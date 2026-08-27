@@ -7,6 +7,7 @@ from .evidence import AmountOrigin, Evidence, EvidenceAssessment, Span, Trust, a
 from .executor import LocalRefundExecutor, RefundNotAuthorized, RefundReceipt
 from .harness import AmountSource, NaiveRefundAgent, Proposal, Ticket
 from .idempotency import IdempotencyLedger
+from .judge import JudgeAdvice, JudgeRequest, JudgeVerdict, adjudicate_hold
 from .money import format_paise, is_valid_paise_amount, rupees_to_paise
 from .proxy import RefundToolProxy, ToolResult
 from .types import (
@@ -39,6 +40,9 @@ __all__ = [
     "Finding",
     "FindingKind",
     "IdempotencyLedger",
+    "JudgeAdvice",
+    "JudgeRequest",
+    "JudgeVerdict",
     "LocalRefundExecutor",
     "NaiveRefundAgent",
     "Payment",
@@ -61,6 +65,7 @@ __all__ = [
     "ToolResult",
     "Trust",
     "VelocityLedger",
+    "adjudicate_hold",
     "assess",
     "evaluate_refund_attempt",
     "format_paise",

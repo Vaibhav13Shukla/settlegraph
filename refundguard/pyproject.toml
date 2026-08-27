@@ -11,6 +11,11 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
+# The core gate has no runtime dependencies and its whole suite runs
+# without a network or a key. The judge is opt-in.
+llm = [
+  "anthropic>=1.0,<2",
+]
 dev = [
   "pytest>=8.2,<9",
   "ruff>=0.4,<1",

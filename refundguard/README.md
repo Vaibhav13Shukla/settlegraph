@@ -13,22 +13,24 @@ refund should actually happen.
 
 ---
 
-## Status: Day 3 of 9
+## Status: Day 4 of 9
 
 ```bash
 python -m pytest refundguard/tests -q
 python refundguard/scripts/demo.py
 ```
 
-`94 passed`. Zero runtime dependencies, no network, no model.
+`137 passed` in 0.2s. Core has zero runtime dependencies; the whole suite runs
+with no network and no API key.
 
 | Built | Not yet |
 | --- | --- |
 | Decision engine, 20 ordered invariants | Real Claude agent in place of the scripted one |
-| **Evidence layer — field-level provenance + injection detectors** | LLM judge for cases the detectors cannot settle |
-| MCP-shaped tool proxy — drop-in at the tool boundary | Batch evaluation over 300+ traces, PR curves |
-| Refund executor, bound to the decision that approved it | Human review console |
-| Hash-chained append-only audit log | Razorpay test-mode API calls |
+| Evidence layer — field-level provenance + injection detectors | Batch evaluation over 300+ traces, PR curves |
+| **Judge — Claude adjudicates held refunds, inside hard bounds** | Human review console |
+| MCP-shaped tool proxy — drop-in at the tool boundary | Razorpay test-mode API calls |
+| Refund executor, bound to the decision that approved it | |
+| Hash-chained append-only audit log | |
 | Idempotency, velocity, cumulative ledgers | |
 
 ## The result
@@ -55,6 +57,45 @@ somebody in the thread is addressing the agent rather than a person.
 attack is caught by knowing where the number came from, not by asking an LLM
 whether the refund seemed reasonable. The model, when it arrives on Day 4, is
 for the cases provenance cannot settle.
+
+## The judge
+
+The evidence layer is deliberately conservative, and most of what it holds is
+an honest customer who is owed their money. A queue nobody can clear is a queue
+that gets cleared without being read, so a judge reads the thread and says
+whether the merchant's own records and policy actually support the refund.
+
+What it is *allowed to do with that opinion* is decided in deterministic code
+after the verdict comes back. The property that makes it safe to ship:
+
+> A judge that has been completely subverted — one returning `clear` at
+> confidence 1.0 on every call — still cannot release anything above the
+> merchant's ceiling, anything the detectors flagged, or anything at all
+> unless the merchant switched the feature on.
+
+Four structural constraints, none of them prompted:
+
+- **Only holds are adjudicated.** A `BLOCK` is arithmetic or contract, and no
+  email changes whether a refund exceeds the balance.
+- **The judge has no tools and returns no action** — a verdict against a strict
+  JSON schema, nothing else. A successful injection produces a wrong label, never
+  a money movement.
+- **Untrusted text is fenced, and the fence cannot be closed from inside.** A
+  customer who writes the closing delimiter gets it neutralised.
+- **Escalation needs no opt-in.** Making a refusal stronger fails towards a
+  delayed refund; making one weaker fails towards a lost one.
+
+Every failure path — timeout, rate limit, connection error, refusal, malformed
+JSON, out-of-range confidence, unknown advice value — returns `keep_hold` at
+zero confidence. The refund stays exactly where the deterministic layer put it.
+
+```bash
+pip install -e ".[llm]"
+export ANTHROPIC_API_KEY=...
+```
+
+Off by default. `Policy(judge_may_clear_holds=True, judge_clear_ceiling_paise=...)`
+turns it on, per merchant, with a rupee ceiling and a confidence floor.
 
 ## The decision path
 

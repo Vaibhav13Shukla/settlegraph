@@ -27,10 +27,12 @@ from datetime import datetime
 
 from .audit_log import AuditLog
 from .decision_engine import EvaluationContext, RefundGuard
+from .detectors import Finding, FindingKind
 from .evidence import Evidence
 from .executor import LocalRefundExecutor, RefundNotAuthorized
+from .judge import JudgeRequest, adjudicate_hold
 from .money import MINOR_UNITS_PER_RUPEE
-from .types import AgentMandate, Disposition, RefundAttempt, RefundSpeed
+from .types import AgentMandate, Decision, Disposition, RefundAttempt, RefundSpeed
 
 REFUND_TOOL = "refunds.create"
 
@@ -77,12 +79,16 @@ class RefundToolProxy:
         clock: Callable[[], datetime] | None = None,
         executor: LocalRefundExecutor | None = None,
         audit: AuditLog | None = None,
+        judge=None,
+        merchant_policy: str = "",
     ) -> None:
         self.context = context
         self.mandate = mandate
         self.clock = clock or datetime.now
         self.executor = executor or LocalRefundExecutor()
         self.guard = RefundGuard(context, audit=audit)
+        self.judge = judge
+        self.merchant_policy = merchant_policy
 
     def call(self, tool_name: str, arguments: dict, evidence: Evidence | None = None) -> ToolResult:
         """Handle one tool call.
@@ -107,6 +113,7 @@ class RefundToolProxy:
 
         attempt = self._to_attempt(arguments, evidence)
         decision = self.guard.evaluate(attempt)
+        decision = self._adjudicate(attempt, decision)
         audit_seq = len(self.guard.audit)
 
         if decision.disposition is not Disposition.ALLOW:
@@ -136,6 +143,57 @@ class RefundToolProxy:
             message=MESSAGES["ALLOW"],
             refund_id=receipt.refund_id,
             audit_seq=audit_seq,
+        )
+
+    def _adjudicate(self, attempt: RefundAttempt, decision: Decision) -> Decision:
+        """Give a judge, if one is configured, a look at a held refund.
+
+        The gate's own verdict is already in the audit log by the time this
+        runs, and an adjudication that changes it appends a second record
+        rather than editing the first. Two decisions genuinely happened -- the
+        automated checks held it, and something released or hardened it -- and
+        a log that showed only the final state would be hiding the more
+        interesting half.
+        """
+        if self.judge is None or decision.disposition is not Disposition.HOLD:
+            return decision
+
+        request = JudgeRequest(
+            merchant_policy=self.merchant_policy,
+            evidence=attempt.evidence,
+            requested_paise=decision.features.get("requested_paise", 0),
+            payment_summary=self._payment_summary(attempt),
+            hold_reason=decision.reason_code.value,
+            findings=tuple(
+                Finding(kind=FindingKind(f["kind"]), excerpt=f["excerpt"], weight=f["weight"])
+                for f in decision.features.get("evidence", {}).get("findings", [])
+            ),
+        )
+        verdict = self.judge.adjudicate(request)
+        adjudicated = adjudicate_hold(decision, verdict, self.context.policy, attempt=attempt)
+
+        if adjudicated.disposition is not decision.disposition:
+            self.guard.audit.append(
+                action_type="refund.adjudicate",
+                agent_id=attempt.agent_id,
+                payment_id=attempt.payment_id,
+                amount_paise=attempt.amount_paise,
+                speed=attempt.audited_speed,
+                disposition=adjudicated.disposition.value,
+                reason_code=adjudicated.reason_code.value,
+                features=adjudicated.features,
+                at=attempt.requested_at,
+            )
+        return adjudicated
+
+    def _payment_summary(self, attempt: RefundAttempt) -> str:
+        payment = self.context.payments.get(attempt.payment_id)
+        if payment is None:  # pragma: no cover - unreachable via a HOLD
+            return attempt.payment_id
+        return (
+            f"{payment.payment_id}, {payment.amount_paise} paise captured, "
+            f"{payment.consumed_paise} paise already refunded, "
+            f"{len(payment.refunds)} prior refunds"
         )
 
     @staticmethod

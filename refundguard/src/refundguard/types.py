@@ -69,6 +69,12 @@ class ReasonCode(str, Enum):
     CUSTOMER_CUMULATIVE_THRESHOLD_EXCEEDED = "CUSTOMER_CUMULATIVE_THRESHOLD_EXCEEDED"
     AGENT_VELOCITY_EXCEEDED = "AGENT_VELOCITY_EXCEEDED"
 
+    # Judge outcomes. JUDGE_CLEARED is the only reason code in this enum
+    # that turns a refusal into a payment, and it is reachable only through
+    # adjudicate_hold, under an explicit merchant opt-in and a rupee ceiling.
+    JUDGE_ESCALATED = "JUDGE_ESCALATED"
+    JUDGE_CLEARED = "JUDGE_CLEARED"
+
     # Clean pass.
     ALL_CHECKS_PASSED = "ALL_CHECKS_PASSED"
 
@@ -190,6 +196,12 @@ class Policy:
     customer_cumulative_window_hours: int = 24
     velocity_max_attempts: int = 5
     velocity_window_minutes: int = 10
+
+    # Judge. Off by default: a merchant who has never heard of this feature
+    # does not get a model releasing their refunds.
+    judge_may_clear_holds: bool = False
+    judge_clear_ceiling_paise: int = 200_000  # Rs 2,000
+    judge_min_confidence: float = 0.8
 
 
 @dataclass(frozen=True)
