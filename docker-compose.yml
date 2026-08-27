@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  settlegraph:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: settlegraph:0.1.0
+    container_name: settlegraph-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SETTLEGRAPH_AUTO_MATCH_THRESHOLD=0.95
+      - SETTLEGRAPH_EXCEPTION_THRESHOLD=0.70
+      - SETTLEGRAPH_AMOUNT_TOLERANCE_PAISE=100
+      - SETTLEGRAPH_DATE_TOLERANCE_DAYS=3
+    volumes:
+      - settlegraph_data:/app/data/generated
+      - settlegraph_results:/app/results
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  settlegraph_data:
+  settlegraph_results:

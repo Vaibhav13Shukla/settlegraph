@@ -1,0 +1,159 @@
+"""Tests for the candidate graph builder."""
+
+from __future__ import annotations
+
+from datetime import date
+
+from settlegraph.config import PipelineConfig
+from settlegraph.engine.match import build_candidate_graph
+from settlegraph.models import NormalizedRecord
+
+
+def _make_rzp(
+    record_id: str,
+    utr: str | None = None,
+    order_id: str | None = None,
+    payment_id: str | None = None,
+    amount: int = 10000,
+    net: int = 9764,
+    settlement_date: date | None = None,
+) -> NormalizedRecord:
+    return NormalizedRecord(
+        record_id=record_id,
+        source="razorpay",
+        source_record_id=record_id,
+        record_type="payment",
+        payment_id=payment_id,
+        order_id=order_id,
+        settlement_id="setl_1",
+        utr=utr,
+        invoice_number=None,
+        reference_text=None,
+        amount_paise=amount,
+        fee_paise=200,
+        tax_paise=36,
+        net_amount_paise=net,
+        currency="INR",
+        transaction_date=date(2026, 1, 15),
+        settlement_date=settlement_date or date(2026, 1, 17),
+        description=None,
+        raw_record={},
+        provenance={"source": "razorpay"},
+    )
+
+
+def _make_bank(
+    record_id: str,
+    utr: str | None = None,
+    amount: int = 9764,
+    transaction_date: date | None = None,
+) -> NormalizedRecord:
+    return NormalizedRecord(
+        record_id=record_id,
+        source="bank",
+        source_record_id=record_id,
+        record_type="settlement_credit",
+        payment_id=None,
+        order_id=None,
+        settlement_id=None,
+        utr=utr,
+        invoice_number=None,
+        reference_text=None,
+        amount_paise=amount,
+        fee_paise=None,
+        tax_paise=None,
+        net_amount_paise=amount,
+        currency="INR",
+        transaction_date=transaction_date or date(2026, 1, 17),
+        settlement_date=transaction_date or date(2026, 1, 17),
+        description=None,
+        raw_record={},
+        provenance={"source": "bank"},
+    )
+
+
+def _make_merchant(
+    record_id: str,
+    order_id: str | None = None,
+    payment_id: str | None = None,
+    amount: int = 10000,
+) -> NormalizedRecord:
+    return NormalizedRecord(
+        record_id=record_id,
+        source="merchant",
+        source_record_id=record_id,
+        record_type="sale",
+        payment_id=payment_id,
+        order_id=order_id,
+        settlement_id=None,
+        utr=None,
+        invoice_number=None,
+        reference_text=None,
+        amount_paise=amount,
+        fee_paise=None,
+        tax_paise=None,
+        net_amount_paise=amount,
+        currency="INR",
+        transaction_date=date(2026, 1, 15),
+        settlement_date=None,
+        description=None,
+        raw_record={},
+        provenance={"source": "merchant"},
+    )
+
+
+def test_utr_match_creates_candidate() -> None:
+    config = PipelineConfig()
+    rzp = [_make_rzp("rzp_1", utr="RZP001", order_id="order_1", payment_id="pay_1")]
+    bank = [_make_bank("bank_1", utr="RZP001")]
+    merch = [_make_merchant("merch_1", order_id="order_1", payment_id="pay_1")]
+
+    candidates = build_candidate_graph(rzp, bank, merch, config)
+
+    # UTR match + order_id match + payment_id match should all create candidates
+    assert len(candidates) >= 1
+    # At least one candidate should be (rzp, bank) via UTR
+    rzp_bank_pairs = [
+        (a, b) for a, b in candidates if a.source == "razorpay" and b.source == "bank"
+    ]
+    assert len(rzp_bank_pairs) >= 1
+
+
+def test_order_id_match_creates_candidate() -> None:
+    config = PipelineConfig()
+    rzp = [_make_rzp("rzp_1", order_id="order_1", payment_id="pay_1")]
+    bank = [_make_bank("bank_1")]  # No UTR
+    merch = [_make_merchant("merch_1", order_id="order_1", payment_id="pay_1")]
+
+    candidates = build_candidate_graph(rzp, bank, merch, config)
+
+    # Should have at least one (rzp, merch) pair via order_id
+    rzp_merch_pairs = [
+        (a, b) for a, b in candidates if a.source == "razorpay" and b.source == "merchant"
+    ]
+    assert len(rzp_merch_pairs) >= 1
+
+
+def test_payment_id_match_creates_candidate() -> None:
+    config = PipelineConfig()
+    rzp = [_make_rzp("rzp_1", payment_id="pay_1")]
+    merch = [_make_merchant("merch_1", payment_id="pay_1")]
+
+    candidates = build_candidate_graph(rzp, [], merch, config)
+
+    rzp_merch_pairs = [
+        (a, b) for a, b in candidates if a.source == "razorpay" and b.source == "merchant"
+    ]
+    assert len(rzp_merch_pairs) >= 1
+
+
+def test_no_candidates_when_no_overlap() -> None:
+    config = PipelineConfig()
+    rzp = [_make_rzp("rzp_1", order_id="order_1")]
+    bank = [_make_bank("bank_1", utr="DIFFERENT_UTR")]
+    merch = [_make_merchant("merch_1", order_id="DIFFERENT_ORDER")]
+
+    candidates = build_candidate_graph(rzp, bank, merch, config)
+
+    # Should have zero candidates (no UTR match, no order_id match, no payment_id match)
+    assert len(candidates) == 0

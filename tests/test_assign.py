@@ -1,0 +1,131 @@
+"""Tests for global assignment."""
+
+from __future__ import annotations
+
+from datetime import date
+
+from settlegraph.config import PipelineConfig
+from settlegraph.engine.assign import classify_unmatched, global_assign
+from settlegraph.models import NormalizedRecord
+
+
+def _make_rzp(
+    record_id: str,
+    utr: str | None = None,
+    order_id: str | None = None,
+    amount: int = 10000,
+    net: int = 9764,
+) -> NormalizedRecord:
+    return NormalizedRecord(
+        record_id=record_id,
+        source="razorpay",
+        source_record_id=record_id,
+        record_type="payment",
+        payment_id=None,
+        order_id=order_id,
+        settlement_id="setl_1",
+        utr=utr,
+        invoice_number=None,
+        reference_text=None,
+        amount_paise=amount,
+        fee_paise=200,
+        tax_paise=36,
+        net_amount_paise=net,
+        currency="INR",
+        transaction_date=date(2026, 1, 15),
+        settlement_date=date(2026, 1, 17),
+        description=None,
+        raw_record={},
+        provenance={"source": "razorpay"},
+    )
+
+
+def _make_bank(
+    record_id: str,
+    utr: str | None = None,
+    amount: int = 9764,
+) -> NormalizedRecord:
+    return NormalizedRecord(
+        record_id=record_id,
+        source="bank",
+        source_record_id=record_id,
+        record_type="settlement_credit",
+        payment_id=None,
+        order_id=None,
+        settlement_id=None,
+        utr=utr,
+        invoice_number=None,
+        reference_text=None,
+        amount_paise=amount,
+        fee_paise=None,
+        tax_paise=None,
+        net_amount_paise=amount,
+        currency="INR",
+        transaction_date=date(2026, 1, 17),
+        settlement_date=date(2026, 1, 17),
+        description=None,
+        raw_record={},
+        provenance={"source": "bank"},
+    )
+
+
+def test_high_confidence_edge_becomes_auto_match() -> None:
+    config = PipelineConfig(auto_match_threshold=0.95, exception_threshold=0.70)
+    rzp = _make_rzp("rzp_1", utr="RZP001")
+    bank = _make_bank("bank_1", utr="RZP001")
+
+    scored = [(rzp, bank, 0.98)]
+    assignments = global_assign(scored, config)
+
+    assert len(assignments) == 1
+    assert assignments[0]["label"] == "AUTO_MATCH"
+
+
+def test_low_confidence_edge_becomes_exception() -> None:
+    config = PipelineConfig(auto_match_threshold=0.95, exception_threshold=0.70)
+    rzp = _make_rzp("rzp_1")
+    bank = _make_bank("bank_1")
+
+    scored = [(rzp, bank, 0.3)]
+    assignments = global_assign(scored, config)
+
+    assert len(assignments) == 1
+    assert assignments[0]["label"] == "EXCEPTION"
+
+
+def test_greedy_selects_highest_confidence() -> None:
+    config = PipelineConfig(auto_match_threshold=0.95, exception_threshold=0.70)
+    rzp1 = _make_rzp("rzp_1", utr="RZP001")
+    rzp2 = _make_rzp("rzp_2", utr="RZP002")
+    bank1 = _make_bank("bank_1", utr="RZP001")
+    bank2 = _make_bank("bank_2", utr="RZP002")
+
+    # Both edges have UTR match, but first is higher confidence
+    scored = [
+        (rzp1, bank1, 0.98),
+        (rzp2, bank2, 0.96),
+    ]
+    assignments = global_assign(scored, config)
+
+    assert len(assignments) == 2
+    assert all(a["label"] == "AUTO_MATCH" for a in assignments)
+
+
+def test_classify_unmatched_identifies_orphans() -> None:
+    config = PipelineConfig()
+    rzp1 = _make_rzp("rzp_1", utr="RZP001")
+    bank1 = _make_bank("bank_1", utr="RZP001")
+    rzp2 = _make_rzp("rzp_2", utr="RZP002")
+
+    scored = [(rzp1, bank1, 0.98)]
+    assignments = global_assign(scored, config)
+
+    unmatched = classify_unmatched(
+        {rzp1.record_id, rzp2.record_id},
+        {bank1.record_id},
+        set(),
+        assignments,
+    )
+
+    unmatched_rzp = [u for u in unmatched if u["source"] == "razorpay"]
+    assert any(u["record_id"] == "rzp_2" for u in unmatched_rzp)

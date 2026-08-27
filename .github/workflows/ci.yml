@@ -1,0 +1,137 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-format:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run Ruff Lint
+        run: ruff check src tests datagen scripts
+
+      - name: Run Ruff Format Check
+        run: ruff format --check src tests datagen scripts
+
+  test-matrix:
+    name: Test Matrix (${{ matrix.os }} / Python ${{ matrix.python-version }})
+    needs: lint-and-format
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run Unit & E2E Tests
+        run: python -m pytest -v --basetemp .pytest-tmp
+
+      - name: Generate 1,000 Financial Realities
+        run: python -m settlegraph.cli generate --total-records 1000 --anomaly-rate 0.15 --seed 42
+
+      - name: Execute Reconciliation Pipeline
+        run: python -m settlegraph.cli run
+
+      - name: Run Baseline Benchmark
+        run: python -m settlegraph.cli benchmark
+
+      - name: Verify Live Failure Containment
+        run: python -m settlegraph.cli simulate
+
+  e2e-healthcheck:
+    name: Production Service & Health Probe
+    needs: test-matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run End-to-End Automated Probe
+        run: python scripts/run_e2e.py
+
+      - name: Upload Audit Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settlegraph-audit-artifacts
+          path: |
+            results/AUDIT_REPORT.md
+            results/summary.json
+            results/revenue_assurance.json
+            results/exceptions.json
+            results/evaluation.json
+
+  docker-build:
+    name: Container Build & Verification
+    needs: lint-and-format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: settlegraph:latest
+          load: true
+
+      - name: Verify Docker Container Health
+        run: |
+          docker run -d --name settlegraph-test -p 8080:8080 settlegraph:latest
+          sleep 3
+          curl --fail http://localhost:8080/healthz || exit 1
+          docker stop settlegraph-test
