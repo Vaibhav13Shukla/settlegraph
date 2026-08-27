@@ -23,6 +23,7 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime
 
 from .audit_log import AuditLog
+from .evidence import SUSPICION_ESCALATION_THRESHOLD, assess
 from .idempotency import IdempotencyLedger
 from .money import is_valid_paise_amount
 from .types import (
@@ -201,6 +202,29 @@ def evaluate_refund_attempt(attempt: RefundAttempt, context: EvaluationContext) 
         )
 
     # Holds below this line: the action is well-formed, a human decides.
+
+    # 9a. Evidence. First in the hold band on purpose: when a refund is held
+    #     for several reasons at once, "somebody is addressing your agent" is
+    #     more useful to a merchant than "this is four days past the window".
+    #
+    #     These produce holds, never blocks. An amount sourced from customer
+    #     text is not proof of an attack -- a customer asking for a refund they
+    #     are owed lands in exactly the same bucket -- so the answer is to put
+    #     it in front of a person, not to refuse it.
+    evidence_view = assess(attempt.evidence, resolved)
+    if evidence_view.needs_human:
+        reason = (
+            ReasonCode.INSTRUCTION_SHAPED_TEXT_IN_THREAD
+            if evidence_view.suspicion >= SUSPICION_ESCALATION_THRESHOLD
+            else ReasonCode.UNCORROBORATED_UNTRUSTED_AMOUNT
+        )
+        return verdict(
+            Disposition.HOLD,
+            reason,
+            requested_paise=resolved,
+            evidence=evidence_view.to_dict(),
+            evidence_reason=evidence_view.reason,
+        )
 
     # 10. Outside the refund window the merchant published.
     if age_days > policy.refund_window_days:

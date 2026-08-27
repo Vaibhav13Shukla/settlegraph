@@ -17,6 +17,7 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+from .evidence import AmountOrigin, Evidence, Span, Trust
 from .proxy import RefundToolProxy, ToolResult
 
 # "refund of Rs 8500", "refund Rs 8,500", "refund of 8500"
@@ -53,8 +54,17 @@ class Proposal:
 
 
 class NaiveRefundAgent:
-    def __init__(self, proxy: RefundToolProxy) -> None:
+    def __init__(self, proxy: RefundToolProxy, declare_evidence: bool = True) -> None:
+        """``declare_evidence=False`` is the ablation control.
+
+        With provenance withheld the gate falls back to arithmetic and policy
+        alone, which is precisely the rules-only baseline any claim about the
+        evidence layer has to beat. Keeping the switch here rather than in the
+        gate means the baseline runs the same decision code, so a difference in
+        outcome is a difference in evidence and nothing else.
+        """
         self.proxy = proxy
+        self.declare_evidence = declare_evidence
 
     def propose(self, ticket: Ticket) -> Proposal | None:
         """Decide what to refund, if anything.
@@ -82,6 +92,41 @@ class NaiveRefundAgent:
             )
         return None
 
+    @staticmethod
+    def evidence_for(ticket: Ticket, proposal: Proposal) -> Evidence:
+        """Label the source material by where it came from.
+
+        Note what this does *not* do: consult the agent. The ticket body is
+        untrusted because it arrived from a helpdesk inbox, not because the
+        agent judged it so, and an approved return amount is trusted because
+        it came out of the merchant's own records. Both facts are properties
+        of the fetch, which is why the runtime can state them and the agent
+        cannot argue with them.
+        """
+        spans = [Span(label="customer_message", text=ticket.body, trust=Trust.UNTRUSTED)]
+        if ticket.approved_refund_inr is not None:
+            spans.append(
+                Span(
+                    label="return_record",
+                    text=f"Approved return: Rs {ticket.approved_refund_inr}",
+                    trust=Trust.TRUSTED,
+                )
+            )
+
+        origin = (
+            AmountOrigin.MERCHANT_RECORD
+            if proposal.amount_source is AmountSource.MERCHANT_RECORD
+            else AmountOrigin.UNTRUSTED_TEXT
+        )
+        approved_paise = (
+            ticket.approved_refund_inr * 100 if ticket.approved_refund_inr is not None else None
+        )
+        return Evidence(
+            spans=tuple(spans),
+            amount_origin=origin,
+            merchant_approved_paise=approved_paise,
+        )
+
     def handle(self, ticket: Ticket) -> tuple[Proposal | None, ToolResult | None]:
         proposal = self.propose(ticket)
         if proposal is None:
@@ -96,6 +141,7 @@ class NaiveRefundAgent:
                 "declared_amount_inr": proposal.amount_inr,
                 "reason": ticket.subject,
             },
+            evidence=self.evidence_for(ticket, proposal) if self.declare_evidence else None,
         )
         return proposal, result
 

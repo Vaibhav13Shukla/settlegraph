@@ -27,6 +27,7 @@ from datetime import datetime
 
 from .audit_log import AuditLog
 from .decision_engine import EvaluationContext, RefundGuard
+from .evidence import Evidence
 from .executor import LocalRefundExecutor, RefundNotAuthorized
 from .money import MINOR_UNITS_PER_RUPEE
 from .types import AgentMandate, Disposition, RefundAttempt, RefundSpeed
@@ -83,7 +84,17 @@ class RefundToolProxy:
         self.executor = executor or LocalRefundExecutor()
         self.guard = RefundGuard(context, audit=audit)
 
-    def call(self, tool_name: str, arguments: dict) -> ToolResult:
+    def call(self, tool_name: str, arguments: dict, evidence: Evidence | None = None) -> ToolResult:
+        """Handle one tool call.
+
+        ``evidence`` is a separate parameter, never a key in ``arguments``, and
+        that separation is load-bearing. Provenance is a statement about which
+        text the merchant wrote and which text a stranger wrote; an agent that
+        could assert its own provenance would simply mark the attacker's
+        instructions as trusted. In a deployment the runtime fetches the thread
+        from the helpdesk and labels the spans by where it fetched them from.
+        Nothing the agent says can change those labels.
+        """
         if tool_name != REFUND_TOOL:
             # Refused before the gate sees it: an unknown tool is not a refund
             # decision and must not occupy a slot in the decision record.
@@ -94,7 +105,7 @@ class RefundToolProxy:
                 message=f"{tool_name!r} is not exposed through this proxy.",
             )
 
-        attempt = self._to_attempt(arguments)
+        attempt = self._to_attempt(arguments, evidence)
         decision = self.guard.evaluate(attempt)
         audit_seq = len(self.guard.audit)
 
@@ -160,7 +171,7 @@ class RefundToolProxy:
             return RefundSpeed.OPTIMUM, normalised
         return RefundSpeed.NORMAL, normalised
 
-    def _to_attempt(self, arguments: dict) -> RefundAttempt:
+    def _to_attempt(self, arguments: dict, evidence: Evidence | None) -> RefundAttempt:
         declared_paise, declared_unparseable = self._parse_declared_amount(arguments)
         speed, raw_speed = self._parse_speed(arguments)
 
@@ -178,4 +189,6 @@ class RefundToolProxy:
             declared_intent_paise=declared_paise,
             raw_speed=raw_speed,
             declared_amount_unparseable=declared_unparseable,
+            # From the runtime, never from `arguments`.
+            evidence=evidence if evidence is not None else Evidence(),
         )

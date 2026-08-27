@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
+from .evidence import Evidence
+
 
 class PaymentStatus(str, Enum):
     CREATED = "created"
@@ -58,6 +60,8 @@ class ReasonCode(str, Enum):
     IDEMPOTENCY_REPLAY = "IDEMPOTENCY_REPLAY"
 
     # Holds -- the action may well be legitimate but needs a human to say so.
+    INSTRUCTION_SHAPED_TEXT_IN_THREAD = "INSTRUCTION_SHAPED_TEXT_IN_THREAD"
+    UNCORROBORATED_UNTRUSTED_AMOUNT = "UNCORROBORATED_UNTRUSTED_AMOUNT"
     REFUND_WINDOW_EXCEEDED = "REFUND_WINDOW_EXCEEDED"
     SPEED_UPGRADE_REQUIRES_APPROVAL = "SPEED_UPGRADE_REQUIRES_APPROVAL"
     PER_CALL_APPROVAL_THRESHOLD_EXCEEDED = "PER_CALL_APPROVAL_THRESHOLD_EXCEEDED"
@@ -156,6 +160,9 @@ class RefundAttempt:
     declared_intent_paise: int | None = None
     raw_speed: str | None = None
     declared_amount_unparseable: bool = False
+    # Where the agent looked, and where it got the figure. Declared by whoever
+    # assembled the request, because that is the only party that knows.
+    evidence: Evidence = field(default_factory=Evidence)
 
     @property
     def audited_speed(self) -> str:
