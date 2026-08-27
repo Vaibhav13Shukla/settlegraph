@@ -51,7 +51,10 @@ class ReasonCode(str, Enum):
     ACTIVE_DISPUTE = "ACTIVE_DISPUTE"
     INVALID_AMOUNT = "INVALID_AMOUNT"
     AMOUNT_INTENT_MISMATCH = "AMOUNT_INTENT_MISMATCH"
+    DECLARED_AMOUNT_UNPARSEABLE = "DECLARED_AMOUNT_UNPARSEABLE"
     AMOUNT_EXCEEDS_REFUNDABLE = "AMOUNT_EXCEEDS_REFUNDABLE"
+    UNSUPPORTED_REFUND_SPEED = "UNSUPPORTED_REFUND_SPEED"
+    MISSING_IDEMPOTENCY_KEY = "MISSING_IDEMPOTENCY_KEY"
     IDEMPOTENCY_REPLAY = "IDEMPOTENCY_REPLAY"
 
     # Holds -- the action may well be legitimate but needs a human to say so.
@@ -131,6 +134,16 @@ class RefundAttempt:
     to declare the figure separately from the wire argument turns a whole
     class of unit-conversion defects into a deterministic equality check
     rather than a semantic judgement call.
+
+    ``raw_speed`` preserves the string the agent actually sent. The parsed
+    ``speed`` enum is a convenience; the raw value is what gets audited, so
+    the log records the request that was made rather than the one the parser
+    was able to make sense of.
+
+    ``declared_amount_unparseable`` marks a declaration that was present but
+    could not be read. Absent and unreadable are different situations: absent
+    means the agent opted out of the cross-check, unreadable means the
+    cross-check was attempted and failed, and only one of those should pass.
     """
 
     idempotency_key: str
@@ -141,6 +154,12 @@ class RefundAttempt:
     amount_paise: int | None = None
     speed: RefundSpeed = RefundSpeed.NORMAL
     declared_intent_paise: int | None = None
+    raw_speed: str | None = None
+    declared_amount_unparseable: bool = False
+
+    @property
+    def audited_speed(self) -> str:
+        return self.raw_speed if self.raw_speed is not None else self.speed.value
 
 
 @dataclass(frozen=True)
@@ -168,9 +187,18 @@ class Policy:
 
 @dataclass(frozen=True)
 class Decision:
+    """A verdict about one specific action.
+
+    ``bound_to`` is set on ALLOW and identifies the exact attempt that was
+    approved. It exists so that an approval cannot be carried to a different
+    action: a decision is permission to do one thing, not a token of general
+    creditworthiness.
+    """
+
     disposition: Disposition
     reason_code: ReasonCode
     features: dict = field(default_factory=dict)
+    bound_to: str | None = None
 
     @property
     def reaches_razorpay(self) -> bool:

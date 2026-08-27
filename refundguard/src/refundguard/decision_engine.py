@@ -18,7 +18,8 @@ the side effect of having made several calls.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import hashlib
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 
 from .audit_log import AuditLog
@@ -37,6 +38,26 @@ from .types import (
 from .velocity import RefundHistoryLedger, VelocityLedger
 
 ACTION_TYPE = "refund.create"
+
+
+def decision_binding(attempt: RefundAttempt, resolved_paise: int) -> str:
+    """Identify the one action an approval is good for.
+
+    Both amounts go into the hash. ``resolved_paise`` is what the gate agreed
+    to; ``attempt.amount_paise`` is what was on the wire, and it can differ --
+    an omitted amount resolves to the whole balance. Binding on the resolved
+    figure alone would let an attempt asking for Rs 9,000 ride an approval
+    issued for Rs 100, because everything else about the two requests matches.
+    """
+    raw = "|".join(
+        [
+            attempt.payment_id,
+            attempt.idempotency_key,
+            str(attempt.amount_paise),
+            str(resolved_paise),
+        ]
+    )
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 @dataclass
@@ -59,7 +80,17 @@ def evaluate_refund_attempt(attempt: RefundAttempt, context: EvaluationContext) 
     policy = context.policy
     now = attempt.requested_at
 
-    # 1. Replay. Checked first: a re-presented key must never be re-evaluated,
+    # 0. An idempotency key is not optional. Without one there is no way to
+    #    tell a retry from a second refund, and defaulting the key to an empty
+    #    string makes the first receiptless call burn it for all the others.
+    if not attempt.idempotency_key:
+        return Decision(
+            disposition=Disposition.BLOCK,
+            reason_code=ReasonCode.MISSING_IDEMPOTENCY_KEY,
+            features={"payment_id": attempt.payment_id},
+        )
+
+    # 1. Replay. Checked next: a re-presented key must never be re-evaluated,
     #    because re-evaluating it is how a timeout becomes a double refund.
     replay = context.idempotency.check(
         attempt.idempotency_key, attempt.payment_id, attempt.amount_paise, attempt.speed.value
@@ -123,6 +154,16 @@ def evaluate_refund_attempt(attempt: RefundAttempt, context: EvaluationContext) 
     if payment.has_active_dispute:
         return verdict(Disposition.BLOCK, ReasonCode.ACTIVE_DISPUTE)
 
+    # 5a. A speed we do not recognise is not a speed we may quietly downgrade.
+    #     Coercing an unknown value to "normal" would bypass the mandate check
+    #     and record a request the agent never made.
+    if attempt.raw_speed is not None and attempt.raw_speed not in {"normal", "optimum"}:
+        return verdict(
+            Disposition.BLOCK,
+            ReasonCode.UNSUPPORTED_REFUND_SPEED,
+            submitted_speed=attempt.raw_speed,
+        )
+
     # 6. Resolve the amount. Omitting it means the remaining balance, matching
     #    the behaviour of the Razorpay refund endpoint.
     is_full_refund = attempt.amount_paise is None
@@ -136,6 +177,12 @@ def evaluate_refund_attempt(attempt: RefundAttempt, context: EvaluationContext) 
             submitted_amount=repr(attempt.amount_paise),
             submitted_type=type(attempt.amount_paise).__name__,
         )
+
+    # 7a. A declaration that arrived but could not be read fails closed. The
+    #     alternative -- skipping the cross-check -- would silently disable the
+    #     defence at exactly the moment something is already wrong.
+    if attempt.declared_amount_unparseable:
+        return verdict(Disposition.BLOCK, ReasonCode.DECLARED_AMOUNT_UNPARSEABLE)
 
     # 8. The figure the agent declared must equal the figure on the wire. This
     #    is the deterministic catch for rupee/paise confusion.
@@ -214,7 +261,8 @@ def evaluate_refund_attempt(attempt: RefundAttempt, context: EvaluationContext) 
             max_attempts=policy.velocity_max_attempts,
         )
 
-    return verdict(Disposition.ALLOW, ReasonCode.ALL_CHECKS_PASSED, requested_paise=resolved)
+    approval = verdict(Disposition.ALLOW, ReasonCode.ALL_CHECKS_PASSED, requested_paise=resolved)
+    return replace(approval, bound_to=decision_binding(attempt, resolved))
 
 
 class RefundGuard:
@@ -259,7 +307,9 @@ class RefundGuard:
             agent_id=attempt.agent_id,
             payment_id=attempt.payment_id,
             amount_paise=attempt.amount_paise,
-            speed=attempt.speed.value,
+            # The raw value, so the log records what was asked for rather than
+            # what the parser managed to make of it.
+            speed=attempt.audited_speed,
             disposition=decision.disposition.value,
             reason_code=decision.reason_code.value,
             features=decision.features,
