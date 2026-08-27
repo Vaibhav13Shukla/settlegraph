@@ -88,7 +88,17 @@ _RULES: tuple[tuple[FindingKind, int, re.Pattern[str]], ...] = (
     (
         FindingKind.INSTRUCTION_TO_AGENT,
         30,
-        re.compile(r"\byou\s+are\s+(?:now\s+)?(?:a|an|the)\s+\w+", re.IGNORECASE),
+        # Role reassignment. The bare form "you are a/an/the <anything>" was too
+        # greedy: "you are the best support team I have dealt with all year"
+        # matched it, and a compliment held a refund. Require either an explicit
+        # "now" or a role noun that a customer has no reason to assign.
+        re.compile(
+            r"\byou\s+are\s+(?:"
+            r"now\s+(?:a|an|the)\s+\w+"
+            r"|(?:a|an|the)\s+(?:refund|payment|approval|admin|system|automated|assistant|agent|bot)\w*"
+            r")",
+            re.IGNORECASE,
+        ),
     ),
     (
         FindingKind.AUTHORITY_CLAIM,
