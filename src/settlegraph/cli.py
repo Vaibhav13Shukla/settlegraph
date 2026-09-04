@@ -307,14 +307,16 @@ def history(
 ) -> None:
     """Show recorded run history and check for real cross-run drift --
     unlike the pipeline's own within-batch-only ADWIN check, this reads
-    actual separate `settlegraph run` invocations from history.db."""
+    actual separate `settlegraph run` invocations from history.jsonl (a
+    plain, appendable, greppable file -- see engine/history_store.py for
+    why this isn't SQLite)."""
     from settlegraph.engine.history_store import check_cross_run_drift, list_runs
 
-    db_path = Path(results_dir) / "history.db"
-    runs = list_runs(db_path, limit=limit)
+    history_path = Path(results_dir) / "history.jsonl"
+    runs = list_runs(history_path, limit=limit)
     if not runs:
         console.print(
-            f"[red]No run history at {db_path}. Run 'settlegraph run' at least once first.[/red]"
+            f"[red]No run history at {history_path}. Run 'settlegraph run' at least once first.[/red]"
         )
         return
 
@@ -336,7 +338,7 @@ def history(
         )
     console.print(table)
 
-    drift = check_cross_run_drift(db_path, metric=metric)
+    drift = check_cross_run_drift(history_path, metric=metric)
     console.print(f"\n[bold cyan]Cross-run drift on '{metric}':[/bold cyan] {drift['status']}")
     if drift["status"] == "insufficient_history":
         console.print(

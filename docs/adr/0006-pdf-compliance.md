@@ -62,7 +62,7 @@ Receivables − Expected Outflows, in the audit report and `summary.json`.
 | **AI Reasoning Layer: LLM-based reasoning via Claude Agent SDK** | ⚠️ **See "Where Agent SDK belongs" below — this is the honest answer to "did you implement Claude Agent SDK."** |
 | Matching Engine: deterministic rules + similarity scoring | ✅ `engine/match.py`, `engine/score.py` |
 | Data & Processing Layer: synthetic CSVs, Python, Pandas | ⚠️ CSVs and Python, no Pandas — stdlib `csv`/`pydantic` throughout. Deliberate: the datasets here are small enough that Pandas would be an unused dependency, not a capability gain (matches this same page's own subtitle, "do not overcomplicate the architecture") |
-| Storage Layer: SQLite / PostgreSQL | ✅ `engine/history_store.py` + `settlegraph history` — stdlib `sqlite3`, one row per run, real cross-run ADWIN drift detection (distinct from the pipeline's own within-batch-only check) |
+| Storage Layer: SQLite / PostgreSQL | ⚠️ `engine/history_store.py` + `settlegraph history` — real cross-run ADWIN drift detection (distinct from the pipeline's own within-batch-only check), but **not SQLite**. A ponytail audit (Day 5) found every operation this module does — append a row, list recent rows, read one metric as a chronological series — is a few lines over a flat JSON Lines file, and that JSONL matches every other output this project produces (CSV/JSON, never a binary DB), which SQLite didn't. Chose the simpler, more consistent option over the literally-named one; see DEVLOG for the full reasoning. |
 
 ### Where Agent SDK belongs (the honest answer)
 
@@ -133,5 +133,5 @@ actually about and directly named in the buildathon's own "why now" framing
   the thing a merchant would actually read, deterministic (not
   LLM-generated) so it can never drift from the numbers it summarizes.
 
-All three, plus the tax-line matcher and SQLite history above, found real
+All three, plus the tax-line matcher and run-history above, found real
 bugs on first real use — written up in full in `DEVLOG.md` Day 5.

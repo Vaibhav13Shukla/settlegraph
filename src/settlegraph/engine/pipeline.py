@@ -259,7 +259,7 @@ def run_pipeline(
     }
 
     # Generate the run id before summary.json is written, not after --
-    # otherwise the persisted file never carries its own history.db primary
+    # otherwise the persisted file never carries its own history.jsonl row
     # key, and a reader of summary.json alone (the dashboard, the digest,
     # qa_agent's get_summary tool) has no way to correlate this batch with
     # its run-history row. Found by code review.
@@ -285,7 +285,7 @@ def run_pipeline(
     if config.history_enabled:
         from settlegraph.engine.history_store import record_run
 
-        record_run(output_path / "history.db", summary, run_id=run_id)
+        record_run(output_path / "history.jsonl", summary, run_id=run_id)
 
     print(f"  Results written to {output_path}")
     print(

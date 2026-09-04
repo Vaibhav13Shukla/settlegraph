@@ -535,3 +535,66 @@ script block's JS syntax directly (`node --check`), then started the real
 server and curled it to confirm the page still serves completely and the
 function is actually present in what ships -- not just "the diff looks
 right."
+
+---
+
+### [Day 5, last] The `/ponytail ultra` question: do we actually need SQLite?
+
+Ran a proper ponytail audit against `history_store.py` and everything
+else added this session, because "the PDF names SQLite" isn't the same
+question as "does this feature need SQLite." It doesn't.
+
+Every operation `history_store.py` performs -- append a row, list recent
+rows sorted by time, read one metric as a chronological series for
+ADWIN -- is a few lines over a flat file. SQLite added a schema, a
+connection lifecycle (`_connect()` on every call), and a query-
+construction surface for that. It also broke with the pattern every
+other output in this project follows: `assignments.csv`,
+`exceptions.json`, `revenue_assurance.json`, `tax_reconciliation.json`,
+`route_reconciliation.json` -- all plain text, all `cat`/`tail`/`grep`-
+able without a client. A binary `.db` file was the odd one out in a
+project whose whole stated purpose is an inspectable audit trail.
+
+Also caught, tracing the schema before judging it: `summary_json` (the
+full run summary, stored as a TEXT blob alongside the indexed columns)
+was write-only -- grepped the whole codebase, nothing ever read it back.
+Storing what nothing reads is exactly the kind of thing ponytail exists
+to catch.
+
+**Rewrote `history_store.py` as plain JSON Lines, TDD throughout:**
+wrote the new test first (`test_history_file_is_plain_jsonl_not_a_binary_db`
+-- read the raw file, assert it parses as UTF-8 JSON Lines), ran it red
+against the SQLite implementation (`UnicodeDecodeError: 'utf-8' codec
+can't decode byte 0x86` -- a `SQLite format 3` binary header, not a
+hypothetical), then rewrote the module and watched all 10 tests go
+green, including every pre-existing behavior test *unchanged* -- they
+tested the public functions, not SQL internals, so they doubled as the
+refactor's safety net for free. Dropped the never-read `summary_json`
+column entirely. `history.db` is `history.jsonl` everywhere now
+(`pipeline.py`, `cli.py`, tests) -- an honest extension for what the file
+actually is.
+
+**The one place this pass did *not* touch:** `qa_agent.py`'s use of the
+real `claude-agent-sdk`. The same ponytail lens says a single
+non-agentic `anthropic` call with the relevant JSON pasted into the
+prompt would answer every question demonstrated so far with a much
+lighter dependency tree and no subprocess-on-the-`claude`-CLI
+requirement -- that's a real, honest tension, not a rationalization away
+of it. But the user asked for Claude Agent SDK specifically, by name,
+more than once, with explicit reasoning ("it can enhance the chance of
+winning this"). Ponytail's own rule: *"anything explicitly requested...
+user insists on the full version, build it, no re-arguing."* SQLite was
+never explicitly requested -- the PDF suggested it as an example, and
+this session's own user message just now was literally "do we really
+need sqlite... check this" -- so questioning it was answering the
+question asked. Agent SDK is the opposite case. It stays.
+
+Everything else added this session (`tax_matcher.py`, `route_reconciliation.py`,
+`digest.py`) checked out clean: stdlib-only, single-responsibility,
+reusing the exact `class + to_dict()` shape `exceptions.py`'s
+`ExceptionReport` already established rather than inventing a new one.
+No changes needed.
+
+**124 tests now** (123 + the new red-then-green JSONL test), lint/format
+clean, a full `generate` → `run` → `history` cycle re-verified against
+the new file format.
