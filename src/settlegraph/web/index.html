@@ -219,7 +219,69 @@
 
     <!-- TAB 1: EXECUTIVE COCKPIT -->
     <div id="view-overview" class="space-y-10">
-      
+
+      <!-- Track 04 brief stat-tile row (page 12 of the buildathon PDF spec).
+           "Automatically Matched" and "Escalated Exceptions" deliberately
+           don't repeat the mockup's exact "(Correct: Y)" phrasing: auto_match
+           spans all three source-pair legs, but true_positives/false_positives
+           are only measurable on the Razorpay<->Bank leg (the only one with
+           ground truth) -- presenting one number as a subset of the other
+           would imply a decomposition the data doesn't actually support. -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-normal tracking-tight text-bone-white">Batch Overview</h2>
+          <span class="text-[10px] uppercase tracking-widest text-fog-blue">Track 04 Brief Metrics</span>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Total Records Processed</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-total-records">--</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Match Rate</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-match-rate">--%</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Accuracy</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-accuracy">--%</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Avg Processing Time</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-avg-time">-- ms/rec</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Automatically Matched</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-auto-matched">--</div>
+            <div class="text-[10px] text-fog-blue" id="pdf-auto-matched-sub">-- verified correct on evaluated leg</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Auto-Resolved Exceptions</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-ai-resolved">--</div>
+            <div class="text-[10px] text-fog-blue">AI hypothesis, invariant-verified</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Escalated Exceptions</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-escalated">--</div>
+            <div class="text-[10px] text-fog-blue">Awaiting human review</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Drift Detected</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-drift">--</div>
+            <div class="text-[10px] text-fog-blue">Within-batch score-distribution shift</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Tax-Line (GST) Match Rate</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-tax-rate">--</div>
+            <div class="text-[10px] text-fog-blue" id="pdf-tax-sub">Not run for this batch</div>
+          </div>
+          <div class="bg-graphite-veil p-5 rounded-card border border-ash-border space-y-2">
+            <div class="text-[10px] uppercase tracking-widest text-fog-blue">Route Split Verified</div>
+            <div class="text-2xl font-normal tracking-tighter text-bone-white" id="pdf-route-rate">--</div>
+            <div class="text-[10px] text-fog-blue" id="pdf-route-sub">Not run for this batch</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Key KPI Cards (Zero Shadows, Clean 1px Ash Borders, 15px Radius) -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
@@ -429,6 +491,25 @@
   <script>
     let globalData = {};
 
+    // Every render function below builds innerHTML from data read out of
+    // results/*.json -- record ids and categories are system-generated in
+    // this synthetic setup, so today's actual exploitability is low, but
+    // interpolating data fields into innerHTML with no escaping at all is
+    // the wrong pattern to ship regardless, and it's the same "don't rely
+    // on a single control" reasoning the rest of this project applies to
+    // money -- applied here to the dashboard's own rendering. Found during
+    // a security review pass; every data-derived interpolation below is
+    // wrapped in this.
+    function escapeHtml(value) {
+      if (value === null || value === undefined) return '';
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function switchTab(tabId) {
       ['overview', 'exceptions', 'ledger', 'sandbox', 'audit'].forEach(t => {
         const view = document.getElementById('view-' + t);
@@ -480,6 +561,47 @@
       document.getElementById('stat-reconciled').innerText = 'INR ' + fin.reconciled_settled_inr.toLocaleString('en-IN');
       document.getElementById('stat-exposure').innerText = 'INR ' + fin.unexplained_exposure_inr.toLocaleString('en-IN');
 
+      // Track 04 brief stat tiles (page 12) -- all sourced from data already
+      // in `summary` / `evaluation`, no new endpoint needed.
+      const thr = summary.throughput || {};
+      document.getElementById('pdf-total-records').innerText =
+        thr.records_processed ? thr.records_processed.toLocaleString() : '--';
+      if (thr.elapsed_seconds && thr.records_processed) {
+        const msPerRecord = (thr.elapsed_seconds / thr.records_processed) * 1000;
+        document.getElementById('pdf-avg-time').innerText = msPerRecord.toFixed(2) + ' ms/rec';
+      }
+      if (evaluation && evaluation.match_rate !== undefined) {
+        document.getElementById('pdf-match-rate').innerText = (evaluation.match_rate * 100).toFixed(1) + '%';
+        document.getElementById('pdf-accuracy').innerText = (evaluation.accuracy * 100).toFixed(1) + '%';
+        const evaluated = evaluation.true_positives + evaluation.false_positives;
+        document.getElementById('pdf-auto-matched-sub').innerText =
+          evaluated > 0
+            ? evaluation.true_positives + ' / ' + evaluated + ' verified correct on evaluated leg'
+            : 'no evaluated leg in this batch';
+      }
+      document.getElementById('pdf-auto-matched').innerText = summary.assignments.auto_match.toLocaleString();
+      document.getElementById('pdf-ai-resolved').innerText = (summary.assignments.ai_resolved_match || 0).toLocaleString();
+      document.getElementById('pdf-escalated').innerText = summary.assignments.exception.toLocaleString();
+      if (summary.drift) {
+        document.getElementById('pdf-drift').innerText = summary.drift.drift_detected
+          ? 'YES (' + summary.drift.drift_events.length + ' event(s))'
+          : 'None';
+      }
+      // Both satellite surfaces (tax-line, Route) ride the same
+      // /api/summary endpoint everything else already uses -- run_pipeline
+      // embeds them directly in summary.json when their feeds exist, no
+      // new endpoint needed for the dashboard to pick them up.
+      if (summary.tax_reconciliation) {
+        const t = summary.tax_reconciliation;
+        document.getElementById('pdf-tax-rate').innerText = (t.match_rate * 100).toFixed(1) + '%';
+        document.getElementById('pdf-tax-sub').innerText = t.total_tax_lines + ' batches, INR ' + t.findings_exposure_inr.toLocaleString('en-IN') + ' exposure';
+      }
+      if (summary.route_reconciliation) {
+        const r = summary.route_reconciliation;
+        document.getElementById('pdf-route-rate').innerText = (r.verification_rate * 100).toFixed(1) + '%';
+        document.getElementById('pdf-route-sub').innerText = r.payout_shortfalls + ' shortfall(s), ' + r.payout_overpayments + ' overpayment(s)';
+      }
+
       document.getElementById('flow-rzp').innerText = summary.records.razorpay.toLocaleString();
       document.getElementById('flow-bank').innerText = summary.records.bank.toLocaleString();
       document.getElementById('flow-merchant').innerText = summary.records.merchant.toLocaleString();
@@ -509,16 +631,16 @@
       container.innerHTML = exceptions.slice(0, 50).map(exc => `
         <div class="bg-graphite-veil p-6 rounded-card border border-ash-border space-y-4 hover:border-bone-white/40 vivid-transition">
           <div class="flex items-center justify-between">
-            <span class="px-2.5 py-1 text-[11px] font-mono uppercase tracking-widest rounded-nav border border-ash-border bg-obsidian text-bone-white">${exc.category}</span>
-            <span class="text-xs uppercase tracking-widest text-fog-blue">${exc.severity} SEVERITY</span>
+            <span class="px-2.5 py-1 text-[11px] font-mono uppercase tracking-widest rounded-nav border border-ash-border bg-obsidian text-bone-white">${escapeHtml(exc.category)}</span>
+            <span class="text-xs uppercase tracking-widest text-fog-blue">${escapeHtml(exc.severity)} SEVERITY</span>
           </div>
           <div class="space-y-1">
-            <div class="text-sm font-normal text-bone-white">${exc.record_id} (${exc.source})</div>
-            <div class="text-xs text-fog-blue leading-relaxed">${exc.root_cause}</div>
+            <div class="text-sm font-normal text-bone-white">${escapeHtml(exc.record_id)} (${escapeHtml(exc.source)})</div>
+            <div class="text-xs text-fog-blue leading-relaxed">${escapeHtml(exc.root_cause)}</div>
           </div>
           <div class="p-3.5 rounded-card bg-obsidian border border-ash-border text-xs text-bone-white flex items-start space-x-3">
             <i class="fa-solid fa-screwdriver-wrench text-fog-blue text-xs mt-0.5"></i>
-            <div><strong class="font-normal uppercase tracking-wider text-fog-blue">Remediation:</strong> ${exc.suggested_action}</div>
+            <div><strong class="font-normal uppercase tracking-wider text-fog-blue">Remediation:</strong> ${escapeHtml(exc.suggested_action)}</div>
           </div>
           <div class="flex justify-between items-center text-xs text-fog-blue pt-1">
             <span>Exposure: INR ${(exc.unexplained_amount_paise / 100).toFixed(2)}</span>
@@ -537,13 +659,13 @@
 
       tbody.innerHTML = assignments.map(a => `
         <tr class="hover:bg-obsidian/70 vivid-transition">
-          <td class="p-4 font-mono text-bone-white">${a.source_a_id} <span class="text-fog-blue text-[10px]">(${a.source_a})</span></td>
-          <td class="p-4 font-mono text-bone-white">${a.source_b_id} <span class="text-fog-blue text-[10px]">(${a.source_b})</span></td>
+          <td class="p-4 font-mono text-bone-white">${escapeHtml(a.source_a_id)} <span class="text-fog-blue text-[10px]">(${escapeHtml(a.source_a)})</span></td>
+          <td class="p-4 font-mono text-bone-white">${escapeHtml(a.source_b_id)} <span class="text-fog-blue text-[10px]">(${escapeHtml(a.source_b)})</span></td>
           <td class="p-4 font-mono font-normal ${(a.confidence >= 0.95) ? 'text-bone-white' : 'text-fog-blue'}">${(a.confidence * 100).toFixed(1)}%</td>
-          <td class="p-4"><span class="px-2.5 py-1 rounded-nav text-[10px] uppercase tracking-widest border border-ash-border ${(a.label === 'AUTO_MATCH') ? 'bg-obsidian text-bone-white' : 'bg-obsidian text-fog-blue'}">${a.label}</span></td>
+          <td class="p-4"><span class="px-2.5 py-1 rounded-nav text-[10px] uppercase tracking-widest border border-ash-border ${(a.label === 'AUTO_MATCH') ? 'bg-obsidian text-bone-white' : 'bg-obsidian text-fog-blue'}">${escapeHtml(a.label)}</span></td>
           <td class="p-4 font-mono">INR ${(a.a_amount_paise / 100).toFixed(2)}</td>
           <td class="p-4 font-mono">INR ${(a.b_amount_paise / 100).toFixed(2)}</td>
-          <td class="p-4 font-mono text-[11px] text-fog-blue">${(a.a_utr && a.a_utr === a.b_utr) ? '<span class="text-bone-white">' + a.a_utr + '</span>' : (a.a_utr || '--')}</td>
+          <td class="p-4 font-mono text-[11px] text-fog-blue">${(a.a_utr && a.a_utr === a.b_utr) ? '<span class="text-bone-white">' + escapeHtml(a.a_utr) + '</span>' : escapeHtml(a.a_utr || '--')}</td>
         </tr>
       `).join('');
     }
@@ -558,8 +680,8 @@
           <div class="bg-graphite-veil p-6 rounded-card border border-ash-border space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ash-border pb-4">
               <div class="flex items-center space-x-3">
-                <span class="px-2 py-0.5 text-xs font-mono rounded-nav bg-obsidian border border-ash-border text-bone-white">${s.scenario_id}</span>
-                <span class="text-base font-normal text-bone-white">${s.name}</span>
+                <span class="px-2 py-0.5 text-xs font-mono rounded-nav bg-obsidian border border-ash-border text-bone-white">${escapeHtml(s.scenario_id)}</span>
+                <span class="text-base font-normal text-bone-white">${escapeHtml(s.name)}</span>
               </div>
               <span class="text-xs font-mono uppercase tracking-widest text-bone-white border border-ash-border bg-obsidian px-3 py-1 rounded-nav">
                 [PASS] CONTAINED
@@ -568,16 +690,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div class="p-4 rounded-card bg-obsidian border border-ash-border space-y-1">
                 <div class="text-fog-blue uppercase tracking-wider text-[10px]">Injected Failure Mode</div>
-                <div class="text-bone-white font-mono pt-1">${s.injected_failure}</div>
+                <div class="text-bone-white font-mono pt-1">${escapeHtml(s.injected_failure)}</div>
               </div>
               <div class="p-4 rounded-card bg-obsidian border border-ash-border space-y-1">
                 <div class="text-fog-blue uppercase tracking-wider text-[10px]">Shield Containment Response</div>
-                <div class="text-bone-white font-mono pt-1">${s.system_response}</div>
+                <div class="text-bone-white font-mono pt-1">${escapeHtml(s.system_response)}</div>
               </div>
             </div>
             <div class="text-xs text-fog-blue flex items-center space-x-2 pt-1">
               <span class="text-bone-white">Proof:</span>
-              <span>${s.safe_containment_proof}</span>
+              <span>${escapeHtml(s.safe_containment_proof)}</span>
             </div>
           </div>
         `).join('');

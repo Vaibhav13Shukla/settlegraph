@@ -11,6 +11,7 @@ from settlegraph.engine.verify import (
     InvariantViolation,
     verify_amount_invariant,
     verify_date_invariant,
+    verify_direction_invariant,
     verify_settlegraph_invariants,
 )
 from settlegraph.models import NormalizedRecord
@@ -47,12 +48,16 @@ def _make_rzp(
 def _make_bank(
     amount: int = 9764,
     transaction_date: date | None = None,
+    direction: str | None = None,
 ) -> NormalizedRecord:
+    provenance: dict[str, str] = {"source": "bank"}
+    if direction is not None:
+        provenance["direction"] = direction
     return NormalizedRecord(
         record_id="bank_1",
         source="bank",
         source_record_id="bank_1",
-        record_type="settlement_credit",
+        record_type="settlement_credit" if direction != "debit" else "adjustment",
         payment_id=None,
         order_id=None,
         settlement_id=None,
@@ -68,7 +73,7 @@ def _make_bank(
         settlement_date=transaction_date or date(2026, 1, 17),
         description=None,
         raw_record={},
-        provenance={"source": "bank"},
+        provenance=provenance,
     )
 
 
@@ -115,6 +120,46 @@ def test_verify_settlegraph_invariants_returns_violations() -> None:
 
     assert len(violations) >= 1
     assert isinstance(violations[0], InvariantViolation)
+
+
+def test_direction_invariant_passes_on_credit() -> None:
+    bank = _make_bank(direction="credit")
+    assert verify_direction_invariant(bank) is True
+
+
+def test_direction_invariant_passes_when_direction_undeclared() -> None:
+    """Undeclared provenance is a deliberate silent pass, not a failure --
+
+    the same default RefundGuard's evidence layer uses so an unwired
+    integration is never blocked. Strict mode (require direction on every
+    bank record) is a follow-up, not implemented here.
+    """
+    bank = _make_bank(direction=None)
+    assert verify_direction_invariant(bank) is True
+
+
+def test_direction_invariant_raises_on_debit() -> None:
+    """A debit/adjustment row must never satisfy a settlement-credit match.
+
+    build_candidate_graph does not discriminate on direction when proposing
+    links, so this is the last line of defense against a refund payout (or
+    any other debit that shares a UTR or amount+date window) being accepted
+    as if it were the settlement credit for a Razorpay payment.
+    """
+    bank = _make_bank(direction="debit")
+
+    with pytest.raises(InvariantViolation, match="Direction violation"):
+        verify_direction_invariant(bank)
+
+
+def test_verify_settlegraph_invariants_flags_debit_matched_as_settlement() -> None:
+    config = PipelineConfig(date_tolerance_days=3)
+    rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+    bank = _make_bank(amount=9764, transaction_date=date(2026, 1, 17), direction="debit")
+
+    violations = verify_settlegraph_invariants(rzp, bank, config)
+
+    assert any("Direction violation" in str(v) for v in violations)
 
 
 def test_verify_settlegraph_invariants_empty_on_valid() -> None:

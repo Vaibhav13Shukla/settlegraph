@@ -47,8 +47,8 @@ def main() -> int:
         f"  [PASS] Precision: {precision * 100:.1f}%, Recall: {recall * 100:.1f}%, False Positives: {fp}"
     )
 
-    print("[4/4] Executing 5-scenario live failure injection containment check...")
     failures = simulate_all_failures()
+    print(f"[4/4] Executing {len(failures)}-scenario live failure injection containment check...")
     for f in failures:
         if not f.passed:
             print(f"  [FAIL] Scenario {f.scenario_id} ({f.name}) was NOT safely contained!")

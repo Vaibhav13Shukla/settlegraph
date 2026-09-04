@@ -19,6 +19,11 @@ dependencies = [
 dev = [
   "pytest>=8.2,<9",
   "ruff>=0.4,<1",
+  "hypothesis>=6.100,<7",
+]
+llm = [
+  "anthropic>=0.40",
+  "claude-agent-sdk>=0.2",
 ]
 
 [project.scripts]

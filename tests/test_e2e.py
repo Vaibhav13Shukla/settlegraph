@@ -70,13 +70,21 @@ def test_full_pipeline_e2e_lifecycle(tmp_path: Path) -> None:
 
 
 def test_failure_injection_suite_e2e() -> None:
-    """Verify that all 5 failure modes are safely contained with zero false ledger entries."""
+    """Verify that all 7 failure modes are safely contained with zero false ledger entries."""
     results = simulate_all_failures()
-    assert len(results) == 5
+    assert len(results) == 7
 
     for r in results:
         assert r.passed is True
-        assert r.scenario_id in ("FAIL_01", "FAIL_02", "FAIL_03", "FAIL_04", "FAIL_05")
+        assert r.scenario_id in (
+            "FAIL_01",
+            "FAIL_02",
+            "FAIL_03",
+            "FAIL_04",
+            "FAIL_05",
+            "FAIL_06",
+            "FAIL_07",
+        )
         assert len(r.safe_containment_proof) > 0
 
 

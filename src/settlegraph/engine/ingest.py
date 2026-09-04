@@ -7,7 +7,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from settlegraph.models import BankStatementRecord, MerchantLedgerRecord, RazorpaySettlementRecord
+from settlegraph.models import (
+    BankStatementRecord,
+    GSTInvoiceRecord,
+    MerchantLedgerRecord,
+    RazorpaySettlementRecord,
+    RoutePayoutRecord,
+)
 
 
 def _read_csv(path: Path) -> list[dict[str, Any]]:
@@ -63,6 +69,22 @@ def load_merchant(path: Path) -> list[MerchantLedgerRecord]:
     rows = _read_csv(path)
     fields = set(MerchantLedgerRecord.model_fields)
     return [MerchantLedgerRecord(**_clean_row(row, fields)) for row in rows]
+
+
+def load_gst_invoices(path: Path) -> list[GSTInvoiceRecord]:
+    if not path.exists():
+        return []
+    rows = _read_csv(path)
+    fields = set(GSTInvoiceRecord.model_fields)
+    return [GSTInvoiceRecord(**_clean_row(row, fields)) for row in rows]
+
+
+def load_route_payouts(path: Path) -> list[RoutePayoutRecord]:
+    if not path.exists():
+        return []
+    rows = _read_csv(path)
+    fields = set(RoutePayoutRecord.model_fields)
+    return [RoutePayoutRecord(**_clean_row(row, fields)) for row in rows]
 
 
 def load_all(

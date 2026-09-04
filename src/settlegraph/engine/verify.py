@@ -46,9 +46,26 @@ def verify_date_invariant(
 
 
 def verify_direction_invariant(bank: NormalizedRecord) -> bool:
-    """Verify: settlement credits should be positive (credit direction)."""
-    if bank.source == "bank" and bank.record_type != "settlement_credit":
-        return True  # debits are expected for refunds
+    """Verify: a bank leg matched to a Razorpay settlement must be a credit.
+
+    ``build_candidate_graph`` (engine/match.py) does not discriminate on
+    ledger direction when proposing links -- a debit/adjustment row (e.g. a
+    refund payout that also lands in the bank feed) can share a UTR or an
+    amount+date window with a Razorpay settlement and get proposed as a
+    candidate. Accepting a debit as if it were the settlement credit would
+    corrupt both the audit trail and the revenue-assurance totals derived
+    from it, so this is a hard invariant rather than a soft check.
+    """
+    if bank.source != "bank":
+        return True
+    direction = bank.provenance.get("direction")
+    if direction == "debit":
+        raise InvariantViolation(
+            f"Direction violation: bank record {bank.record_id} is a debit "
+            "line, not a settlement credit, and cannot satisfy a Razorpay "
+            "settlement match.",
+            {"record_id": bank.record_id, "direction": direction},
+        )
     return True
 
 

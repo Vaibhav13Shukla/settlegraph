@@ -62,6 +62,38 @@ def test_investigate_amount_mismatch() -> None:
     assert report.unexplained_amount_paise == 4764
 
 
+def test_investigate_utr_corruption_multi_character() -> None:
+    """A single trailing character used to be the only shape this caught.
+
+    Two transposed/corrupted characters mid-string is just as plausible a
+    bank-side data-entry failure and must still be diagnosed as
+    UTR_CORRUPTION, not fall through to a vaguer AMBIGUOUS_MATCH.
+    """
+    rzp = _make_record("rzp_1", source="razorpay", utr="RZP000000001")
+    bank = _make_record("bank_1", source="bank", utr="RZP0000000XY")  # last two chars corrupted
+    norm_map = {rzp.record_id: rzp, bank.record_id: bank}
+
+    report = investigate_exception(rzp, [(bank, 0.40)], norm_map)
+
+    assert report.category == "UTR_CORRUPTION"
+    assert "edit distance" in report.root_cause
+
+
+def test_investigate_genuinely_different_utr_is_not_corruption() -> None:
+    """Two UTRs that are simply unrelated must not be labeled as corrupted
+
+    of each other -- that would misdirect a reviewer toward "confirm manual
+    linkage" for a pair that never should have been linked at all.
+    """
+    rzp = _make_record("rzp_1", source="razorpay", utr="RZP000000001")
+    bank = _make_record("bank_1", source="bank", utr="HDFC999888777")
+    norm_map = {rzp.record_id: rzp, bank.record_id: bank}
+
+    report = investigate_exception(rzp, [(bank, 0.30)], norm_map)
+
+    assert report.category != "UTR_CORRUPTION"
+
+
 def test_investigate_missing_counterpart() -> None:
     rzp = _make_record("rzp_orphan", source="razorpay")
     norm_map = {rzp.record_id: rzp}

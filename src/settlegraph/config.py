@@ -16,3 +16,4 @@ class PipelineConfig(BaseSettings):
     exception_threshold: float = 0.70
     generated_data_directory: Path = Path("data/generated")
     llm_provider: str = "none"
+    history_enabled: bool = True

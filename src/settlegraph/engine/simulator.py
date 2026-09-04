@@ -186,4 +186,83 @@ def simulate_all_failures() -> list[FailureSimulationResult]:
         )
     )
 
+    # --- Scenario 6: Split Settlement (one payment, two bank credits) ---
+    rzp6 = _make_sample_record("rzp_006", "razorpay", utr="RZP000000006", amount=10000, net=9764)
+    bank6a = _make_sample_record("bank_006a", "bank", utr="RZP000000006", amount=5000, net=5000)
+    bank6b = _make_sample_record("bank_006b", "bank", utr="RZP000000006", amount=4764, net=4764)
+    # Both bank legs carry the same UTR, so both compete for the same
+    # Razorpay record via the primary candidate path. Global assignment's
+    # 1-to-1 exclusivity means at most one wins -- proving the system never
+    # silently double-books a split settlement as two separate matches.
+    scored6 = [
+        (rzp6, bank6a, score_edge(rzp6, bank6a)),
+        (rzp6, bank6b, score_edge(rzp6, bank6b)),
+    ]
+    assigned6 = global_assign(scored6, config)
+    s6_pass = len(assigned6) <= 1
+    results.append(
+        FailureSimulationResult(
+            scenario_id="FAIL_06",
+            name="Split Settlement (One Payment, Two Bank Credits)",
+            injected_failure=(
+                "A single Razorpay payment settles as two partial bank credits "
+                "sharing the same UTR, neither of which alone equals the full "
+                "net settlement amount."
+            ),
+            system_response=(
+                "Neither partial credit clears the amount-match component of the "
+                "confidence score against the full net amount; global assignment's "
+                "leg exclusivity additionally guarantees at most one edge is ever "
+                "accepted, so the payment is never double-booked."
+            ),
+            safe_containment_proof=f"Assignments made: {len(assigned6)} (must be <= 1, never 2).",
+            passed=s6_pass,
+            details={
+                "scores": [round(s, 4) for _, _, s in scored6],
+                "assignments_made": len(assigned6),
+            },
+        )
+    )
+
+    # --- Scenario 7: Duplicate Reference Number Reuse ---
+    rzp7_true = _make_sample_record(
+        "rzp_007_true", "razorpay", utr="RZP000000007", amount=20000, net=19528
+    )
+    # A recycled bank reference number: this bank credit's UTR field has been
+    # corrupted to match a *different* payment's UTR (a real bank batch-
+    # numbering collision), competing with that payment's own, correct,
+    # bank credit for the same UTR key.
+    bank7_reused = _make_sample_record(
+        "bank_007_reused", "bank", utr="RZP000000007", amount=19528, net=19528
+    )
+    bank7_correct = _make_sample_record(
+        "bank_007_correct", "bank", utr="RZP000000007", amount=19528, net=19528
+    )
+    scored7 = [
+        (rzp7_true, bank7_correct, score_edge(rzp7_true, bank7_correct)),
+        (rzp7_true, bank7_reused, score_edge(rzp7_true, bank7_reused)),
+    ]
+    assigned7 = global_assign(scored7, config)
+    s7_pass = len(assigned7) == 1
+    results.append(
+        FailureSimulationResult(
+            scenario_id="FAIL_07",
+            name="Duplicate Bank Reference Number Reuse",
+            injected_failure=(
+                "Two bank credits present the exact same UTR reference for one "
+                "Razorpay payment -- a recycled or corrupted reference number, "
+                "not a real second settlement."
+            ),
+            system_response=(
+                "Global assignment's per-leg exclusivity accepts at most one "
+                "bank credit per Razorpay payment even when both score "
+                "identically on UTR; the loser is never silently discarded, it "
+                "surfaces as an exception routed to the audit queue."
+            ),
+            safe_containment_proof=f"Exactly {len(assigned7)} of {len(scored7)} competing edges accepted.",
+            passed=s7_pass,
+            details={"assignments_made": len(assigned7), "candidates": len(scored7)},
+        )
+    )
+
     return results

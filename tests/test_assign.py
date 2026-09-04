@@ -111,6 +111,28 @@ def test_greedy_selects_highest_confidence() -> None:
     assert all(a["label"] == "AUTO_MATCH" for a in assignments)
 
 
+def test_tied_confidence_edges_resolve_identically_regardless_of_input_order() -> None:
+    """Code-review finding: two edges tied on confidence used to be
+    resolved by input order alone (Python's `sorted` is stable), which
+    made the winner depend on whatever order candidate generation happened
+    to produce them in -- not a property that should matter to a
+    deterministic financial matcher. Two rzp records compete for the same
+    bank record at identical confidence; whichever wins must be the same
+    no matter which order the candidate list arrives in."""
+    config = PipelineConfig(auto_match_threshold=0.95, exception_threshold=0.70)
+    rzp_a = _make_rzp("rzp_a", utr="RZP001")
+    rzp_b = _make_rzp("rzp_b", utr="RZP001")
+    bank = _make_bank("bank_1", utr="RZP001")
+
+    forward = [(rzp_a, bank, 0.97), (rzp_b, bank, 0.97)]
+    reversed_order = [(rzp_b, bank, 0.97), (rzp_a, bank, 0.97)]
+
+    winner_forward = global_assign(forward, config)[0]["source_a_id"]
+    winner_reversed = global_assign(reversed_order, config)[0]["source_a_id"]
+
+    assert winner_forward == winner_reversed
+
+
 def test_classify_unmatched_identifies_orphans() -> None:
     config = PipelineConfig()
     rzp1 = _make_rzp("rzp_1", utr="RZP001")

@@ -7,6 +7,24 @@ from typing import Any
 from settlegraph.models import NormalizedRecord
 
 
+def _levenshtein(a: str, b: str) -> int:
+    """Minimal edit distance between two strings. No dependency needed for this."""
+    if a == b:
+        return 0
+    if not a:
+        return len(b)
+    if not b:
+        return len(a)
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, start=1):
+        curr = [i] + [0] * len(b)
+        for j, cb in enumerate(b, start=1):
+            cost = 0 if ca == cb else 1
+            curr[j] = min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
+        prev = curr
+    return prev[-1]
+
+
 class ExceptionReport:
     """Detailed diagnostic report for an un-reconciled record or exception assignment."""
 
@@ -71,20 +89,31 @@ def investigate_exception(
 
     best_counterpart, score = max(candidate_links, key=lambda x: x[1])
 
-    # Check for UTR anomaly
+    # Check for UTR anomaly. A single corrupted trailing character was the
+    # only shape this used to catch (`record.utr[:-1] == counterpart.utr[:-1]`);
+    # that misses multi-character corruption and transpositions, which are
+    # exactly as plausible a bank-side data-entry failure. Edit distance
+    # catches both while a length-difference cap keeps it from calling two
+    # genuinely different UTRs "corrupted" of each other.
     if record.utr and best_counterpart.utr and record.utr != best_counterpart.utr:
-        if record.utr[:-1] == best_counterpart.utr[:-1]:
+        distance = _levenshtein(record.utr, best_counterpart.utr)
+        length_gap = abs(len(record.utr) - len(best_counterpart.utr))
+        if distance <= 2 and length_gap <= 1:
             return ExceptionReport(
                 record_id=record.record_id,
                 source=record.source,
                 category="UTR_CORRUPTION",
                 severity="MEDIUM",
-                root_cause=f"UTR mismatch due to character corruption: '{record.utr}' vs '{best_counterpart.utr}'.",
+                root_cause=(
+                    f"UTR mismatch due to character corruption (edit distance {distance}): "
+                    f"'{record.utr}' vs '{best_counterpart.utr}'."
+                ),
                 unexplained_amount_paise=abs(record.amount_paise - best_counterpart.amount_paise),
                 suggested_action="Review fuzzy UTR match and confirm manual linkage.",
                 evidence={
                     "record_utr": record.utr,
                     "counterpart_utr": best_counterpart.utr,
+                    "edit_distance": distance,
                     "score": score,
                 },
             )

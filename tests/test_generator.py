@@ -5,7 +5,12 @@ def test_generator_creates_auditable_truth_and_source_views(tmp_path) -> None:
     output = tmp_path / "generated"
     generator = SyntheticDataGenerator(seed=42, anomaly_rate=0.15, output_dir=output)
     razorpay, bank, merchant, truth = generator.generate(1000)
-    assert len(razorpay) == len(bank) == len(merchant) == len(truth) == 1000
+    assert len(razorpay) == len(merchant) == len(truth) == 1000
+    # Bank can exceed 1000: a `split_settlement` anomaly renders one payment
+    # as two separate bank credits, which is why this is `>=` rather than
+    # `==`. Uniqueness matters more than count here.
+    assert len(bank) >= 1000
+    assert len({b.record_id for b in bank}) == len(bank)
     assert all(record.amount_paise == int(record.amount_paise) for record in razorpay)
     assert all(record.true_bank_record_ids for record in truth)
     generator.write(1000)

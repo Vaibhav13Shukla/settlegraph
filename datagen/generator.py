@@ -6,11 +6,14 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from settlegraph.engine.tax_matcher import TRUE_GST_RATE_PERCENT
 from settlegraph.models import (
     BankStatementRecord,
     GroundTruthRecord,
+    GSTInvoiceRecord,
     MerchantLedgerRecord,
     RazorpaySettlementRecord,
+    RoutePayoutRecord,
 )
 
 PAYMENT_METHODS = (
@@ -115,6 +118,23 @@ class SyntheticDataGenerator:
                 split_output_dir=Path(split_output_dir),
             )
         return self.output_dir
+
+    def write_gst_and_route(self, razorpay: list[RazorpaySettlementRecord]) -> None:
+        """Additive to `write()`, not folded into it: the core generate/write
+        path is exercised by every existing test and demo script, and this
+        keeps that surface untouched. Call after `write()`, passing the same
+        `razorpay` list `generate()` returned.
+        """
+        gst_invoices = self.generate_gst_invoices(razorpay)
+        route_payouts = self.generate_route_payouts(razorpay)
+        self._write_csv(
+            self.output_dir / "gst_invoices.csv",
+            [row.model_dump(mode="json") for row in gst_invoices],
+        )
+        self._write_csv(
+            self.output_dir / "route_payouts.csv",
+            [row.model_dump(mode="json") for row in route_payouts],
+        )
 
     def _write_splits(
         self,
@@ -230,6 +250,19 @@ class SyntheticDataGenerator:
 
     def _bank(self, record: TransactionReality) -> BankStatementRecord:
         net = record.net_amount_paise - record.refunded_paise
+        # Not every merchant settles to a traditional bank account -- a real
+        # and growing share settle straight into a RazorpayX current
+        # account instead. Modeled here as just another value of the
+        # existing `bank_name` field (BankStatementRecord already supported
+        # this; nothing about the schema needed to change) so the core
+        # engine's reconciliation logic, which is bank-name-agnostic, gets
+        # to prove it already generalizes rather than needing a parallel
+        # code path for "the Razorpay-native rail."
+        bank_name, account_number = self.rng.choices(
+            [("ICICI", "XXXX001234"), ("HDFC", "XXXX007788"), ("RazorpayX", "RZPX00XXXX2201")],
+            weights=[0.55, 0.25, 0.20],
+            k=1,
+        )[0]
         return BankStatementRecord(
             record_id=f"bank_{record.index:06d}",
             transaction_date=record.settled_at.date(),
@@ -238,8 +271,8 @@ class SyntheticDataGenerator:
             reference_number=record.utr,
             credit_amount_paise=net,
             balance_paise=None,
-            bank_name="ICICI",
-            account_number="XXXX001234",
+            bank_name=bank_name,
+            account_number=account_number,
         )
 
     def _merchant(self, record: TransactionReality) -> MerchantLedgerRecord:
@@ -275,17 +308,37 @@ class SyntheticDataGenerator:
         merchant: list[MerchantLedgerRecord],
         truth: list[GroundTruthRecord],
     ) -> None:
+        """Inject controlled noise so the batch breaks clean automation on purpose.
+
+        The original five kinds (missing/corrupted UTR, timing, fee mismatch,
+        missing merchant record) only exercise single-record corruption. Real
+        settlement feeds fail in stranger shapes than that -- a payment
+        settling as two bank credits, a bank reusing a reference number,
+        a statement arriving dated before the payment it settles, a unit-
+        confusion-shaped amount error, and gateway/ledger currency drift are
+        all business edge cases a merchant's ops team has actually seen. Each
+        new kind still follows the existing pattern: mutate the already-
+        rendered bank/merchant view, never the underlying reality, so the
+        generator's own double-entry conservation invariant stays intact for
+        every record this function doesn't touch.
+        """
         count = int(len(truth) * self.anomaly_rate)
+        extra_bank_records: list[BankStatementRecord] = []
+        kinds = [
+            "missing_utr",
+            "corrupted_utr",
+            "timing_difference",
+            "fee_mismatch",
+            "missing_merchant_record",
+            "split_settlement",
+            "duplicate_utr_reuse",
+            "out_of_order_arrival",
+            "extreme_amount_mismatch",
+            "malformed_description",
+            "currency_mismatch",
+        ]
         for index in self.rng.sample(range(len(truth)), count):
-            kind = self.rng.choice(
-                [
-                    "missing_utr",
-                    "corrupted_utr",
-                    "timing_difference",
-                    "fee_mismatch",
-                    "missing_merchant_record",
-                ]
-            )
+            kind = self.rng.choice(kinds)
             truth[index].anomaly_type = kind
             if kind == "missing_utr":
                 bank[index].reference_number = None
@@ -299,6 +352,216 @@ class SyntheticDataGenerator:
             elif kind == "missing_merchant_record":
                 merchant[index].payment_gateway_id = None
                 merchant[index].order_id = None
+            elif kind == "split_settlement" and bank[index].credit_amount_paise:
+                # A gateway sometimes settles one payment as two bank credits
+                # (partial batch cutoff). true_bank_record_ids already supports
+                # a list; GroundTruthRecord.relationship_type already has
+                # "split" as a valid value -- this was designed for, just
+                # never exercised.
+                total = bank[index].credit_amount_paise
+                first_share = total // 2
+                second_share = total - first_share
+                if first_share > 0 and second_share > 0:
+                    bank[index].credit_amount_paise = first_share
+                    second_record = bank[index].model_copy(
+                        update={
+                            "record_id": f"{bank[index].record_id}_split2",
+                            "credit_amount_paise": second_share,
+                        }
+                    )
+                    extra_bank_records.append(second_record)
+                    truth[index].relationship_type = "split"
+                    truth[index].true_bank_record_ids = [
+                        bank[index].record_id,
+                        second_record.record_id,
+                    ]
+            elif kind == "duplicate_utr_reuse":
+                # A bank reference number gets reused across two unrelated
+                # settlements (recycled batch numbering). The correct
+                # behaviour is that at most one of the two competing bank
+                # rows wins the match -- never both, and never silently the
+                # wrong one without the exception queue noticing.
+                donor_pool = [
+                    i for i in range(len(bank)) if i != index and bank[i].reference_number
+                ]
+                if donor_pool:
+                    donor = self.rng.choice(donor_pool)
+                    bank[index].reference_number = bank[donor].reference_number
+            elif kind == "out_of_order_arrival":
+                # Backdated bank statement / clock skew: the credit is dated
+                # well before the payment it settles, not just a few days off
+                # like `timing_difference`.
+                bank[index].transaction_date -= timedelta(days=self.rng.randint(10, 20))
+                bank[index].value_date = bank[index].transaction_date
+            elif kind == "extreme_amount_mismatch" and bank[index].credit_amount_paise:
+                # Unit-confusion-shaped error (paise read as rupees, or vice
+                # versa) rather than a small rounding drift -- tests whether
+                # the *relative*-tolerance branch in score_edge
+                # (`diff / rzp_net < 0.01`) can be fooled by scale the way a
+                # fixed absolute tolerance could.
+                bank[index].credit_amount_paise *= 100
+            elif kind == "malformed_description":
+                bank[index].description = "NEFT/RAZORPAY/⚠️​<<<INJECTED>>>/" + "ട" * 200
+            elif kind == "currency_mismatch":
+                merchant[index].currency = "USD"
+        bank.extend(extra_bank_records)
+
+    def generate_gst_invoices(
+        self, razorpay: list[RazorpaySettlementRecord], anomaly_rate: float = 0.12
+    ) -> list[GSTInvoiceRecord]:
+        """Render a GSTR-2B-shaped invoice feed for the GST charged on
+        Razorpay's own MDR fee -- a reconciliation surface distinct from the
+        settlement-amount matching the rest of this engine does.
+
+        One invoice per *settlement batch*, not per payment: `settlement_id`
+        already groups ~20 payments together (see `_reality`), matching how
+        Razorpay actually raises one consolidated GST invoice per
+        settlement cycle rather than one per transaction. Keying this
+        per-payment instead was tried first and produced a batch of ~20
+        payments each individually "matched" against the same one invoice
+        -- which the matcher correctly, but uselessly, flagged as
+        DUPLICATE_INVOICE on nearly everything. Aggregating here is what
+        makes "duplicate" mean something real again.
+
+        Anomaly kinds:
+        - clean: taxable value and rate match the batch exactly.
+        - rate_mismatch: invoice shows 12% or 28% instead of the true 18%.
+        - missing_invoice: no invoice was raised at all for this batch.
+        - rounding_drift: a few paise of rounding noise, within tolerance.
+        - duplicate_invoice: two invoices raised for the same batch -- a
+          real input-tax-credit overclaim risk.
+        """
+        rng = random.Random(self.seed + 7331)
+        invoices: list[GSTInvoiceRecord] = []
+        # Shared with engine/tax_matcher.py rather than redefined here --
+        # the rate that decides RATE_MISMATCH vs MATCHED is real-money
+        # logic; two independently hardcoded 18.0 literals in different
+        # files (as this was before) is exactly the kind of drift
+        # config.py's own docstring warns against ("financial thresholds
+        # are never magic numbers"). Found by code review.
+        true_rate = TRUE_GST_RATE_PERCENT
+
+        by_settlement: dict[str, list[RazorpaySettlementRecord]] = {}
+        for record in razorpay:
+            if record.entity_type == "payment" and record.fee_paise > 0:
+                by_settlement.setdefault(record.settlement_id, []).append(record)
+
+        for settlement_id in sorted(by_settlement):
+            batch = by_settlement[settlement_id]
+            total_fee = sum(r.fee_paise for r in batch)
+            invoice_date = max(r.settled_at for r in batch).date()
+
+            roll = rng.random()
+            if roll < anomaly_rate * 0.3:
+                kind = "missing_invoice"
+            elif roll < anomaly_rate * 0.6:
+                kind = "rate_mismatch"
+            elif roll < anomaly_rate * 0.85:
+                kind = "rounding_drift"
+            elif roll < anomaly_rate:
+                kind = "duplicate_invoice"
+            else:
+                kind = "clean"
+
+            if kind == "missing_invoice":
+                continue
+
+            rate = rng.choice([12.0, 28.0]) if kind == "rate_mismatch" else true_rate
+            expected_tax = round(total_fee * rate / 100)
+            drift = rng.choice([-3, -2, -1, 1, 2, 3]) if kind == "rounding_drift" else 0
+            total_tax = max(0, expected_tax + drift)
+            # Intra-state assumption throughout this synthetic feed: split
+            # evenly into CGST/SGST, IGST always zero. A real feed would
+            # carry actual place-of-supply data; that's out of scope here.
+            cgst = total_tax // 2
+            sgst = total_tax - cgst
+
+            invoice = GSTInvoiceRecord(
+                invoice_id=f"gst_{kind}_{settlement_id}",
+                settlement_id=settlement_id,
+                taxable_value_paise=total_fee,
+                cgst_paise=cgst,
+                sgst_paise=sgst,
+                igst_paise=0,
+                gst_rate_percent=rate,
+                invoice_date=invoice_date,
+                gstin=f"29AAAAA{rng.randrange(1000, 9999)}A1Z{rng.randrange(1, 9)}",
+            )
+            invoices.append(invoice)
+            if kind == "duplicate_invoice":
+                invoices.append(
+                    invoice.model_copy(update={"invoice_id": invoice.invoice_id + "_dup"})
+                )
+
+        return invoices
+
+    def generate_route_payouts(
+        self, razorpay: list[RazorpaySettlementRecord], marketplace_rate: float = 0.10
+    ) -> list[RoutePayoutRecord]:
+        """A fraction of payments are marketplace collections that Route
+        splits across 2-3 linked vendor accounts, minus a Route fee.
+
+        A small slice of these split badly on purpose (payout legs that
+        don't sum to the original amount minus fee) -- the thing
+        `engine/route_reconciliation.py` exists to catch.
+        """
+        rng = random.Random(self.seed + 5051)
+        payouts: list[RoutePayoutRecord] = []
+
+        for record in razorpay:
+            if record.entity_type != "payment" or rng.random() >= marketplace_rate:
+                continue
+            n_vendors = rng.choice([2, 2, 3])
+            route_fee = round(record.amount_paise * 0.02)
+            distributable = record.amount_paise - route_fee
+            shares = self._split_amount(distributable, n_vendors, rng)
+
+            broken = rng.random() < 0.15
+            if broken:
+                # Three real Route failure shapes, not just one: a leg that
+                # silently never reached a vendor, a leg underpaid, or a
+                # leg overpaid (e.g. a fee miscalculation that leaves too
+                # much distributed). The first version of this only ever
+                # produced shortfalls -- reconcile_route_splits's
+                # PAYOUT_OVERPAYMENT path existed and was unit-tested, but
+                # nothing here ever actually exercised it end to end.
+                fail_kind = rng.choice(["drop_leg", "underpay", "overpay"])
+                if fail_kind == "drop_leg" and len(shares) > 1:
+                    shares.pop(rng.randrange(len(shares)))
+                elif fail_kind == "overpay":
+                    shares[rng.randrange(len(shares))] += rng.randint(100, 5000)
+                else:
+                    shares[rng.randrange(len(shares))] -= rng.randint(100, 5000)
+
+            for i, share in enumerate(shares):
+                if share <= 0:
+                    continue
+                payouts.append(
+                    RoutePayoutRecord(
+                        transfer_id=f"trf_{record.entity_id}_{i}",
+                        source_payment_id=record.entity_id,
+                        linked_account_id=f"acc_{rng.randrange(1, 200):04d}",
+                        amount_paise=share,
+                        route_fee_paise=route_fee // n_vendors,
+                        processed_at=record.settled_at,
+                        status="processed",
+                    )
+                )
+        return payouts
+
+    @staticmethod
+    def _split_amount(total: int, n: int, rng: random.Random) -> list[int]:
+        """Split `total` paise into `n` positive-ish shares that sum exactly
+        to `total` -- exact by construction, not by rounding luck."""
+        if n <= 1:
+            return [total]
+        cuts = (
+            sorted(rng.randrange(1, total) for _ in range(n - 1))
+            if total > n
+            else list(range(1, n))
+        )
+        bounds = [0, *cuts, total]
+        return [bounds[i + 1] - bounds[i] for i in range(n)]
 
     @staticmethod
     def _write_csv(path: Path, rows: list[dict]) -> None:

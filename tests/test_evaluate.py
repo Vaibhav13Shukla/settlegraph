@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from settlegraph.engine.evaluate import evaluate
+from settlegraph.engine.evaluate import count_correctly_flagged_for_review, evaluate
 
 
 def test_evaluate_returns_metrics(tmp_path: Path) -> None:
@@ -58,3 +58,33 @@ def test_evaluate_handles_no_matches() -> None:
     assert results["recall"] == 0.0
     assert results["f1"] == 0.0
     assert results["false_negatives"] == 1
+
+
+def test_correctly_flagged_for_review_distinguishes_right_from_wrong_likely_matches(
+    tmp_path: Path,
+) -> None:
+    """The finding this function exists for (DEVLOG Day 5): a LIKELY_MATCH
+    can be pointing at the genuinely correct counterpart, just held below
+    the auto-match confidence bar -- distinct from one that's actually
+    wrong. Both must be counted, separately."""
+    assignments_csv = tmp_path / "assignments.csv"
+    assignments_csv.write_text(
+        "source_a,source_a_id,source_b,source_b_id,confidence,label,a_amount_paise,b_amount_paise,a_utr,b_utr,a_order_id,b_order_id\n"
+        "razorpay,rzp_norm_pay_1,bank,bank_norm_bank_1,0.90,LIKELY_MATCH,10000,10000,RZP001,RZP001,order_1,\n"
+        "razorpay,rzp_norm_pay_2,bank,bank_norm_bank_99,0.80,LIKELY_MATCH,10000,10000,RZP002,RZP099,order_2,\n"
+        "razorpay,rzp_norm_pay_3,bank,bank_norm_bank_3,0.98,AUTO_MATCH,10000,10000,RZP003,RZP003,order_3,\n"
+    )
+    gt_csv = tmp_path / "ground_truth.csv"
+    gt_csv.write_text(
+        "razorpay_record_id,true_bank_record_ids,true_merchant_record_id,relationship_type,anomaly_type,notes\n"
+        "pay_1,bank_1,led_1,exact_match,,\n"
+        "pay_2,bank_2,led_2,exact_match,,\n"
+        "pay_3,bank_3,led_3,exact_match,,\n"
+    )
+
+    result = count_correctly_flagged_for_review(assignments_csv, gt_csv)
+
+    # pay_1's LIKELY_MATCH correctly points at bank_1 -> correct.
+    # pay_2's LIKELY_MATCH points at bank_99, but ground truth says bank_2 -> incorrect.
+    # pay_3 is AUTO_MATCH, not LIKELY_MATCH -- excluded entirely.
+    assert result == {"correct": 1, "incorrect": 1, "total": 2}

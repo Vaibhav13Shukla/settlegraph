@@ -12,4 +12,5 @@ results/
 
 # tooling
 .pytest-tmp/
+.stress-tmp/
 *.egg-info/

@@ -32,8 +32,21 @@ def global_assign(
     bank_merch_assigned: set[str] = set()
     merch_bank_assigned: set[str] = set()
 
-    # Sort edges by confidence descending
-    sorted_edges = sorted(scored_edges, key=lambda e: e[2], reverse=True)
+    # Sort edges by confidence descending. Tie-break on record ids, not
+    # insertion order: `sorted` is stable, so two edges with an identical
+    # score (routine for `_score_bank_merchant`, which only ever produces
+    # a handful of discrete values) used to be ordered however
+    # `build_candidate_graph` happened to generate them. That made a
+    # supposedly pure performance refactor of the candidate-generation loop
+    # (see match.py, DEVLOG Day 4) capable of silently changing *which*
+    # tied edge wins an exclusivity slot, even though the candidate set
+    # itself was verified identical -- caught by code review, not by any
+    # difference in aggregate precision/recall (bank-merchant is a
+    # lower-priority cross-check leg, so it didn't move those numbers, but
+    # it could still change which specific record ends up in the audit
+    # trail). Ordering on ids makes the result independent of whatever
+    # order candidates were generated in, not just "usually the same."
+    sorted_edges = sorted(scored_edges, key=lambda e: (-e[2], e[0].record_id, e[1].record_id))
 
     assignments: list[dict] = []
 
