@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 
 from settlegraph.qa_agent import (
+    arithmetic_impl,
     build_options,
     get_assignment_impl,
     get_exception_impl,
@@ -114,6 +115,40 @@ def test_get_revenue_assurance_returns_the_real_file(tmp_path) -> None:
     assert "financial_summary" in payload
 
 
+def test_arithmetic_add_is_exact() -> None:
+    """The gap this tool exists to close: proved live (not theorized) that
+    without it, the model computes sums itself in free text -- correct that
+    one time, but unverified, which is a different standard than every
+    other number in this system meets. Every operation the agent might
+    need must be exact, deterministic Python, not model arithmetic."""
+    result = arithmetic_impl(756.14, 4255.00, "add")
+    payload = json.loads(result["content"][0]["text"])
+    assert payload["result"] == 5011.14
+
+
+def test_arithmetic_chains_to_more_than_two_numbers() -> None:
+    """The tool is deliberately two-operand only (ponytail: no unrequested
+    generality) -- combining three-plus numbers means the agent calls it
+    more than once. Confirm that composition is exact too."""
+    first = arithmetic_impl(756.14, 4255.00, "add")
+    total = json.loads(first["content"][0]["text"])["result"]
+    second = arithmetic_impl(total, 103.37, "add")
+    payload = json.loads(second["content"][0]["text"])
+    assert round(payload["result"], 2) == 5114.51
+
+
+def test_arithmetic_rejects_division_by_zero() -> None:
+    result = arithmetic_impl(100, 0, "divide")
+    payload = json.loads(result["content"][0]["text"])
+    assert "error" in payload
+
+
+def test_arithmetic_rejects_an_unsupported_operation() -> None:
+    result = arithmetic_impl(1, 2, "modulo")
+    payload = json.loads(result["content"][0]["text"])
+    assert "error" in payload
+
+
 def test_build_options_never_enables_a_dangerous_builtin_tool(tmp_path) -> None:
     """The two independent restrictions this module's docstring promises:
     empty built-in tools preset, and an explicit disallowed_tools list."""
@@ -123,7 +158,7 @@ def test_build_options_never_enables_a_dangerous_builtin_tool(tmp_path) -> None:
         assert dangerous in options.disallowed_tools
 
 
-def test_build_options_allows_exactly_the_five_ledger_tools(tmp_path) -> None:
+def test_build_options_allows_exactly_the_six_ledger_tools(tmp_path) -> None:
     options = build_options(tmp_path)
     assert set(options.allowed_tools) == {
         "mcp__ledger__get_summary",
@@ -131,4 +166,5 @@ def test_build_options_allows_exactly_the_five_ledger_tools(tmp_path) -> None:
         "mcp__ledger__get_exception",
         "mcp__ledger__search_by_amount_or_utr",
         "mcp__ledger__get_revenue_assurance",
+        "mcp__ledger__arithmetic",
     }

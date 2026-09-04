@@ -54,7 +54,7 @@ DANGEROUS_BUILTIN_TOOLS = [
 SYSTEM_PROMPT = """You answer questions about one already-completed \
 settlement reconciliation batch, for the person who has to act on it.
 
-You have exactly five tools, all read-only, all scoped to this batch's own
+You have exactly six tools, all read-only, all scoped to this batch's own
 results directory. You cannot move money, edit any record, re-run the
 pipeline, or reach outside these tools -- there is nothing else available to
 you, this is not a permission you are being asked to respect, it is the
@@ -70,7 +70,13 @@ Rules:
   diagnosed root cause before speculating.
 - You're explaining a decision that was already made by deterministic code
   (or, for AI_RESOLVED_MATCH rows, a hypothesis that already passed the
-  same deterministic invariant gate). You are not re-deciding anything."""
+  same deterministic invariant gate). You are not re-deciding anything.
+- Never do arithmetic yourself, not even something as simple as adding two
+  numbers together. Call the `arithmetic` tool for every calculation. If
+  you notice yourself about to write out a sum, a difference, or a percentage
+  in your reasoning, stop and call the tool instead -- every other number in
+  this system is correct by construction, not by your mental math being good
+  enough on the day, and an answer you give should hold to the same standard."""
 
 
 def _read_json(path: Path) -> Any:
@@ -88,6 +94,40 @@ def _read_csv_rows(path: Path) -> list[dict[str, str]]:
 
 def _text_result(payload: Any) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": json.dumps(payload, indent=2, default=str)}]}
+
+
+_ARITHMETIC_OPS = {
+    "add": lambda a, b: a + b,
+    "subtract": lambda a, b: a - b,
+    "multiply": lambda a, b: a * b,
+    "divide": lambda a, b: a / b,
+}
+
+
+def arithmetic_impl(a: float, b: float, operation: str) -> dict[str, Any]:
+    """Exact, deterministic two-operand arithmetic -- the tool this agent's
+    system prompt requires for every calculation instead of computing it in
+    free text.
+
+    Proved live before this existed: asked the agent to add three exposure
+    figures together, and it did the addition itself in its answer --
+    correct that time, but "correct that time" is not the standard
+    anything else in this system is held to; everything else is proven
+    correct by construction (an invariant check, a hidden-ground-truth
+    evaluator), never by an LLM's arithmetic being good enough on the day.
+    Two operands only, deliberately (ponytail: no unrequested generality --
+    a general expression evaluator would also mean parsing/eval-adjacent
+    code for a need that "call this twice" already covers); combining more
+    than two numbers means chaining calls, each one independently exact.
+    """
+    if operation not in _ARITHMETIC_OPS:
+        return _text_result(
+            {"error": f"Unsupported operation {operation!r}. Use one of: {sorted(_ARITHMETIC_OPS)}"}
+        )
+    if operation == "divide" and b == 0:
+        return _text_result({"error": "Division by zero."})
+    result = _ARITHMETIC_OPS[operation](a, b)
+    return _text_result({"a": a, "b": b, "operation": operation, "result": result})
 
 
 def get_summary_impl(results_dir: Path) -> dict[str, Any]:
@@ -159,7 +199,9 @@ def get_revenue_assurance_impl(results_dir: Path) -> dict[str, Any]:
 
 
 def build_ledger_tools(results_dir: Path) -> list[Any]:
-    """Bind the five read-only tools to one batch's results directory.
+    """Bind the six read-only tools to one batch's results directory --
+    five data-lookup tools plus `arithmetic`, so the agent never has to
+    trust its own mental math for a number that ends up in an answer.
 
     Imported lazily so importing this module doesn't require
     claude-agent-sdk to be installed unless a caller actually builds an
@@ -204,12 +246,24 @@ def build_ledger_tools(results_dir: Path) -> list[Any]:
     async def get_revenue_assurance(_args: dict[str, Any]) -> dict[str, Any]:
         return get_revenue_assurance_impl(results_dir)
 
+    @tool(
+        "arithmetic",
+        "Exact addition, subtraction, multiplication, or division of two numbers. "
+        "Use this for EVERY calculation, however simple -- never compute a sum, "
+        "difference, or ratio yourself in your answer text. Chain multiple calls "
+        "to combine more than two numbers.",
+        {"a": float, "b": float, "operation": str},
+    )
+    async def arithmetic(args: dict[str, Any]) -> dict[str, Any]:
+        return arithmetic_impl(args["a"], args["b"], args["operation"])
+
     return [
         get_summary,
         get_assignment,
         get_exception,
         search_by_amount_or_utr,
         get_revenue_assurance,
+        arithmetic,
     ]
 
 

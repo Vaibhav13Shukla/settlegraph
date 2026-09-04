@@ -598,3 +598,55 @@ No changes needed.
 **124 tests now** (123 + the new red-then-green JSONL test), lint/format
 clean, a full `generate` → `run` → `history` cycle re-verified against
 the new file format.
+
+---
+
+### [Day 5, really last] The audit the user actually asked for: does anything trust an LLM's arithmetic?
+
+Full sweep, evidence before verdict for each component:
+
+- **`engine/ai_reasoner.py`** -- clean. The model only ever picks *which*
+  candidate; `resolve_exceptions_with_ai` runs the actual amount/date
+  check through `verify_settlegraph_invariants` (pure Python) regardless
+  of what the model's rationale claims. Confirmed by re-reading the
+  promotion path, not assumed from having designed it that way originally.
+- **`engine/digest.py`** -- clean by construction. Deterministic string
+  templating, no model call at all.
+- **`engine/tax_matcher.py`, `route_reconciliation.py`, the core matching
+  engine** -- no LLM touches these paths at all.
+- **`qa_agent.py`** -- not clean, and proved it before fixing it rather
+  than assuming. Asked it live: *"combined exposure from tax findings plus
+  Route shortfalls plus Route overpayments, added together?"* It answered
+  `756.14 + 4,255.00 + 103.37 = ₹5,114.51` -- computed in free text, no
+  tool behind it. Checked independently: the arithmetic was correct. That's
+  the actual point, not a gotcha -- "correct this time" is a different,
+  weaker standard than everything else in this system meets, where the
+  guarantee comes from an invariant check or a hidden-ground-truth
+  evaluator, never from an LLM's mental math being good enough on the day.
+
+**Fixed with TDD:** wrote `test_arithmetic_add_is_exact` and three more
+before the tool existed, watched the import fail (red), added
+`arithmetic_impl` -- two operands, four fixed operations
+(add/subtract/multiply/divide), no expression parser or `eval` anywhere
+near it -- wired it in as the agent's sixth tool, and added an explicit
+system-prompt rule: never compute anything in free text, call the tool,
+chain calls for more than two numbers. Two operands only, deliberately:
+ponytail's "no unrequested generality" applies exactly as much to a
+calculator tool as anywhere else -- "call it twice" already covers
+combining three-plus numbers without a general expression evaluator's
+larger, harder-to-audit surface.
+
+**Verified the fix actually changed behavior, not just the prompt text**
+-- a system-prompt instruction is a preference, not a guarantee, and this
+project doesn't accept those as proof of anything. Re-ran the identical
+question through `query()` directly, inspecting every `ToolUseBlock` in
+the stream rather than just the final answer text: the agent called
+`arithmetic` twice --
+`(756.14, 4255, "add") -> 5011.14`, then `(5011.14, 103.37, "add") ->
+5114.51` -- chaining exactly as designed, matching the deterministic
+computation exactly. That's the same number as the unverified free-text
+answer, which is the honest result: the fix isn't "the old answer was
+wrong," it's "the new answer is provably right instead of probably
+right," and those are different claims even when the digits match.
+
+128 tests, lint/format clean.
