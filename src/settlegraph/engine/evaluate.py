@@ -69,6 +69,111 @@ def count_correctly_flagged_for_review(
     return {"correct": correct, "incorrect": incorrect, "total": correct + incorrect}
 
 
+def _strip(record_id: str) -> str:
+    """Normalized ids carry a source prefix; ground truth does not."""
+    for prefix in ("rzp_norm_", "bank_norm_", "merch_norm_"):
+        if record_id.startswith(prefix):
+            return record_id[len(prefix) :]
+    return record_id
+
+
+def evaluate_secondary_legs(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
+    """Score the two reconciliation legs `evaluate()` has always ignored.
+
+    `evaluate()` measures only razorpay<->bank, because that is the leg the
+    ground truth indexes directly. On a real 1,000-record batch that left
+    **1,283 of 2,106 automatic matches unscored** -- 990 razorpay<->merchant
+    and 293 bank<->merchant. Automatic financial decisions with no
+    ground-truth check are exactly what this project claims not to make, so
+    "we only measure one leg" was an unstated hole rather than a scoping
+    decision. Rated HIGH in `docs/RED_TEAM.md`; this closes it.
+
+    Both legs are derivable from the ground truth already on disk:
+
+    - **razorpay<->merchant** directly, via `true_merchant_record_id`.
+    - **bank<->merchant** by derivation: the pair is correct when some
+      payment's ground-truth row names both that bank record and that
+      merchant record. This leg is the more important of the two to measure,
+      because `_score_bank_merchant` has no identifier signal at all -- only
+      amount and date -- so it is the likeliest place for a coincidental
+      match to look confident.
+
+    Recall is reported only for razorpay<->merchant, where the denominator
+    ("every payment that has a true merchant counterpart") is well defined.
+    The bank<->merchant leg is a cross-check whose full universe of correct
+    pairs is not enumerated by the generator, so only precision is claimed --
+    stating a recall there would invent a denominator.
+    """
+    truth = _load_ground_truth(ground_truth_path)
+    assignments = _load_assignments(assignment_path)
+
+    true_merchant: dict[str, str] = {}
+    bank_to_payment: dict[str, str] = {}
+    for row in truth:
+        rzp_id = row["razorpay_record_id"]
+        merch_id = (row.get("true_merchant_record_id") or "").strip()
+        if merch_id:
+            true_merchant[rzp_id] = merch_id
+        raw_banks = row["true_bank_record_ids"]
+        for bank_id in raw_banks.split("|") if raw_banks else []:
+            bank_to_payment[bank_id] = rzp_id
+
+    matchable = {"AUTO_MATCH", "AI_RESOLVED_MATCH"}
+    rm_tp = rm_fp = 0
+    bm_tp = bm_fp = 0
+    seen_rzp: set[str] = set()
+
+    for a in assignments:
+        if a["label"] not in matchable:
+            continue
+        sources = {a["source_a"], a["source_b"]}
+        a_id, b_id = _strip(a["source_a_id"]), _strip(a["source_b_id"])
+
+        if sources == {"razorpay", "merchant"}:
+            rzp_id = a_id if a["source_a"] == "razorpay" else b_id
+            merch_id = b_id if a["source_b"] == "merchant" else a_id
+            expected = true_merchant.get(rzp_id)
+            if expected is None:
+                continue
+            seen_rzp.add(rzp_id)
+            if merch_id == expected:
+                rm_tp += 1
+            else:
+                rm_fp += 1
+
+        elif sources == {"bank", "merchant"}:
+            bank_id = a_id if a["source_a"] == "bank" else b_id
+            merch_id = b_id if a["source_b"] == "merchant" else a_id
+            owning_payment = bank_to_payment.get(bank_id)
+            if owning_payment is None:
+                continue
+            if true_merchant.get(owning_payment) == merch_id:
+                bm_tp += 1
+            else:
+                bm_fp += 1
+
+    rm_total = len(true_merchant)
+    rm_fn = rm_total - len(seen_rzp)
+
+    def _precision(tp: int, fp: int) -> float:
+        return round(tp / (tp + fp), 4) if (tp + fp) else 0.0
+
+    return {
+        "razorpay_merchant_leg": {
+            "true_positives": rm_tp,
+            "false_positives": rm_fp,
+            "false_negatives": rm_fn,
+            "precision": _precision(rm_tp, rm_fp),
+            "recall": round(rm_tp / rm_total, 4) if rm_total else 0.0,
+        },
+        "bank_merchant_leg": {
+            "true_positives": bm_tp,
+            "false_positives": bm_fp,
+            "precision": _precision(bm_tp, bm_fp),
+        },
+    }
+
+
 def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
     """Evaluate reconciliation results against hidden ground truth.
 
@@ -257,4 +362,9 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
         "exception_recall": round(correctly_abstained_no_counterpart / no_counterpart_total, 4)
         if no_counterpart_total
         else 0.0,
+        # The other two legs. Merged into this return rather than exposed as
+        # a separate call so they land in evaluation.json, the audit report
+        # and the dashboard automatically -- being reachable only via a
+        # side channel is how they went unmeasured in the first place.
+        **evaluate_secondary_legs(assignment_path, ground_truth_path),
     }

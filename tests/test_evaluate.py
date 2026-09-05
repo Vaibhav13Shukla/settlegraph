@@ -5,7 +5,11 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from settlegraph.engine.evaluate import count_correctly_flagged_for_review, evaluate
+from settlegraph.engine.evaluate import (
+    count_correctly_flagged_for_review,
+    evaluate,
+    evaluate_secondary_legs,
+)
 
 
 def test_evaluate_returns_metrics(tmp_path: Path) -> None:
@@ -242,6 +246,94 @@ def test_no_counterpart_dangerously_auto_matched_is_flagged(tmp_path: Path) -> N
     assert results["exception_recall"] == 0.0
     # Not a real recall miss either way -- excluded from that denominator.
     assert results["false_negatives"] == 0
+
+
+def test_secondary_legs_score_merchant_and_bank_merchant_matches(tmp_path: Path) -> None:
+    """`evaluate()` only ever scored the razorpay<->bank leg. On a real
+    1,000-record batch that left **1,283 of 2,106 auto-matches unmeasured**
+    (990 razorpay<->merchant + 293 bank<->merchant) -- automatic financial
+    decisions with no ground-truth check at all. Rated HIGH in
+    `docs/RED_TEAM.md`; this closes it.
+
+    Both legs are scoreable from the ground truth already on disk:
+    - razorpay<->merchant directly, via `true_merchant_record_id`.
+    - bank<->merchant by derivation: the pair is correct when some payment's
+      ground truth points at both that bank record and that merchant record.
+      This leg has no identifier signal of its own (`_score_bank_merchant`
+      uses only amount and date), which is exactly why leaving it unmeasured
+      was the risk.
+    """
+    assignments_csv = tmp_path / "assignments.csv"
+    assignments_csv.write_text(
+        "source_a,source_a_id,source_b,source_b_id,confidence,label,a_amount_paise,b_amount_paise,a_utr,b_utr,a_order_id,b_order_id\n"
+        # razorpay<->merchant: correct
+        "razorpay,rzp_norm_pay_1,merchant,merch_norm_led_1,0.98,AUTO_MATCH,10000,10000,U1,,order_1,order_1\n"
+        # razorpay<->merchant: wrong merchant
+        "razorpay,rzp_norm_pay_2,merchant,merch_norm_led_99,0.96,AUTO_MATCH,10000,10000,U2,,order_2,order_2\n"
+        # bank<->merchant: correct by derivation (pay_1 -> bank_1 and led_1)
+        "bank,bank_norm_bank_1,merchant,merch_norm_led_1,1.0,AUTO_MATCH,10000,10000,U1,,,\n"
+        # bank<->merchant: wrong (bank_1 belongs to pay_1, led_2 to pay_2)
+        "bank,bank_norm_bank_1,merchant,merch_norm_led_2,1.0,AUTO_MATCH,10000,10000,U1,,,\n"
+    )
+    gt_csv = tmp_path / "ground_truth.csv"
+    gt_csv.write_text(
+        "razorpay_record_id,true_bank_record_ids,true_merchant_record_id,relationship_type,anomaly_type,notes\n"
+        "pay_1,bank_1,led_1,exact_match,,\n"
+        "pay_2,bank_2,led_2,exact_match,,\n"
+    )
+
+    result = evaluate_secondary_legs(assignments_csv, gt_csv)
+
+    merch = result["razorpay_merchant_leg"]
+    assert merch["true_positives"] == 1
+    assert merch["false_positives"] == 1
+    assert merch["precision"] == 0.5
+
+    bm = result["bank_merchant_leg"]
+    assert bm["true_positives"] == 1
+    assert bm["false_positives"] == 1
+    assert bm["precision"] == 0.5
+
+
+def test_secondary_legs_handle_empty_input_without_dividing_by_zero(
+    tmp_path: Path,
+) -> None:
+    assignments_csv = tmp_path / "assignments.csv"
+    assignments_csv.write_text(
+        "source_a,source_a_id,source_b,source_b_id,confidence,label,a_amount_paise,b_amount_paise,a_utr,b_utr,a_order_id,b_order_id\n"
+    )
+    gt_csv = tmp_path / "ground_truth.csv"
+    gt_csv.write_text(
+        "razorpay_record_id,true_bank_record_ids,true_merchant_record_id,relationship_type,anomaly_type,notes\n"
+        "pay_1,bank_1,led_1,exact_match,,\n"
+    )
+
+    result = evaluate_secondary_legs(assignments_csv, gt_csv)
+
+    assert result["razorpay_merchant_leg"]["precision"] == 0.0
+    assert result["bank_merchant_leg"]["precision"] == 0.0
+    assert result["razorpay_merchant_leg"]["true_positives"] == 0
+
+
+def test_evaluate_includes_secondary_leg_metrics(tmp_path: Path) -> None:
+    """The legs must land in `evaluate()`'s own output, not a side channel --
+    otherwise they stay out of `evaluation.json`, the audit report and the
+    dashboard, which is how they went unmeasured in the first place."""
+    assignments_csv = tmp_path / "assignments.csv"
+    assignments_csv.write_text(
+        "source_a,source_a_id,source_b,source_b_id,confidence,label,a_amount_paise,b_amount_paise,a_utr,b_utr,a_order_id,b_order_id\n"
+        "razorpay,rzp_norm_pay_1,merchant,merch_norm_led_1,0.98,AUTO_MATCH,10000,10000,U1,,order_1,order_1\n"
+    )
+    gt_csv = tmp_path / "ground_truth.csv"
+    gt_csv.write_text(
+        "razorpay_record_id,true_bank_record_ids,true_merchant_record_id,relationship_type,anomaly_type,notes\n"
+        "pay_1,bank_1,led_1,exact_match,,\n"
+    )
+
+    results = evaluate(assignments_csv, gt_csv)
+
+    assert results["razorpay_merchant_leg"]["true_positives"] == 1
+    assert "bank_merchant_leg" in results
 
 
 def test_metrics_default_sensibly_when_no_no_counterpart_records_exist(
