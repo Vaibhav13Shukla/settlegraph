@@ -26,4 +26,5 @@ results/
 noise-sweep.json
 *.pdf
 refundguard/
-
+demo_recordings/
+*.webm
