@@ -18,24 +18,28 @@
         extend: {
           colors: {
             rzp: {
-              bg: '#0B0F19',
-              surface: '#111726',
-              card: '#151E2E',
-              elevated: '#1A2538',
-              border: '#1F2C40',
-              borderLight: '#2A3B54',
+              bg: '#F8FAFC',
+              surface: '#FFFFFF',
+              card: '#F8FAFC',
+              elevated: '#FFFFFF',
+              border: '#E2E8F0',
+              borderLight: '#EDF2F7',
               blue: '#0C83FF',
+              blueDark: '#0066E0',
               blueHover: '#2891FF',
-              blueActive: '#0066E0',
               blueFaint: 'rgba(12, 131, 255, 0.08)',
               teal: '#00D1B2',
-              emerald: '#10B981',
-              amber: '#F59E0B',
-              crimson: '#EF4444',
-              violet: '#8B5CF6',
-              textPrimary: '#FFFFFF',
-              textSecondary: '#94A3B8',
-              textMuted: '#64748B',
+              emerald: '#059669',
+              emeraldLight: '#ECFDF5',
+              amber: '#D97706',
+              amberLight: '#FFFBEB',
+              crimson: '#DC2626',
+              crimsonLight: '#FEF2F2',
+              violet: '#7C3AED',
+              navy: '#0C2340',
+              textPrimary: '#0C2340',
+              textSecondary: '#515978',
+              textMuted: '#8D9BB0',
             }
           },
           fontFamily: {
@@ -50,10 +54,11 @@
             'blade-2xl': '20px',
           },
           boxShadow: {
-            'blade-sm': '0 1px 3px 0 rgba(0, 0, 0, 0.25)',
-            'blade-md': '0 4px 12px 0 rgba(0, 0, 0, 0.35)',
-            'blade-glow': '0 0 24px rgba(12, 131, 255, 0.2)',
-            'blade-sense': '0 0 35px rgba(0, 209, 178, 0.15)',
+            'blade-sm': '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+            'blade-md': '0 4px 20px -2px rgba(0, 0, 0, 0.06)',
+            'blade-lg': '0 10px 30px -4px rgba(0, 0, 0, 0.08)',
+            'blade-glow': '0 4px 14px 0 rgba(12, 131, 255, 0.25)',
+            'blade-sense': '0 0 25px rgba(0, 209, 178, 0.15)',
           }
         }
       }
@@ -67,454 +72,553 @@
     :root {
       --rzp-blue: #0C83FF;
       --rzp-teal: #00D1B2;
-      --rzp-violet: #8B5CF6;
-      --rzp-bg: #0B0F19;
-      --rzp-surface: #111726;
-      --rzp-border: #1F2C40;
+      --rzp-navy: #0C2340;
+      --rzp-bg: #F8FAFC;
+      --rzp-surface: #FFFFFF;
+      --rzp-border: #E2E8F0;
     }
 
     body {
-      background-color: #0B0F19;
-      color: #FFFFFF;
+      background-color: #F8FAFC;
+      color: #0C2340;
       font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-font-smoothing: antialiased;
-      selection-background-color: #0C83FF;
-      selection-color: #FFFFFF;
     }
 
-    /* RazorSense Ambient Fluid Mesh Animation */
-    @keyframes razorSenseGradientShift {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    .razorsense-hero-mesh {
-      background: radial-gradient(circle at 60% -20%, rgba(12, 131, 255, 0.25) 0%, rgba(0, 209, 178, 0.12) 32%, rgba(139, 92, 246, 0.10) 65%, transparent 100%), #111726;
-    }
-
-    .razorsense-subtle-glow {
-      background: radial-gradient(circle at 50% 0%, rgba(12, 131, 255, 0.15) 0%, rgba(0, 209, 178, 0.08) 40%, transparent 80%);
-    }
-
-    .razorsense-top-beam {
-      background: linear-gradient(90deg, #0C83FF 0%, #00D1B2 50%, #8B5CF6 100%);
-      background-size: 200% 100%;
-      animation: razorSenseGradientShift 8s ease infinite;
-    }
-
-    .razorsense-border-pill {
-      position: relative;
-    }
-    .razorsense-border-pill::before {
-      content: '';
-      position: absolute;
-      inset: -1px;
-      border-radius: 9999px;
-      padding: 1px;
-      background: linear-gradient(90deg, #0C83FF, #00D1B2, #8B5CF6, #0C83FF);
-      background-size: 300% 100%;
-      animation: razorSenseGradientShift 6s linear infinite;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
-
-    .vivid-transition {
+    /* Ambient card glow inspired by Razorpay Build AI Native card visual */
+    .rzp-agent-card {
+      background: #FFFFFF;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .rzp-agent-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -6px rgba(12, 131, 255, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+      border-color: #CBD5E1;
+    }
 
-    /* Blade Custom Scrollbar */
+    .rzp-card-glow {
+      background: linear-gradient(180deg, #FFFFFF 60%, rgba(12, 131, 255, 0.08) 100%);
+    }
+
+    /* Active Tab Green Underline - Authentic Razorpay Style */
+    .rzp-tab-active {
+      color: #0C2340 !important;
+      border-bottom: 2px solid #00D1B2 !important;
+      font-weight: 700 !important;
+    }
+
+    /* Floating Ask RAY Button */
+    .ask-ray-float {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 50;
+      background: #FFFFFF;
+      border: 1px solid #00D1B2;
+      box-shadow: 0 8px 24px -4px rgba(0, 209, 178, 0.2), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ask-ray-float:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -4px rgba(0, 209, 178, 0.3), 0 6px 16px -2px rgba(0, 0, 0, 0.12);
+      border-color: #00BA9F;
+    }
+
+    /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0B0F19;
+      background: #F1F5F9;
     }
     ::-webkit-scrollbar-thumb {
-      background: #233045;
+      background: #CBD5E1;
       border-radius: 3px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #0C83FF;
+      background: #94A3B8;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-rzp-bg text-white">
+<body class="min-h-screen flex flex-col bg-rzp-bg text-rzp-textPrimary">
 
-  <!-- RazorSense Prismatic Top Hairline Beam -->
-  <div class="h-[2px] w-full razorsense-top-beam"></div>
+  <!-- Top Razorpay Blue Hairline Accent -->
+  <div class="h-[3px] w-full bg-gradient-to-r from-rzp-blue via-rzp-teal to-rzp-blue"></div>
 
-  <!-- Blade Header Bar -->
-  <header class="border-b border-rzp-border bg-rzp-surface/90 backdrop-blur sticky top-0 z-50">
+  <!-- Primary Razorpay White Header Bar -->
+  <header class="border-b border-rzp-border bg-white sticky top-0 z-40 shadow-sm">
     <div class="max-w-[1440px] mx-auto px-6 lg:px-8 h-18 flex items-center justify-between py-3">
       
-      <!-- Razorpay & SettleGraph Brand Identity -->
+      <!-- Brand Lockup: Slanted Bolt + Razorpay + SettleGraph -->
       <div class="flex items-center space-x-3.5">
-        <!-- Razorpay Ray Bolt Icon -->
-        <div class="w-9 h-9 rounded-blade-md bg-rzp-blue/15 border border-rzp-blue/40 flex items-center justify-center text-rzp-blue shadow-blade-glow">
-          <svg class="w-5 h-5 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/>
+        <!-- Authentic Razorpay Slanted Bolt Logo Mark -->
+        <div class="flex items-center space-x-2">
+          <svg class="w-7 h-7 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/>
           </svg>
+          <span class="text-2xl font-black tracking-tight text-rzp-navy font-sans">Razorpay</span>
         </div>
-        <div class="flex items-center space-x-3">
-          <span class="text-xl font-bold tracking-tight text-white font-sans">SettleGraph</span>
-          <div class="hidden sm:flex items-center space-x-2">
-            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rzp-blue/10 border border-rzp-blue/30 text-rzp-blue uppercase tracking-wider">
-              Blade Design System
-            </span>
-            <span class="razorsense-border-pill inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rzp-card text-rzp-teal">
-              <svg class="w-3 h-3 text-rzp-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/></svg>
-              <span>RazorSense&trade;</span>
-            </span>
-          </div>
+
+        <div class="h-5 w-[1px] bg-slate-300"></div>
+
+        <div class="flex items-center space-x-2.5">
+          <span class="text-base font-extrabold tracking-tight text-rzp-navy">SettleGraph</span>
+          <span class="hidden sm:inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>RazorSense&trade;</span>
+          </span>
+          <span class="hidden md:inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">
+            Track 04
+          </span>
         </div>
       </div>
 
-      <!-- Navigation Actions -->
+      <!-- Header Navigation Links & Action CTAs -->
       <div class="flex items-center space-x-5">
-        <!-- Desktop Blade Nav Links -->
-        <nav class="hidden md:flex items-center space-x-6 text-xs uppercase tracking-wider text-rzp-textSecondary font-semibold">
-          <button onclick="switchTab('overview')" class="hover:text-white hover:border-b-2 hover:border-rzp-blue pb-1 vivid-transition">Overview</button>
-          <button onclick="switchTab('exceptions')" class="hover:text-white hover:border-b-2 hover:border-rzp-blue pb-1 vivid-transition">Exceptions</button>
-          <button onclick="switchTab('ledger')" class="hover:text-white hover:border-b-2 hover:border-rzp-blue pb-1 vivid-transition">Ledger</button>
-          <button onclick="switchTab('decisions')" class="hover:text-white hover:border-b-2 hover:border-rzp-blue pb-1 vivid-transition">Decisions</button>
-          <button onclick="switchTab('sandbox')" class="hover:text-white hover:border-b-2 hover:border-rzp-blue pb-1 vivid-transition">Sandbox</button>
-          <button onclick="switchTab('audit')" class="hover:text-white hover:border-b-2 hover:border-rzp-blue pb-1 vivid-transition">Audit</button>
-          <button onclick="switchTab('qa')" class="text-rzp-teal hover:text-white pb-1 vivid-transition flex items-center space-x-1">
-            <svg class="w-3 h-3 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/></svg>
-            <span>Q&amp;A</span>
+        <!-- Quick Links -->
+        <nav class="hidden lg:flex items-center space-x-6 text-xs font-semibold text-rzp-textSecondary">
+          <button onclick="switchTab('overview')" class="hover:text-rzp-blue transition">Agentic Stack</button>
+          <button onclick="switchTab('ledger')" class="hover:text-rzp-blue transition">Ledger</button>
+          <button onclick="switchTab('decisions')" class="hover:text-rzp-blue transition">Decisions</button>
+          <button onclick="switchTab('exceptions')" class="hover:text-rzp-blue transition">Exceptions</button>
+          <button onclick="switchTab('sandbox')" class="hover:text-rzp-blue transition">Sandbox</button>
+          <button onclick="switchTab('audit')" class="hover:text-rzp-blue transition">Audit</button>
+          <button onclick="switchTab('qa')" class="text-rzp-teal hover:text-emerald-700 font-bold transition flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
+            <span>Ask RAY</span>
           </button>
         </nav>
 
-        <!-- Primary Reconcile Action Button (Blade Style) -->
-        <button id="btn-reconcile" onclick="triggerReconciliation()" class="bg-rzp-blue hover:bg-rzp-blueHover active:bg-rzp-blueActive text-white font-semibold rounded-blade-md px-4 py-2 text-xs uppercase tracking-wider shadow-blade-glow vivid-transition flex items-center space-x-2 cursor-pointer">
-          <i class="fa-solid fa-play text-[10px]"></i>
-          <span>Reconcile</span>
-        </button>
+        <div class="hidden sm:flex items-center space-x-3">
+          <!-- Support Icon -->
+          <button title="Support Documentation" class="text-slate-500 hover:text-slate-700 p-2 rounded-md hover:bg-slate-100 transition">
+            <i class="fa-solid fa-headset text-sm"></i>
+          </button>
 
-        <button onclick="fetchData()" title="Refresh Ledger State" class="text-rzp-textSecondary hover:text-white p-2 rounded-blade-md hover:bg-rzp-card vivid-transition">
-          <i class="fa-solid fa-arrow-rotate-right text-sm"></i>
+          <!-- Live Replay Verification (White Outlined Button like Login in Screenshot 2) -->
+          <button id="btn-replay-check" onclick="triggerReplayCheck()" class="border border-rzp-blue text-rzp-blue hover:bg-blue-50/60 font-bold text-xs px-3.5 py-2 rounded-md transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-rotate-left text-[11px]"></i>
+            <span>Live Replay</span>
+          </button>
+
+          <!-- Primary Reconcile CTA (Electric Blue Button like Sign Up in Screenshot 2) -->
+          <button id="btn-reconcile" onclick="triggerReconciliation()" class="bg-rzp-blue hover:bg-rzp-blueDark active:bg-blue-800 text-white font-bold text-xs px-4 py-2 rounded-md shadow-blade-glow transition flex items-center space-x-2 cursor-pointer">
+            <i class="fa-solid fa-play text-[10px]"></i>
+            <span>Reconcile Batch &rarr;</span>
+          </button>
+
+          <!-- Refresh Data -->
+          <button onclick="fetchData()" title="Refresh Dashboard State" class="text-slate-500 hover:text-slate-800 p-2 rounded-md hover:bg-slate-100 transition">
+            <i class="fa-solid fa-arrow-rotate-right text-sm"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Subnav Tabs (Directly Matching Screenshot 1 & 2 Tab Underline Style) -->
+    <div class="border-t border-slate-200/80 bg-white">
+      <div class="max-w-[1440px] mx-auto px-6 lg:px-8 flex items-center space-x-8 text-sm font-semibold overflow-x-auto">
+        <button onclick="switchTab('overview')" id="tab-overview" class="rzp-tab-active py-3.5 text-rzp-navy border-b-2 border-rzp-teal transition flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-chart-pie text-xs text-rzp-blue"></i>
+          <span>Overview &middot; Executive Cockpit</span>
+        </button>
+        <button onclick="switchTab('exceptions')" id="tab-exceptions" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-triangle-exclamation text-xs text-amber-500"></i>
+          <span>Exceptions</span>
+          <span id="badge-exceptions" class="bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-[11px] text-amber-700 font-mono font-bold">0</span>
+        </button>
+        <button onclick="switchTab('ledger')" id="tab-ledger" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-book text-xs text-blue-500"></i>
+          <span>Reconciled Ledger</span>
+        </button>
+        <button onclick="switchTab('decisions')" id="tab-decisions" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-code-branch text-xs text-indigo-500"></i>
+          <span>Decision Drill-Down</span>
+        </button>
+        <button onclick="switchTab('sandbox')" id="tab-sandbox" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-shield-halved text-xs text-emerald-600"></i>
+          <span>Failure Sandbox</span>
+        </button>
+        <button onclick="switchTab('audit')" id="tab-audit" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-file-contract text-xs text-slate-500"></i>
+          <span>Audit Report</span>
+        </button>
+        <button onclick="switchTab('qa')" id="tab-qa" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-1.5 whitespace-nowrap">
+          <svg class="w-3.5 h-3.5 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
+          <span class="text-rzp-teal font-bold">RazorSense Q&amp;A</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Hero Section with RazorSense Ambient Mesh -->
-  <section class="max-w-[1440px] mx-auto px-6 lg:px-8 pt-8 pb-6 w-full">
-    <div class="relative overflow-hidden rounded-blade-2xl border border-rzp-border razorsense-hero-mesh p-8 md:p-10 shadow-blade-md">
-      <!-- Ambient Glow Blobs -->
-      <div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-rzp-blue/20 blur-3xl pointer-events-none"></div>
-      <div class="absolute right-40 -bottom-16 w-80 h-80 rounded-full bg-rzp-teal/15 blur-3xl pointer-events-none"></div>
-      
-      <div class="relative z-10 max-w-3xl space-y-4">
-        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-rzp-surface/80 border border-rzp-border text-xs font-semibold uppercase tracking-wider text-rzp-textSecondary">
-          <span class="w-2 h-2 rounded-full bg-rzp-blue animate-pulse"></span>
-          <span>Track 04 &middot; Evidence-First Autonomous Reconciliation Controller</span>
-        </div>
-        
-        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.1] text-white font-sans">
-          Find every rupee.<br><span class="bg-gradient-to-r from-rzp-blue via-rzp-teal to-rzp-violet bg-clip-text text-transparent">Prove every match.</span>
-        </h1>
-
-        <p class="text-base md:text-lg text-rzp-textSecondary leading-relaxed max-w-2xl font-normal">
-          Bipartite graph matching with Fellegi-Sunter scoring, cryptographic stream deduplication, and zero-error invariant verification. Powered by RazorSense&trade; Intelligence.
-        </p>
-
-        <!-- Blade Invariant Metric Badges -->
-        <div class="pt-3 flex flex-wrap gap-3 text-xs tracking-wider uppercase">
-          <div class="flex items-center space-x-2 border border-rzp-border rounded-blade-md px-3.5 py-1.5 bg-rzp-surface/90 shadow-blade-sm">
-            <span class="w-2 h-2 rounded-full bg-rzp-emerald animate-pulse" id="invariant-shield-dot"></span>
-            <span class="text-rzp-textSecondary font-semibold">Invariant Shield: <strong class="text-white font-mono" id="invariant-shield-text">--</strong></span>
-          </div>
-          <div class="flex items-center space-x-2 border border-rzp-border rounded-blade-md px-3.5 py-1.5 bg-rzp-surface/90 shadow-blade-sm">
-            <span class="text-rzp-textSecondary font-semibold">Model: <strong class="text-white font-mono">Fellegi-Sunter (1969)</strong></span>
-          </div>
-          <div class="flex items-center space-x-2 border border-rzp-border rounded-blade-md px-3.5 py-1.5 bg-rzp-surface/90 shadow-blade-sm">
-            <span class="text-rzp-textSecondary font-semibold">Deduplication: <strong class="text-white font-mono">SHA-256 Stream</strong></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Blade Navigation Tabs Bar -->
-  <div class="max-w-[1440px] mx-auto px-6 lg:px-8 w-full">
-    <div class="flex border-b border-rzp-border space-x-6 text-xs uppercase tracking-wider font-semibold overflow-x-auto">
-      <button onclick="switchTab('overview')" id="tab-overview" class="pb-3 text-white border-b-2 border-rzp-blue vivid-transition flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-chart-pie text-[11px] text-rzp-blue"></i>
-        <span>Executive Cockpit</span>
-      </button>
-      <button onclick="switchTab('exceptions')" id="tab-exceptions" class="pb-3 text-rzp-textSecondary hover:text-white border-b-2 border-transparent vivid-transition flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-triangle-exclamation text-[11px]"></i>
-        <span>Exception Diagnostics</span>
-        <span id="badge-exceptions" class="bg-rzp-card border border-rzp-border px-1.5 py-0.2 rounded-full text-[10px] text-rzp-amber font-mono">0</span>
-      </button>
-      <button onclick="switchTab('ledger')" id="tab-ledger" class="pb-3 text-rzp-textSecondary hover:text-white border-b-2 border-transparent vivid-transition flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-book text-[11px]"></i>
-        <span>Reconciled Ledger</span>
-      </button>
-      <button onclick="switchTab('decisions')" id="tab-decisions" class="pb-3 text-rzp-textSecondary hover:text-white border-b-2 border-transparent vivid-transition flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-code-branch text-[11px]"></i>
-        <span>Decision Drill-Down</span>
-      </button>
-      <button onclick="switchTab('sandbox')" id="tab-sandbox" class="pb-3 text-rzp-textSecondary hover:text-white border-b-2 border-transparent vivid-transition flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-shield-halved text-[11px]"></i>
-        <span>Failure Sandbox</span>
-      </button>
-      <button onclick="switchTab('audit')" id="tab-audit" class="pb-3 text-rzp-textSecondary hover:text-white border-b-2 border-transparent vivid-transition flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-file-contract text-[11px]"></i>
-        <span>Audit Report</span>
-      </button>
-      <button onclick="switchTab('qa')" id="tab-qa" class="pb-3 text-rzp-textSecondary hover:text-white border-b-2 border-transparent vivid-transition flex items-center space-x-1.5 whitespace-nowrap">
-        <svg class="w-3.5 h-3.5 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/></svg>
-        <span class="text-rzp-teal">RazorSense Q&amp;A</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Main Views Container -->
+  <!-- Main Content Container -->
   <main class="max-w-[1440px] mx-auto px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
 
-    <!-- TAB 1: EXECUTIVE COCKPIT -->
+    <!-- TAB 1: EXECUTIVE OVERVIEW -->
     <div id="view-overview" class="space-y-8">
 
-      <!-- Track 04 brief stat-tile row -->
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-base font-bold tracking-tight text-white uppercase">Batch Telemetry Overview</h2>
-          <span class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-mono">Track 04 Brief Metrics</span>
+      <!-- HERO SECTION: Matching Screenshot 1 "Build AI Native NEW" Layout -->
+      <section class="bg-white rounded-2xl border border-slate-200/90 p-8 shadow-blade-sm space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-2 max-w-3xl">
+            <div class="flex items-center space-x-3">
+              <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-rzp-navy font-sans">
+                Build AI Native
+              </h1>
+              <span class="bg-black text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider uppercase">
+                NEW
+              </span>
+              <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                Track 04 &middot; Autonomous Settlement Controller
+              </span>
+            </div>
+            <p class="text-sm md:text-base text-rzp-textSecondary leading-relaxed">
+              Streamline multi-source payment reconciliation with bipartite graph matching, Fellegi-Sunter scoring, cryptographic stream deduplication, and zero-error invariant verification.
+            </p>
+          </div>
+
+          <!-- Invariant Shield Pill -->
+          <div class="flex flex-wrap gap-2.5 items-center">
+            <div class="flex items-center space-x-2 border border-emerald-200 rounded-lg px-3.5 py-2 bg-emerald-50 shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="invariant-shield-dot"></span>
+              <span class="text-xs text-emerald-900 font-bold">Invariant Shield: <strong class="font-mono text-emerald-700" id="invariant-shield-text">--</strong></span>
+            </div>
+            <div class="border border-slate-200 rounded-lg px-3.5 py-2 bg-slate-50 text-xs font-semibold text-slate-700">
+              Model: <strong class="font-mono text-rzp-navy">Fellegi-Sunter</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 AGENT CARDS GRID: Profoundly Matching Screenshot 1 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
+          
+          <!-- Card 1: Agentic Payments / Bipartite Auto-Reconciliation -->
+          <div class="rzp-agent-card rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-4 shadow-sm">
+            <div class="h-36 rounded-lg bg-slate-50 border border-slate-100 flex flex-col items-center justify-center p-3 relative overflow-hidden rzp-card-glow">
+              <div class="w-full bg-white rounded-md border border-slate-200 p-2 space-y-1 shadow-sm text-center">
+                <div class="text-[10px] font-bold text-rzp-blue uppercase tracking-wider flex items-center justify-center space-x-1">
+                  <i class="fa-solid fa-cloud text-[9px]"></i>
+                  <span>razorpay_settlements</span>
+                </div>
+                <div class="text-[9px] text-slate-500 font-mono truncate">UTR: RZPX202609051401</div>
+                <div class="text-xs font-bold text-emerald-600 font-mono">INR 2,450.00 &check;</div>
+              </div>
+              <div class="absolute bottom-2 text-[10px] font-bold text-rzp-blue bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                Payment Complete!
+              </div>
+            </div>
+            <div class="space-y-1.5">
+              <h3 class="font-bold text-base text-rzp-navy">Agentic Payments</h3>
+              <p class="text-xs text-rzp-textSecondary leading-relaxed">
+                Turn 3-way multi-source settlement streams into zero-error matched ledgers with instant double-entry proof.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 2: Agent Studio / Autonomous Triage -->
+          <div class="rzp-agent-card rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-4 shadow-sm">
+            <div class="h-36 rounded-lg bg-slate-50 border border-slate-100 flex flex-col items-center justify-center p-2 relative overflow-hidden rzp-card-glow space-y-1.5">
+              <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center space-x-1">
+                <i class="fa-solid fa-robot text-[8px] text-rzp-blue"></i>
+                <span>AGENT/ SUBSCRIPTION RECOVERY</span>
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center space-x-1">
+                <i class="fa-solid fa-chart-line text-[8px] text-amber-500"></i>
+                <span>AGENT/ REVENUE DROP DETECTOR</span>
+              </span>
+              <span class="px-3 py-1 rounded-full text-[10px] font-extrabold bg-rzp-blue text-white shadow-blade-glow flex items-center space-x-1">
+                <i class="fa-solid fa-check text-[9px]"></i>
+                <span>AGENT/ AUTO-CAPTURE</span>
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center space-x-1">
+                <i class="fa-solid fa-shield text-[8px] text-emerald-600"></i>
+                <span>AGENT/ RTO SHIELDER</span>
+              </span>
+            </div>
+            <div class="space-y-1.5">
+              <h3 class="font-bold text-base text-rzp-navy">Agent Studio</h3>
+              <p class="text-xs text-rzp-textSecondary leading-relaxed">
+                Autonomous 6-category failure triage with deterministic root-cause remediation instructions.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 3: Payments for AI Builders / Ingestion Engine -->
+          <div class="rzp-agent-card rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-4 shadow-sm">
+            <div class="h-36 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-around p-3 relative overflow-hidden rzp-card-glow">
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-center">
+                <svg class="w-5 h-5 text-rzp-blue mx-auto" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
+                <div class="text-[9px] font-bold text-slate-700 mt-1">Razorpay</div>
+              </div>
+              <div class="text-slate-400 font-bold">&harr;</div>
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-center">
+                <i class="fa-solid fa-building-columns text-emerald-600 text-sm"></i>
+                <div class="text-[9px] font-bold text-slate-700 mt-1">Bank CBS</div>
+              </div>
+              <div class="text-slate-400 font-bold">&harr;</div>
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-center">
+                <i class="fa-solid fa-receipt text-indigo-600 text-sm"></i>
+                <div class="text-[9px] font-bold text-slate-700 mt-1">ERP Ledger</div>
+              </div>
+            </div>
+            <div class="space-y-1.5">
+              <h3 class="font-bold text-base text-rzp-navy">Payments for AI Builders</h3>
+              <p class="text-xs text-rzp-textSecondary leading-relaxed">
+                Cryptographic SHA-256 stream deduplication preventing double bookings across all nodes.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 4: Agentic Business Banking / Invariant Gate -->
+          <div class="rzp-agent-card rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-4 shadow-sm">
+            <div class="h-36 rounded-lg bg-slate-50 border border-slate-100 flex flex-col items-center justify-center p-2 relative overflow-hidden rzp-card-glow space-y-1.5">
+              <span class="w-4/5 text-center py-0.5 rounded text-[9px] font-semibold bg-white border border-slate-200 text-slate-600">REPORTING AGENT</span>
+              <span class="w-4/5 text-center py-0.5 rounded text-[9px] font-semibold bg-white border border-slate-200 text-slate-600">PAYROLL AGENT</span>
+              <span class="w-4/5 text-center py-1 rounded text-[10px] font-bold bg-white border border-blue-300 text-rzp-navy shadow-sm">CASHFLOW INSIGHTS AGENT</span>
+              <span class="w-4/5 text-center py-0.5 rounded text-[9px] font-semibold bg-white border border-slate-200 text-slate-600">TAX &amp; GST AGENT</span>
+              <span class="w-4/5 text-center py-1 rounded text-[10px] font-extrabold bg-blue-600 text-white shadow-sm">INVARIANT TRUTH GATE</span>
+            </div>
+            <div class="space-y-1.5">
+              <h3 class="font-bold text-base text-rzp-navy">Agentic Business Banking</h3>
+              <p class="text-xs text-rzp-textSecondary leading-relaxed">
+                Expertise of a world-class financial controller with 100.0% precision invariant enforcement.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Batch Telemetry Overview Matrix -->
+      <div class="space-y-3.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold tracking-tight text-rzp-navy uppercase">Batch Telemetry Overview</h2>
+          <span class="text-xs font-semibold text-slate-500 font-mono">Track 04 Live Telemetry</span>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Total Records Processed</div>
-            <div class="text-2xl font-bold tracking-tight text-white font-mono" id="pdf-total-records">--</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Total Records Processed</div>
+            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-total-records">--</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Match Rate</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-emerald font-mono" id="pdf-match-rate">--%</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Match Rate</div>
+            <div class="text-2xl font-bold tracking-tight text-emerald-600 font-mono" id="pdf-match-rate">--%</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Accuracy</div>
-            <div class="text-2xl font-bold tracking-tight text-white font-mono" id="pdf-accuracy">--%</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Accuracy</div>
+            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-accuracy">--%</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Avg Processing Time</div>
-            <div class="text-2xl font-bold tracking-tight text-white font-mono" id="pdf-avg-time">-- ms/rec</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Avg Processing Time</div>
+            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-avg-time">-- ms/rec</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Automatically Matched</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Automatically Matched</div>
             <div class="text-2xl font-bold tracking-tight text-rzp-blue font-mono" id="pdf-auto-matched">--</div>
-            <div class="text-[11px] text-rzp-textSecondary" id="pdf-auto-matched-sub">-- verified correct on evaluated leg</div>
+            <div class="text-[11px] text-slate-500 truncate" id="pdf-auto-matched-sub">-- verified correct on evaluated leg</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Auto-Resolved Exceptions</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-violet font-mono" id="pdf-ai-resolved">--</div>
-            <div class="text-[11px] text-rzp-textSecondary">AI hypothesis, invariant-verified</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Auto-Resolved Exceptions</div>
+            <div class="text-2xl font-bold tracking-tight text-purple-600 font-mono" id="pdf-ai-resolved">--</div>
+            <div class="text-[11px] text-slate-500">AI hypothesis, invariant-verified</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Abstained (Held Safe)</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-amber font-mono" id="pdf-abstained">--</div>
-            <div class="text-[11px] text-rzp-textSecondary">Evidence insufficient &mdash; held, not guessed</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Abstained (Held Safe)</div>
+            <div class="text-2xl font-bold tracking-tight text-amber-600 font-mono" id="pdf-abstained">--</div>
+            <div class="text-[11px] text-slate-500">Evidence insufficient &mdash; held, not guessed</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Escalated Exceptions</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-crimson font-mono" id="pdf-escalated">--</div>
-            <div class="text-[11px] text-rzp-textSecondary">Awaiting human review</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Escalated Exceptions</div>
+            <div class="text-2xl font-bold tracking-tight text-rose-600 font-mono" id="pdf-escalated">--</div>
+            <div class="text-[11px] text-slate-500">Awaiting human review</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Drift Detected</div>
-            <div class="text-2xl font-bold tracking-tight text-white font-mono" id="pdf-drift">--</div>
-            <div class="text-[11px] text-rzp-textSecondary">Within-batch score-distribution shift</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Drift Detected</div>
+            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-drift">--</div>
+            <div class="text-[11px] text-slate-500">Within-batch score-distribution shift</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Tax-Line (GST) Match Rate</div>
-            <div class="text-2xl font-bold tracking-tight text-white font-mono" id="pdf-tax-rate">--</div>
-            <div class="text-[11px] text-rzp-textSecondary" id="pdf-tax-sub">Not run for this batch</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Tax-Line (GST) Match Rate</div>
+            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-tax-rate">--</div>
+            <div class="text-[11px] text-slate-500 truncate" id="pdf-tax-sub">Not run for this batch</div>
           </div>
-          <div class="bg-rzp-surface p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Route Split Verified</div>
-            <div class="text-2xl font-bold tracking-tight text-white font-mono" id="pdf-route-rate">--</div>
-            <div class="text-[11px] text-rzp-textSecondary" id="pdf-route-sub">Not run for this batch</div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Route Split Verified</div>
+            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-route-rate">--</div>
+            <div class="text-[11px] text-slate-500 truncate" id="pdf-route-sub">Not run for this batch</div>
           </div>
         </div>
       </div>
 
-      <!-- Core Financial KPI Cards (Blade Elevated Design) -->
+      <!-- Financial KPI Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <!-- Card 1: Reconciliation Rate -->
-        <div class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border hover:border-rzp-blue/50 vivid-transition space-y-2.5 shadow-blade-sm">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-rzp-blue transition space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-rzp-textMuted font-semibold">Reconciliation Rate</span>
-            <span class="text-rzp-emerald"><i class="fa-solid fa-chart-line text-xs"></i></span>
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Reconciliation Rate</span>
+            <span class="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><i class="fa-solid fa-chart-line text-sm"></i></span>
           </div>
-          <div class="text-3xl font-extrabold text-white font-mono" id="stat-rate">--%</div>
-          <div class="text-xs text-rzp-textSecondary">Automated settlement throughput</div>
+          <div class="text-3xl font-black text-rzp-navy font-mono" id="stat-rate">--%</div>
+          <div class="text-xs text-slate-500">Automated settlement throughput</div>
         </div>
 
         <!-- Card 2: Gross Sales -->
-        <div class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border hover:border-rzp-blue/50 vivid-transition space-y-2.5 shadow-blade-sm">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-rzp-blue transition space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-rzp-textMuted font-semibold">Merchant Sales Ingested</span>
-            <span class="text-rzp-blue"><i class="fa-solid fa-receipt text-xs"></i></span>
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Merchant Sales Ingested</span>
+            <span class="text-rzp-blue bg-blue-50 p-2 rounded-lg"><i class="fa-solid fa-receipt text-sm"></i></span>
           </div>
-          <div class="text-3xl font-extrabold text-white font-mono" id="stat-gross">INR --</div>
-          <div class="text-xs text-rzp-textSecondary">Gross merchant sales orders</div>
+          <div class="text-3xl font-black text-rzp-navy font-mono" id="stat-gross">INR --</div>
+          <div class="text-xs text-slate-500">Gross merchant sales orders</div>
         </div>
 
         <!-- Card 3: Reconciled Volume -->
-        <div class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border hover:border-rzp-blue/50 vivid-transition space-y-2.5 shadow-blade-sm">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-rzp-blue transition space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-rzp-textMuted font-semibold">Verified Settlement Credits</span>
-            <span class="text-rzp-teal"><i class="fa-solid fa-building-columns text-xs"></i></span>
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Verified Settlement Credits</span>
+            <span class="text-teal-600 bg-teal-50 p-2 rounded-lg"><i class="fa-solid fa-building-columns text-sm"></i></span>
           </div>
-          <div class="text-3xl font-extrabold text-white font-mono" id="stat-reconciled">INR --</div>
-          <div class="text-xs text-rzp-textSecondary">Double-entry verified bank credits</div>
+          <div class="text-3xl font-black text-rzp-navy font-mono" id="stat-reconciled">INR --</div>
+          <div class="text-xs text-slate-500">Double-entry verified bank credits</div>
         </div>
 
         <!-- Card 4: Unexplained Exposure -->
-        <div class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border hover:border-rzp-crimson/50 vivid-transition space-y-2.5 shadow-blade-sm">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-rose-300 transition space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-rzp-textMuted font-semibold">Unexplained Exposure</span>
-            <span class="text-rzp-crimson"><i class="fa-solid fa-triangle-exclamation text-xs"></i></span>
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Unexplained Exposure</span>
+            <span class="text-rose-600 bg-rose-50 p-2 rounded-lg"><i class="fa-solid fa-triangle-exclamation text-sm"></i></span>
           </div>
-          <div class="text-3xl font-extrabold text-rzp-crimson font-mono" id="stat-exposure">INR --</div>
-          <div class="text-xs text-rzp-textSecondary">At-risk discrepancy flagged for review</div>
+          <div class="text-3xl font-black text-rose-600 font-mono" id="stat-exposure">INR --</div>
+          <div class="text-xs text-slate-500">At-risk discrepancy flagged for review</div>
         </div>
       </div>
 
       <!-- 3-Way Ingestion Flow & Evaluator Ground Truth Benchmark -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- Ingestion Funnel -->
-        <div class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border lg:col-span-2 space-y-5">
-          <div class="flex items-center justify-between border-b border-rzp-border pb-3.5">
+        <!-- Multi-Source Ingestion Funnel -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-2 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3.5">
             <div class="flex items-center space-x-2">
-              <span class="w-2 h-2 rounded-full bg-rzp-blue"></span>
-              <h2 class="text-sm font-bold uppercase tracking-wider text-white">Multi-Source Ingestion &amp; Assignment</h2>
+              <span class="w-2.5 h-2.5 rounded-full bg-rzp-blue"></span>
+              <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Multi-Source Ingestion &amp; Assignment</h2>
             </div>
-            <span class="text-xs uppercase tracking-wider text-rzp-textMuted font-mono">3-Way Bipartite Graph</span>
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-mono font-semibold">3-Way Bipartite Graph</span>
           </div>
 
           <div class="grid grid-cols-3 gap-4 text-center">
-            <div class="p-4 rounded-blade-lg bg-rzp-card border border-rzp-border space-y-1">
-              <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Razorpay Records</div>
-              <div class="text-2xl font-bold text-white font-mono pt-0.5" id="flow-rzp">--</div>
-              <div class="text-[11px] text-rzp-textSecondary">Gateway Settlement Feed</div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Razorpay Feed</div>
+              <div class="text-2xl font-bold text-rzp-navy font-mono pt-0.5" id="flow-rzp">--</div>
+              <div class="text-[11px] text-slate-500">Gateway Settlements</div>
             </div>
-            <div class="p-4 rounded-blade-lg bg-rzp-card border border-rzp-border space-y-1">
-              <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Bank Statements</div>
-              <div class="text-2xl font-bold text-white font-mono pt-0.5" id="flow-bank">--</div>
-              <div class="text-[11px] text-rzp-textSecondary">NEFT / RTGS Line Items</div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Bank Statements</div>
+              <div class="text-2xl font-bold text-rzp-navy font-mono pt-0.5" id="flow-bank">--</div>
+              <div class="text-[11px] text-slate-500">NEFT / RTGS Items</div>
             </div>
-            <div class="p-4 rounded-blade-lg bg-rzp-card border border-rzp-border space-y-1">
-              <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Merchant Ledger</div>
-              <div class="text-2xl font-bold text-white font-mono pt-0.5" id="flow-merchant">--</div>
-              <div class="text-[11px] text-rzp-textSecondary">ERP Sales Records</div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Merchant Ledger</div>
+              <div class="text-2xl font-bold text-rzp-navy font-mono pt-0.5" id="flow-merchant">--</div>
+              <div class="text-[11px] text-slate-500">ERP Sales Records</div>
             </div>
           </div>
 
-          <div class="p-4 rounded-blade-lg bg-rzp-card border border-rzp-border flex items-center justify-between">
-            <div class="space-y-1">
-              <div class="text-xs font-bold uppercase tracking-wider text-white">AUTO_MATCH High-Confidence Output</div>
-              <div class="text-xs text-rzp-textSecondary">Scored \(\ge 0.95\) &amp; double-entry verified with zero invariant breaches</div>
+          <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 flex items-center justify-between">
+            <div class="space-y-0.5">
+              <div class="text-xs font-bold uppercase tracking-wider text-emerald-900">AUTO_MATCH High-Confidence Output</div>
+              <div class="text-xs text-emerald-700">Scored \(\ge 0.95\) &amp; double-entry verified with zero invariant breaches</div>
             </div>
             <div class="text-right">
-              <div class="text-2xl font-bold text-rzp-emerald font-mono" id="flow-auto">--</div>
-              <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted">Assignments Booked</div>
+              <div class="text-2xl font-bold text-emerald-700 font-mono" id="flow-auto">--</div>
+              <div class="text-[10px] uppercase tracking-wider text-emerald-600 font-semibold">Assignments Booked</div>
             </div>
           </div>
         </div>
 
         <!-- Ground Truth Evaluator Benchmark -->
-        <div class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border flex flex-col justify-between space-y-5">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-5">
           <div>
-            <div class="border-b border-rzp-border pb-3.5 mb-4 flex items-center justify-between">
+            <div class="border-b border-slate-200 pb-3.5 mb-4 flex items-center justify-between">
               <div class="flex items-center space-x-2">
-                <span class="w-2 h-2 rounded-full bg-rzp-emerald"></span>
-                <h2 class="text-sm font-bold uppercase tracking-wider text-white">Evaluator Truth Gate</h2>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Evaluator Truth Gate</h2>
               </div>
-              <span class="text-[10px] uppercase tracking-wider text-rzp-emerald font-mono bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full" id="eval-zero-fp-badge">Evaluating...</span>
+              <span class="text-[10px] uppercase tracking-wider text-emerald-700 font-mono font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" id="eval-zero-fp-badge">Evaluating...</span>
             </div>
 
-            <div class="space-y-2.5 text-xs">
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">Precision (Zero-Error)</span>
-                <span class="font-mono font-bold text-rzp-emerald" id="eval-precision">--%</span>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">Precision (Zero-Error)</span>
+                <span class="font-mono font-bold text-emerald-600" id="eval-precision">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">Recall (Throughput)</span>
-                <span class="font-mono text-white" id="eval-recall">--%</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">Recall (Throughput)</span>
+                <span class="font-mono text-rzp-navy font-semibold" id="eval-recall">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">F1 Score</span>
-                <span class="font-mono text-white" id="eval-f1">--</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">F1 Score</span>
+                <span class="font-mono text-rzp-navy font-semibold" id="eval-f1">--</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">False Positives</span>
-                <span class="font-mono font-bold text-rzp-emerald" id="eval-fp">--</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">False Positives</span>
+                <span class="font-mono font-bold text-emerald-600" id="eval-fp">--</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">Safe Auto-Resolution Rate</span>
-                <span class="font-mono text-white" id="eval-safe-auto-rate">--%</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">Safe Auto-Resolution Rate</span>
+                <span class="font-mono text-rzp-navy" id="eval-safe-auto-rate">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">False Auto-Book Rate</span>
-                <span class="font-mono text-white" id="eval-false-book-rate">--%</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">False Auto-Book Rate</span>
+                <span class="font-mono text-rzp-navy font-bold" id="eval-false-book-rate">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">Dangerous Miss Rate</span>
-                <span class="font-mono text-white" id="eval-dangerous-miss-rate">--%</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">Dangerous Miss Rate</span>
+                <span class="font-mono text-rzp-navy" id="eval-dangerous-miss-rate">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">Exception Recall</span>
-                <span class="font-mono text-white" id="eval-exception-recall">--%</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">Exception Recall</span>
+                <span class="font-mono text-rzp-navy" id="eval-exception-recall">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">Calibration Error (ECE)</span>
-                <span class="font-mono text-rzp-blue" id="eval-ece">--</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">Calibration Error (ECE)</span>
+                <span class="font-mono text-rzp-blue font-bold" id="eval-ece">--</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-rzp-border/60">
-                <span class="text-rzp-textSecondary">Brier Score</span>
-                <span class="font-mono text-rzp-blue" id="eval-brier">--</span>
+              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
+                <span class="text-slate-600 font-medium">Brier Score</span>
+                <span class="font-mono text-rzp-blue font-bold" id="eval-brier">--</span>
               </div>
               <div class="flex justify-between items-center py-1.5">
                 <div class="flex items-center space-x-2">
-                  <span class="text-rzp-textSecondary">Replay Stability</span>
-                  <button onclick="triggerReplayCheck()" id="btn-replay-check" class="text-[10px] text-white bg-rzp-card border border-rzp-border px-2 py-0.5 rounded-blade-sm hover:border-rzp-blue">Verify Live</button>
+                  <span class="text-slate-600 font-medium">Replay Stability</span>
                 </div>
-                <span class="font-mono font-bold text-rzp-emerald" id="eval-replay">100.0%</span>
+                <span class="font-mono font-bold text-emerald-600" id="eval-replay">100.0%</span>
               </div>
             </div>
           </div>
 
-          <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border text-[11px] text-rzp-textSecondary leading-relaxed">
-            <span class="text-white font-semibold">Ground Truth Isolation:</span> Evaluator truth records remain encrypted and inaccessible to matching logic, verifying true blind accuracy.
+          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 leading-relaxed">
+            <span class="text-rzp-navy font-bold">Ground Truth Isolation:</span> Evaluator truth records remain encrypted and inaccessible to matching logic, verifying true blind accuracy.
           </div>
         </div>
       </div>
 
       <!-- Per-Anomaly Safety Breakdown Table -->
-      <div class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border space-y-4 shadow-blade-sm">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-rzp-border pb-3.5">
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-200 pb-3.5">
           <div>
-            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Per-Anomaly Safety &amp; Robustness Matrix</h2>
-            <p class="text-xs text-rzp-textSecondary mt-0.5">Verification that zero false positives occur under each injected financial anomaly type.</p>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Per-Anomaly Safety &amp; Robustness Matrix</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Verification that zero false positives occur under each injected financial anomaly type.</p>
           </div>
-          <span class="text-[11px] uppercase tracking-wider text-rzp-emerald font-semibold border border-emerald-500/40 px-3 py-1 rounded-full bg-emerald-500/10">0 False Positives Across All Scenarios</span>
+          <span class="text-[11px] uppercase tracking-wider text-emerald-700 font-bold border border-emerald-200 px-3 py-1 rounded-full bg-emerald-50">
+            0 False Positives Across All Scenarios
+          </span>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-white">
-            <thead class="bg-rzp-card uppercase tracking-wider text-[11px] text-rzp-textMuted border-b border-rzp-border">
+          <table class="w-full text-left text-xs text-rzp-navy">
+            <thead class="bg-slate-50 uppercase tracking-wider text-[11px] text-slate-500 border-b border-slate-200">
               <tr>
                 <th class="p-3.5">Injected Anomaly Scenario</th>
                 <th class="p-3.5">Auto-Recovered (TP)</th>
@@ -524,7 +628,7 @@
                 <th class="p-3.5">Safety Verdict</th>
               </tr>
             </thead>
-            <tbody id="anomaly-breakdown-body" class="divide-y divide-rzp-border">
+            <tbody id="anomaly-breakdown-body" class="divide-y divide-slate-100">
               <!-- Injected dynamically -->
             </tbody>
           </table>
@@ -534,12 +638,12 @@
 
     <!-- TAB 2: EXCEPTION DIAGNOSTICS -->
     <div id="view-exceptions" class="hidden space-y-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-rzp-border pb-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 class="text-xl font-bold tracking-tight text-white">Diagnosed Exception Root Causes</h2>
-          <p class="text-xs text-rzp-textSecondary mt-1">Autonomous 6-category failure classification with deterministic remediation instructions.</p>
+          <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Diagnosed Exception Root Causes</h2>
+          <p class="text-xs text-slate-500 mt-1">Autonomous 6-category failure classification with deterministic remediation instructions.</p>
         </div>
-        <div id="exception-count-label" class="border border-rzp-border px-3.5 py-1.5 rounded-blade-md text-xs uppercase tracking-wider text-white bg-rzp-card font-mono font-semibold">
+        <div id="exception-count-label" class="border border-slate-200 px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider text-rzp-navy bg-white font-mono font-bold shadow-sm">
           -- Exceptions Surfaced
         </div>
       </div>
@@ -551,18 +655,18 @@
 
     <!-- TAB 3: RECONCILED LEDGER -->
     <div id="view-ledger" class="hidden space-y-6">
-      <div class="flex items-center justify-between border-b border-rzp-border pb-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-4">
         <div>
-          <h2 class="text-xl font-bold tracking-tight text-white">Reconciled Match Groups &amp; Ledger</h2>
-          <p class="text-xs text-rzp-textSecondary mt-1">Showing 1-to-1 verified bipartite assignments across reconciliation legs.</p>
+          <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Reconciled Match Groups &amp; Ledger</h2>
+          <p class="text-xs text-slate-500 mt-1">Showing 1-to-1 verified bipartite assignments across reconciliation legs.</p>
         </div>
-        <span class="text-xs uppercase tracking-wider text-rzp-textMuted font-mono">Balanced Sample</span>
+        <span class="text-xs uppercase tracking-wider text-slate-400 font-mono font-bold">Balanced Sample</span>
       </div>
 
-      <div class="bg-rzp-surface rounded-blade-xl border border-rzp-border overflow-hidden p-4 space-y-3">
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden p-4 space-y-3 shadow-sm">
         <div class="overflow-x-auto max-h-[650px]">
-          <table class="w-full text-left text-xs text-white">
-            <thead class="bg-rzp-card uppercase tracking-wider text-[11px] text-rzp-textMuted sticky top-0 border-b border-rzp-border">
+          <table class="w-full text-left text-xs text-rzp-navy">
+            <thead class="bg-slate-50 uppercase tracking-wider text-[11px] text-slate-500 sticky top-0 border-b border-slate-200">
               <tr>
                 <th class="p-3.5">Source A</th>
                 <th class="p-3.5">Source B</th>
@@ -573,7 +677,7 @@
                 <th class="p-3.5">UTR Reference</th>
               </tr>
             </thead>
-            <tbody id="ledger-table-body" class="divide-y divide-rzp-border">
+            <tbody id="ledger-table-body" class="divide-y divide-slate-100">
               <!-- Injected dynamically -->
             </tbody>
           </table>
@@ -583,65 +687,65 @@
 
     <!-- TAB 4: DECISION DRILL-DOWN -->
     <div id="view-decisions" class="hidden space-y-6">
-      <div class="border-b border-rzp-border pb-4">
-        <h2 class="text-xl font-bold tracking-tight text-white">Why Was This Decision Made?</h2>
-        <p class="text-xs text-rzp-textSecondary mt-1 max-w-3xl">
+      <div class="border-b border-slate-200 pb-4">
+        <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Why Was This Decision Made?</h2>
+        <p class="text-xs text-slate-500 mt-1 max-w-3xl">
           Every row in the ledger is one of four decision states. A "NO DECISION" abstention is not a failure &mdash; it is the system correctly refusing to guess when the assembled evidence does not clear the auto-match bar. Pick a state below to inspect the exact evidence.
         </p>
       </div>
 
       <!-- Decision State Filter -->
       <div class="flex flex-wrap gap-2.5" id="decision-filter-bar">
-        <button data-decision-filter="all" onclick="filterDecisions('all')" class="decision-filter-btn px-3.5 py-1.5 rounded-blade-md text-xs uppercase tracking-wider border border-rzp-blue text-white bg-rzp-blue/15 font-semibold vivid-transition">All States</button>
-        <button data-decision-filter="auto" onclick="filterDecisions('auto')" class="decision-filter-btn px-3.5 py-1.5 rounded-blade-md text-xs uppercase tracking-wider border border-rzp-border text-rzp-textSecondary hover:text-white bg-rzp-card vivid-transition">Correct Auto-Match</button>
-        <button data-decision-filter="abstained" onclick="filterDecisions('abstained')" class="decision-filter-btn px-3.5 py-1.5 rounded-blade-md text-xs uppercase tracking-wider border border-rzp-border text-rzp-textSecondary hover:text-white bg-rzp-card vivid-transition">Ambiguous / Abstained</button>
-        <button data-decision-filter="exception" onclick="filterDecisions('exception')" class="decision-filter-btn px-3.5 py-1.5 rounded-blade-md text-xs uppercase tracking-wider border border-rzp-border text-rzp-textSecondary hover:text-white bg-rzp-card vivid-transition">Genuine Exception</button>
-        <button data-decision-filter="failclosed" onclick="filterDecisions('failclosed')" class="decision-filter-btn px-3.5 py-1.5 rounded-blade-md text-xs uppercase tracking-wider border border-rzp-border text-rzp-textSecondary hover:text-white bg-rzp-card vivid-transition">System Failure Safety</button>
+        <button data-decision-filter="all" onclick="filterDecisions('all')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-rzp-blue text-white bg-rzp-blue font-bold shadow-sm transition">All States</button>
+        <button data-decision-filter="auto" onclick="filterDecisions('auto')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition">Correct Auto-Match</button>
+        <button data-decision-filter="abstained" onclick="filterDecisions('abstained')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition">Ambiguous / Abstained</button>
+        <button data-decision-filter="exception" onclick="filterDecisions('exception')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition">Genuine Exception</button>
+        <button data-decision-filter="failclosed" onclick="filterDecisions('failclosed')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition">System Failure Safety</button>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         <!-- (1) CORRECT AUTO-MATCH -->
-        <div id="decision-auto" data-decision-state="auto" class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border space-y-4 shadow-blade-sm">
-          <div class="flex items-center justify-between border-b border-rzp-border pb-3">
-            <span class="text-xs uppercase tracking-wider font-bold text-rzp-emerald">Correct Auto-Match</span>
-            <span class="text-[10px] uppercase tracking-wider font-mono text-rzp-textMuted">Deterministic Gate Passed</span>
+        <div id="decision-auto" data-decision-state="auto" class="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <span class="text-xs uppercase tracking-wider font-bold text-emerald-600">Correct Auto-Match</span>
+            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400 font-bold">Deterministic Gate Passed</span>
           </div>
-          <div id="decision-auto-body" class="text-xs text-rzp-textSecondary">Loading assignment data&hellip;</div>
+          <div id="decision-auto-body" class="text-xs text-slate-600">Loading assignment data&hellip;</div>
         </div>
 
         <!-- (2) AMBIGUOUS / ABSTAINED -->
-        <div id="decision-abstained" data-decision-state="abstained" class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border space-y-4 shadow-blade-sm">
-          <div class="flex items-center justify-between border-b border-rzp-border pb-3">
-            <span class="text-xs uppercase tracking-wider font-bold text-rzp-amber">NO DECISION &mdash; Held For Review</span>
-            <span class="text-[10px] uppercase tracking-wider font-mono text-rzp-textMuted">Intelligent Abstention</span>
+        <div id="decision-abstained" data-decision-state="abstained" class="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <span class="text-xs uppercase tracking-wider font-bold text-amber-600">NO DECISION &mdash; Held For Review</span>
+            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400 font-bold">Intelligent Abstention</span>
           </div>
-          <div id="decision-abstained-body" class="text-xs text-rzp-textSecondary">Loading assignment data&hellip;</div>
+          <div id="decision-abstained-body" class="text-xs text-slate-600">Loading assignment data&hellip;</div>
         </div>
 
         <!-- (3) GENUINE EXCEPTION -->
-        <div id="decision-exception" data-decision-state="exception" class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border space-y-4 shadow-blade-sm">
-          <div class="flex items-center justify-between border-b border-rzp-border pb-3">
-            <span class="text-xs uppercase tracking-wider font-bold text-rzp-crimson">Genuine Exception</span>
-            <span class="text-[10px] uppercase tracking-wider font-mono text-rzp-textMuted">Automation Stopped</span>
+        <div id="decision-exception" data-decision-state="exception" class="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <span class="text-xs uppercase tracking-wider font-bold text-rose-600">Genuine Exception</span>
+            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400 font-bold">Automation Stopped</span>
           </div>
-          <div id="decision-exception-body" class="text-xs text-rzp-textSecondary">Loading exception data&hellip;</div>
+          <div id="decision-exception-body" class="text-xs text-slate-600">Loading exception data&hellip;</div>
         </div>
 
         <!-- (4) SYSTEM FAILURE SAFETY -->
-        <div id="decision-failclosed" data-decision-state="failclosed" class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border space-y-4 shadow-blade-sm">
-          <div class="flex items-center justify-between border-b border-rzp-border pb-3">
+        <div id="decision-failclosed" data-decision-state="failclosed" class="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
             <span class="text-xs uppercase tracking-wider font-bold text-rzp-blue">System Failure Safety</span>
-            <span class="text-[10px] uppercase tracking-wider font-mono text-rzp-textMuted">Fail-Closed By Design</span>
+            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400 font-bold">Fail-Closed By Design</span>
           </div>
-          <div class="text-xs text-rzp-textSecondary leading-relaxed space-y-3">
+          <div class="text-xs text-slate-600 leading-relaxed space-y-3">
             <p>
-              SettleGraph's optional AI reasoner (<code class="font-mono text-white bg-rzp-card px-1.5 py-0.5 rounded">engine/ai_reasoner.py</code>) only ever <em>proposes</em> a hypothesis for an exception the deterministic matcher already could not resolve. The model never decides a match: its hypothesis is fed back through the deterministic invariant gate (<code class="font-mono text-white bg-rzp-card px-1.5 py-0.5 rounded">verify_settlegraph_invariants</code>) and only promotes to <code class="font-mono text-rzp-teal bg-rzp-card px-1.5 py-0.5 rounded">AI_RESOLVED_MATCH</code> &mdash; never <code class="font-mono text-rzp-emerald bg-rzp-card px-1.5 py-0.5 rounded">AUTO_MATCH</code> &mdash; if every invariant passes.
+              SettleGraph's optional AI reasoner (<code class="font-mono text-rzp-navy bg-slate-100 px-1.5 py-0.5 rounded">engine/ai_reasoner.py</code>) only ever <em>proposes</em> a hypothesis for an exception the deterministic matcher already could not resolve. The model never decides a match: its hypothesis is fed back through the deterministic invariant gate (<code class="font-mono text-rzp-navy bg-slate-100 px-1.5 py-0.5 rounded">verify_settlegraph_invariants</code>) and only promotes to <code class="font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">AI_RESOLVED_MATCH</code> &mdash; never <code class="font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">AUTO_MATCH</code> &mdash; if every invariant passes.
             </p>
             <p>
-              Every failure path leaves the record exactly where the deterministic layer put it. A timeout, rate limit, refusal, malformed JSON, or invariant breach keeps the record as <code class="font-mono text-rzp-crimson bg-rzp-card px-1.5 py-0.5 rounded">EXCEPTION</code>.
+              Every failure path leaves the record exactly where the deterministic layer put it. A timeout, rate limit, refusal, malformed JSON, or invariant breach keeps the record as <code class="font-mono text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded">EXCEPTION</code>.
             </p>
-            <div class="p-3 rounded-blade-md bg-rzp-card border border-rzp-border text-[11px] text-rzp-textMuted">
+            <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-500">
               Enforced in code and verified live in the Failure Sandbox.
             </div>
           </div>
@@ -650,19 +754,19 @@
 
       <!-- BASELINE COMPARISON -->
       <div class="space-y-4 pt-2">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-rzp-border pb-3">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-200 pb-3">
           <div>
-            <h2 class="text-base font-bold uppercase tracking-wider text-white">4-Way Baseline Comparison Matrix</h2>
-            <p class="text-xs text-rzp-textSecondary mt-0.5 max-w-2xl">
+            <h2 class="text-base font-bold uppercase tracking-wider text-rzp-navy">4-Way Baseline Comparison Matrix</h2>
+            <p class="text-xs text-slate-500 mt-0.5 max-w-2xl">
               Three naive matchers recomputed live against current batch files and ground truth.
             </p>
           </div>
-          <span id="baseline-status" class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-mono">Loading&hellip;</span>
+          <span id="baseline-status" class="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-bold">Loading&hellip;</span>
         </div>
-        <div class="bg-rzp-surface rounded-blade-xl border border-rzp-border overflow-hidden">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-white">
-              <thead class="bg-rzp-card uppercase tracking-wider text-[11px] text-rzp-textMuted border-b border-rzp-border">
+            <table class="w-full text-left text-xs text-rzp-navy">
+              <thead class="bg-slate-50 uppercase tracking-wider text-[11px] text-slate-500 border-b border-slate-200">
                 <tr>
                   <th class="p-3.5">Method</th>
                   <th class="p-3.5">Precision</th>
@@ -672,25 +776,25 @@
                   <th class="p-3.5">False Auto-Book Rate</th>
                 </tr>
               </thead>
-              <tbody id="baseline-table-body" class="divide-y divide-rzp-border">
+              <tbody id="baseline-table-body" class="divide-y divide-slate-100">
                 <!-- Injected dynamically -->
               </tbody>
             </table>
           </div>
         </div>
-        <div id="baseline-note" class="text-xs text-rzp-textSecondary leading-relaxed"></div>
+        <div id="baseline-note" class="text-xs text-slate-600 leading-relaxed font-medium"></div>
       </div>
     </div>
 
     <!-- TAB 5: FAILURE SANDBOX -->
     <div id="view-sandbox" class="hidden space-y-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-rzp-border pb-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h2 class="text-xl font-bold tracking-tight text-white">Live Failure Injection &amp; Containment Sandbox</h2>
-          <p class="text-xs text-rzp-textSecondary mt-1">Simulate real-world catastrophic failure modes and verify deterministic containment.</p>
+          <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Live Failure Injection &amp; Containment Sandbox</h2>
+          <p class="text-xs text-slate-500 mt-1">Simulate real-world catastrophic failure modes and verify deterministic containment.</p>
         </div>
-        <button onclick="runFailureSimulations()" class="bg-rzp-card hover:bg-rzp-elevated border border-rzp-border hover:border-rzp-blue text-white rounded-blade-md px-4 py-2 text-xs uppercase tracking-wider font-semibold vivid-transition flex items-center space-x-2">
-          <i class="fa-solid fa-bolt text-rzp-amber text-[10px]"></i>
+        <button onclick="runFailureSimulations()" class="bg-white hover:bg-slate-50 border border-slate-200 hover:border-rzp-blue text-rzp-navy rounded-lg px-4 py-2 text-xs uppercase tracking-wider font-bold shadow-sm transition flex items-center space-x-2">
+          <i class="fa-solid fa-bolt text-amber-500 text-[10px]"></i>
           <span>Execute All 7 Scenarios</span>
         </button>
       </div>
@@ -702,96 +806,96 @@
 
     <!-- TAB 6: AUDIT REPORT -->
     <div id="view-audit" class="hidden space-y-6">
-      <div class="flex items-center justify-between border-b border-rzp-border pb-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-4">
         <div>
-          <h2 class="text-xl font-bold tracking-tight text-white">Executive Audit Ledger (`AUDIT_REPORT.md`)</h2>
-          <p class="text-xs text-rzp-textSecondary mt-1">Formal verification evidence ledger for CFO and Controller audit sign-off.</p>
+          <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Executive Audit Ledger (`AUDIT_REPORT.md`)</h2>
+          <p class="text-xs text-slate-500 mt-1">Formal verification evidence ledger for CFO and Controller audit sign-off.</p>
         </div>
-        <button onclick="copyAuditReport()" class="border border-rzp-border hover:border-white rounded-blade-md px-3.5 py-1.5 text-xs uppercase tracking-wider text-white bg-rzp-card vivid-transition flex items-center space-x-1.5">
+        <button onclick="copyAuditReport()" class="border border-slate-200 hover:border-slate-400 rounded-lg px-3.5 py-1.5 text-xs uppercase tracking-wider text-rzp-navy bg-white shadow-sm transition flex items-center space-x-1.5 font-bold">
           <i class="fa-regular fa-copy text-xs"></i>
           <span>Copy Markdown</span>
         </button>
       </div>
-      <div class="bg-rzp-surface p-6 rounded-blade-xl border border-rzp-border text-white font-mono">
-        <pre id="audit-report-content" class="text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto"></pre>
+      <div class="bg-white p-6 rounded-xl border border-slate-200 text-rzp-navy font-mono shadow-sm">
+        <pre id="audit-report-content" class="text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto text-slate-700"></pre>
       </div>
     </div>
 
-    <!-- TAB 7: RAZORSENSE FINANCIAL CONTROLLER Q&A (BLADE CHAT COMPONENT) -->
+    <!-- TAB 7: RAZORSENSE FINANCIAL CONTROLLER Q&A -->
     <div id="view-qa" class="hidden space-y-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-rzp-border pb-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-blade-md bg-gradient-to-br from-rzp-blue/20 to-rzp-teal/20 border border-rzp-teal/40 flex items-center justify-center text-rzp-teal shadow-blade-sense">
-            <svg class="w-5 h-5 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/></svg>
+          <div class="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-sm">
+            <svg class="w-5 h-5 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
           </div>
           <div>
-            <h2 class="text-xl font-bold tracking-tight text-white flex items-center space-x-2">
+            <h2 class="text-xl font-bold tracking-tight text-rzp-navy flex items-center space-x-2">
               <span>RazorSense&trade; AI Finance Controller</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rzp-teal/10 border border-rzp-teal/30 text-rzp-teal uppercase">/api/ask</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold uppercase">/api/ask</span>
             </h2>
-            <p class="text-xs text-rzp-textSecondary mt-0.5">Natural language query engine over reconciliation telemetry, MDR anomalies, and deterministic audit proofs.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Natural language query engine over reconciliation telemetry, MDR anomalies, and deterministic audit proofs.</p>
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <span class="w-2 h-2 rounded-full bg-rzp-teal animate-pulse"></span>
-          <span class="text-xs uppercase tracking-wider text-rzp-teal font-semibold">Evidence Engine Active</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-xs uppercase tracking-wider text-emerald-700 font-bold">Evidence Engine Active</span>
         </div>
       </div>
 
-      <!-- Quick Preset Queries (Blade Style Action Chips) -->
+      <!-- Quick Preset Queries (Action Chips) -->
       <div class="space-y-2.5">
-        <p class="text-xs uppercase tracking-wider text-rzp-textMuted font-semibold">Recommended Controller Audits</p>
+        <p class="text-xs uppercase tracking-wider text-slate-500 font-bold">Recommended Controller Audits</p>
         <div class="flex flex-wrap gap-2">
-          <button onclick="askQuestionPreset('What is our reconciliation precision and false positive rate?')" class="border border-rzp-border hover:border-rzp-blue rounded-full px-3 py-1 text-xs text-white bg-rzp-card hover:bg-rzp-elevated vivid-transition flex items-center space-x-1.5">
-            <svg class="w-3 h-3 text-rzp-emerald" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/></svg>
+          <button onclick="askQuestionPreset('What is our reconciliation precision and false positive rate?')" class="border border-slate-200 hover:border-rzp-blue rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium">
+            <svg class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
             <span>Precision &amp; False Positive Proof</span>
           </button>
-          <button onclick="askQuestionPreset('Which merchants have unexplained fee leakages?')" class="border border-rzp-border hover:border-rzp-amber rounded-full px-3 py-1 text-xs text-white bg-rzp-card hover:bg-rzp-elevated vivid-transition flex items-center space-x-1.5">
-            <i class="fa-solid fa-triangle-exclamation text-rzp-amber text-[10px]"></i>
+          <button onclick="askQuestionPreset('Which merchants have unexplained fee leakages?')" class="border border-slate-200 hover:border-amber-400 rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-[10px]"></i>
             <span>Fee Leakage &amp; Discrepancies</span>
           </button>
-          <button onclick="askQuestionPreset('How many exceptions were flagged and what are the top categories?')" class="border border-rzp-border hover:border-rzp-blue rounded-full px-3 py-1 text-xs text-white bg-rzp-card hover:bg-rzp-elevated vivid-transition flex items-center space-x-1.5">
+          <button onclick="askQuestionPreset('How many exceptions were flagged and what are the top categories?')" class="border border-slate-200 hover:border-rzp-blue rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium">
             <i class="fa-solid fa-filter text-rzp-blue text-[10px]"></i>
             <span>Exception Triage Summary</span>
           </button>
-          <button onclick="askQuestionPreset('Explain the double-entry accounting invariant and any violations.')" class="border border-rzp-border hover:border-rzp-teal rounded-full px-3 py-1 text-xs text-white bg-rzp-card hover:bg-rzp-elevated vivid-transition flex items-center space-x-1.5">
-            <i class="fa-solid fa-scale-balanced text-rzp-teal text-[10px]"></i>
+          <button onclick="askQuestionPreset('Explain the double-entry accounting invariant and any violations.')" class="border border-slate-200 hover:border-teal-400 rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium">
+            <i class="fa-solid fa-scale-balanced text-teal-600 text-[10px]"></i>
             <span>Conservation Invariant Status</span>
           </button>
         </div>
       </div>
 
-      <!-- Query Form (Blade ChatInput Style) -->
-      <div class="bg-rzp-surface border border-rzp-border rounded-blade-xl p-4 shadow-blade-sm">
+      <!-- Query Form -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
         <form onsubmit="submitQuestion(event)" class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-rzp-textMuted">
-              <svg class="w-4 h-4 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/></svg>
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
             </div>
-            <input type="text" id="qa-input" placeholder="Ask RazorSense about settlement discrepancies, fee drift, anomalies, or invariants..." class="w-full bg-rzp-card border border-rzp-border rounded-blade-md pl-10 pr-4 py-2.5 text-sm text-white placeholder-rzp-textMuted focus:outline-none focus:border-rzp-blue vivid-transition font-sans">
+            <input type="text" id="qa-input" placeholder="Ask RazorSense about settlement discrepancies, fee drift, anomalies, or invariants..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-sm text-rzp-navy placeholder-slate-400 focus:outline-none focus:border-rzp-blue focus:bg-white transition font-sans">
           </div>
-          <button type="submit" id="qa-submit-btn" class="bg-rzp-blue hover:bg-rzp-blueHover active:bg-rzp-blueActive text-white font-semibold rounded-blade-md px-6 py-2.5 text-xs uppercase tracking-wider shadow-blade-glow vivid-transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer">
+          <button type="submit" id="qa-submit-btn" class="bg-rzp-blue hover:bg-rzp-blueDark text-white font-bold rounded-lg px-6 py-2.5 text-xs uppercase tracking-wider shadow-blade-glow transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer">
             <i class="fa-solid fa-arrow-right text-xs"></i>
             <span>Ask Controller</span>
           </button>
         </form>
       </div>
 
-      <!-- Response Area (Blade ChatMessage Style) -->
-      <div id="qa-response-container" class="hidden bg-rzp-surface border border-rzp-border rounded-blade-xl p-6 space-y-4 shadow-blade-md">
-        <div class="flex items-center justify-between border-b border-rzp-border pb-3">
+      <!-- Response Area -->
+      <div id="qa-response-container" class="hidden bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-md">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
           <div class="flex items-center space-x-3">
-            <span id="qa-engine-badge" class="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono tracking-wider bg-rzp-teal/10 border border-rzp-teal/30 text-rzp-teal font-semibold">
+            <span id="qa-engine-badge" class="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono tracking-wider bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
               settlegraph_deterministic_controller
             </span>
-            <span id="qa-timestamp" class="text-xs text-rzp-textMuted font-mono">--</span>
+            <span id="qa-timestamp" class="text-xs text-slate-400 font-mono font-medium">--</span>
           </div>
-          <button onclick="copyQAResponse()" class="text-xs text-rzp-textSecondary hover:text-white vivid-transition flex items-center space-x-1">
+          <button onclick="copyQAResponse()" class="text-xs text-slate-500 hover:text-rzp-navy transition flex items-center space-x-1 font-semibold">
             <i class="fa-regular fa-copy text-[11px]"></i>
             <span>Copy</span>
           </button>
         </div>
-        <div id="qa-answer-text" class="text-sm text-white leading-relaxed whitespace-pre-wrap font-mono bg-rzp-card p-4 rounded-blade-md border border-rzp-border">
+        <div id="qa-answer-text" class="text-sm text-rzp-navy leading-relaxed whitespace-pre-wrap font-mono bg-slate-50 p-4 rounded-lg border border-slate-200">
           <!-- Dynamic Answer -->
         </div>
       </div>
@@ -799,14 +903,22 @@
 
   </main>
 
-  <!-- Blade Footer Bar -->
-  <footer class="border-t border-rzp-border bg-rzp-surface py-6 mt-auto">
-    <div class="max-w-[1440px] mx-auto px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-rzp-textMuted tracking-wider uppercase space-y-3 md:space-y-0">
-      <div class="flex items-center space-x-2">
-        <svg class="w-3.5 h-3.5 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/></svg>
+  <!-- Floating Ask RAY / RazorSense Action Button (Profoundly Featured as in Screenshots) -->
+  <button onclick="switchTab('qa')" class="ask-ray-float py-2.5 px-4 rounded-lg flex items-center space-x-2 cursor-pointer" title="Ask RAY Financial Assistant">
+    <svg class="w-4 h-4 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/>
+    </svg>
+    <span class="text-xs font-black tracking-wide text-rzp-navy">Ask RAY</span>
+  </button>
+
+  <!-- Razorpay White Footer Bar -->
+  <footer class="border-t border-slate-200 bg-white py-6 mt-auto">
+    <div class="max-w-[1440px] mx-auto px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 tracking-wider uppercase space-y-3 md:space-y-0">
+      <div class="flex items-center space-x-2 font-medium">
+        <svg class="w-3.5 h-3.5 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
         <span>SettleGraph &middot; Razorpay Buildathon 2026 &middot; Blade &amp; RazorSense</span>
       </div>
-      <div class="flex items-center space-x-6">
+      <div class="flex items-center space-x-6 font-semibold">
         <span id="footer-precision-badge">Precision: --</span>
         <span id="footer-fp-badge">False Positives: --</span>
       </div>
@@ -814,9 +926,9 @@
   </footer>
 
   <!-- Blade Transaction Inspector Modal -->
-  <div id="inspector-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" onclick="if(event.target===this) closeInspector()">
-    <div class="bg-rzp-surface border border-rzp-borderLight rounded-blade-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-blade-md relative">
-      <button onclick="closeInspector()" class="absolute top-4 right-4 text-rzp-textMuted hover:text-white text-lg p-2" aria-label="Close inspector">
+  <div id="inspector-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" onclick="if(event.target===this) closeInspector()">
+    <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-xl relative text-rzp-navy">
+      <button onclick="closeInspector()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg p-2" aria-label="Close inspector">
         <i class="fa-solid fa-xmark"></i>
       </button>
       <div id="inspector-body"></div>
@@ -843,11 +955,11 @@
         const tab = document.getElementById('tab-' + t);
         if (t === tabId) {
           view.classList.remove('hidden');
-          tab.classList.add('text-white', 'border-b-2', 'border-rzp-blue');
+          tab.classList.add('rzp-tab-active');
           tab.classList.remove('text-rzp-textSecondary', 'border-transparent');
         } else {
           view.classList.add('hidden');
-          tab.classList.remove('text-white', 'border-b-2', 'border-rzp-blue');
+          tab.classList.remove('rzp-tab-active');
           tab.classList.add('text-rzp-textSecondary', 'border-transparent');
         }
       });
@@ -944,9 +1056,9 @@
         document.getElementById('invariant-shield-text').innerText = precPct;
         const shieldDot = document.getElementById('invariant-shield-dot');
         if (evaluation.precision >= 1.0) {
-          shieldDot.className = 'w-2 h-2 rounded-full bg-rzp-emerald animate-pulse';
+          shieldDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
         } else {
-          shieldDot.className = 'w-2 h-2 rounded-full bg-rzp-crimson animate-pulse';
+          shieldDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse';
         }
 
         document.getElementById('footer-precision-badge').innerText =
@@ -984,7 +1096,7 @@
       const tbody = document.getElementById('anomaly-breakdown-body');
       if (!tbody) return;
       if (!breakdown || Object.keys(breakdown).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-rzp-textMuted">No anomaly breakdown data available.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">No anomaly breakdown data available.</td></tr>';
         return;
       }
 
@@ -1010,17 +1122,17 @@
         const fn = m.fn || 0;
         const isClean = fp === 0;
         return `
-          <tr class="hover:bg-rzp-card vivid-transition">
+          <tr class="hover:bg-slate-50 transition">
             <td class="p-3.5">
-              <div class="font-mono text-white text-xs font-semibold">${escapeHtml(scenario)}</div>
-              <div class="text-[11px] text-rzp-textSecondary">${escapeHtml(desc.label)}</div>
+              <div class="font-mono text-rzp-navy text-xs font-bold">${escapeHtml(scenario)}</div>
+              <div class="text-[11px] text-slate-500">${escapeHtml(desc.label)}</div>
             </td>
-            <td class="p-3.5 font-mono ${tp > 0 ? 'text-rzp-emerald font-semibold' : 'text-rzp-textMuted'}">${tp}</td>
-            <td class="p-3.5 font-mono ${fn > 0 ? 'text-rzp-amber font-semibold' : 'text-rzp-textMuted'}">${fn}</td>
-            <td class="p-3.5 font-mono ${fp > 0 ? 'text-rzp-crimson font-bold' : 'text-white'}">${fp}</td>
-            <td class="p-3.5 text-[11px] text-rzp-textSecondary">${escapeHtml(desc.action)}</td>
+            <td class="p-3.5 font-mono ${tp > 0 ? 'text-emerald-600 font-bold' : 'text-slate-400'}">${tp}</td>
+            <td class="p-3.5 font-mono ${fn > 0 ? 'text-amber-600 font-bold' : 'text-slate-400'}">${fn}</td>
+            <td class="p-3.5 font-mono ${fp > 0 ? 'text-rose-600 font-bold' : 'text-rzp-navy'}">${fp}</td>
+            <td class="p-3.5 text-[11px] text-slate-500">${escapeHtml(desc.action)}</td>
             <td class="p-3.5">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono font-semibold tracking-wider ${isClean ? 'border border-emerald-500/40 bg-emerald-500/10 text-rzp-emerald' : 'border border-red-500 bg-red-500/10 text-rzp-crimson'}">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono font-bold tracking-wider ${isClean ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-rose-200 bg-rose-50 text-rose-700'}">
                 ${isClean ? 'PASS (0 FP)' : 'FAIL'}
               </span>
             </td>
@@ -1048,25 +1160,25 @@
     async function triggerReplayCheck() {
       const btn = document.getElementById('btn-replay-check');
       const val = document.getElementById('eval-replay');
-      if (btn) btn.innerText = 'Replaying...';
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs mr-1"></i>Replaying...';
       try {
         const res = await fetch('/api/replay');
         const data = await res.json();
         if (data.stability_rate !== undefined) {
           val.innerText = (data.stability_rate * 100).toFixed(1) + '%';
-          if (btn) btn.innerText = 'Verified 100%';
+          if (btn) btn.innerHTML = '<i class="fa-solid fa-check text-xs mr-1"></i>Verified 100%';
         } else {
-          if (btn) btn.innerText = 'Check Failed';
+          if (btn) btn.innerHTML = 'Check Failed';
         }
       } catch (e) {
-        if (btn) btn.innerText = 'Error';
+        if (btn) btn.innerHTML = 'Error';
       }
     }
 
     function renderExceptions(exceptions) {
       const container = document.getElementById('exception-cards-container');
       if (!exceptions || exceptions.length === 0) {
-        container.innerHTML = '<div class="text-xs text-rzp-textMuted col-span-2 p-4">No exceptions found in ledger.</div>';
+        container.innerHTML = '<div class="text-xs text-slate-400 col-span-2 p-4">No exceptions found in ledger.</div>';
         return;
       }
 
@@ -1084,10 +1196,10 @@
 
       const filterHtml = `
         <div class="col-span-2 flex flex-wrap gap-2 mb-2">
-          <button onclick="filterExceptions('ALL')" class="exc-filter-pill px-3 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue/15 text-white">All (${sorted.length})</button>
+          <button onclick="filterExceptions('ALL')" class="exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm">All (${sorted.length})</button>
           ${categories.map(c => {
             const count = sorted.filter(e => e.category === c).length;
-            return `<button onclick="filterExceptions('${c}')" class="exc-filter-pill px-3 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-full border border-rzp-border bg-rzp-card text-rzp-textSecondary hover:border-rzp-blue/50 hover:text-white vivid-transition">${c.replace(/_/g, ' ')} (${count})</button>`;
+            return `<button onclick="filterExceptions('${c}')" class="exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition">${c.replace(/_/g, ' ')} (${count})</button>`;
           }).join('')}
         </div>`;
 
@@ -1098,9 +1210,9 @@
       window._activeExcFilter = category;
       const filtered = category === 'ALL' ? window._allExceptions : window._allExceptions.filter(e => e.category === category);
       document.querySelectorAll('.exc-filter-pill').forEach(btn => {
-        btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-full border border-rzp-border bg-rzp-card text-rzp-textSecondary hover:border-rzp-blue/50 hover:text-white vivid-transition';
+        btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition';
         if ((category === 'ALL' && btn.textContent.startsWith('All')) || btn.textContent.toUpperCase().startsWith(category.replace(/_/g, ' '))) {
-          btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue/15 text-white';
+          btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm';
         }
       });
       const container = document.getElementById('exception-cards-container');
@@ -1111,24 +1223,28 @@
     }
 
     function renderExceptionCards(exceptions) {
-      const severityColor = { HIGH: 'text-rzp-crimson border-rose-500/30 bg-rose-500/10', MEDIUM: 'text-rzp-amber border-amber-500/30 bg-amber-500/10', LOW: 'text-rzp-textSecondary border-rzp-border bg-rzp-card' };
+      const severityColor = {
+        HIGH: 'text-rose-700 border-rose-200 bg-rose-50',
+        MEDIUM: 'text-amber-700 border-amber-200 bg-amber-50',
+        LOW: 'text-slate-600 border-slate-200 bg-slate-50'
+      };
       return exceptions.slice(0, 100).map(exc => `
-        <div class="bg-rzp-surface p-5 rounded-blade-xl border border-rzp-border space-y-3.5 hover:border-rzp-blue/40 vivid-transition shadow-blade-sm">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 space-y-3.5 hover:border-rzp-blue transition shadow-sm">
           <div class="flex items-center justify-between">
-            <span class="px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wider rounded-blade-sm border border-rzp-border bg-rzp-card text-white font-semibold">${escapeHtml(exc.category)}</span>
-            <span class="text-[10px] uppercase font-mono font-bold tracking-wider px-2 py-0.5 rounded-full border ${severityColor[exc.severity] || 'text-rzp-textSecondary border-rzp-border'}">${escapeHtml(exc.severity)} SEVERITY</span>
+            <span class="px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wider rounded-md border border-slate-200 bg-slate-50 text-rzp-navy font-bold">${escapeHtml(exc.category)}</span>
+            <span class="text-[10px] uppercase font-mono font-extrabold tracking-wider px-2 py-0.5 rounded-full border ${severityColor[exc.severity] || 'text-slate-600 border-slate-200 bg-slate-50'}">${escapeHtml(exc.severity)} SEVERITY</span>
           </div>
           <div class="space-y-1">
-            <div class="text-sm font-bold text-white font-mono">${escapeHtml(exc.record_id)} <span class="text-rzp-textMuted font-sans text-xs">(${escapeHtml(exc.source)})</span></div>
-            <div class="text-xs text-rzp-textSecondary leading-relaxed">${escapeHtml(exc.root_cause)}</div>
+            <div class="text-sm font-bold text-rzp-navy font-mono">${escapeHtml(exc.record_id)} <span class="text-slate-400 font-sans text-xs">(${escapeHtml(exc.source)})</span></div>
+            <div class="text-xs text-slate-600 leading-relaxed">${escapeHtml(exc.root_cause)}</div>
           </div>
-          <div class="p-3 rounded-blade-md bg-rzp-card border border-rzp-border text-xs text-white flex items-start space-x-2.5">
+          <div class="p-3 rounded-lg bg-blue-50/60 border border-blue-100 text-xs text-slate-800 flex items-start space-x-2.5">
             <i class="fa-solid fa-screwdriver-wrench text-rzp-blue text-xs mt-0.5"></i>
-            <div><strong class="font-semibold uppercase tracking-wider text-rzp-blue">Remediation:</strong> ${escapeHtml(exc.suggested_action)}</div>
+            <div><strong class="font-bold uppercase tracking-wider text-rzp-blue">Remediation:</strong> ${escapeHtml(exc.suggested_action)}</div>
           </div>
-          <div class="flex justify-between items-center text-xs text-rzp-textSecondary pt-1">
-            <span>Exposure: <strong class="font-mono text-white">INR ${(exc.unexplained_amount_paise / 100).toFixed(2)}</strong></span>
-            <span class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-mono">Deterministic Diagnostic Log</span>
+          <div class="flex justify-between items-center text-xs text-slate-500 pt-1">
+            <span>Exposure: <strong class="font-mono text-rose-600 font-bold">INR ${(exc.unexplained_amount_paise / 100).toFixed(2)}</strong></span>
+            <span class="text-[10px] uppercase tracking-wider text-slate-400 font-mono">Deterministic Diagnostic Log</span>
           </div>
         </div>
       `).join('');
@@ -1137,7 +1253,7 @@
     function renderLedger(assignments) {
       const tbody = document.getElementById('ledger-table-body');
       if (!assignments || assignments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-rzp-textMuted">No assignments found. Run reconciliation pipeline.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">No assignments found. Run reconciliation pipeline.</td></tr>';
         return;
       }
 
@@ -1155,15 +1271,15 @@
       controlsEl.innerHTML = `
         <div class="flex flex-wrap gap-2.5 items-center">
           <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-rzp-textMuted"></i>
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
             <input type="text" id="ledger-search" placeholder="Search UTR, Order ID, or Record ID..."
-              class="bg-rzp-card border border-rzp-border rounded-blade-md pl-8 pr-3 py-1.5 text-xs text-white w-72 focus:border-rzp-blue outline-none" oninput="applyLedgerFilters()">
+              class="bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-rzp-navy w-72 focus:border-rzp-blue outline-none shadow-sm" oninput="applyLedgerFilters()">
           </div>
-          <button onclick="setLedgerFilter('ALL')" class="ledger-pill px-3 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue/15 text-white">All (${assignments.length})</button>
+          <button onclick="setLedgerFilter('ALL')" class="ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm">All (${assignments.length})</button>
           ${['AUTO_MATCH', 'LIKELY_MATCH', 'EXCEPTION', 'AI_RESOLVED_MATCH'].map(label => {
             const count = assignments.filter(a => a.label === label).length;
             if (count === 0) return '';
-            return `<button onclick="setLedgerFilter('${label}')" class="ledger-pill px-3 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-full border border-rzp-border bg-rzp-card text-rzp-textSecondary hover:border-rzp-blue/50 hover:text-white">${label.replace(/_/g, ' ')} (${count})</button>`;
+            return `<button onclick="setLedgerFilter('${label}')" class="ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition">${label.replace(/_/g, ' ')} (${count})</button>`;
           }).join('')}
         </div>`;
 
@@ -1173,9 +1289,9 @@
     function setLedgerFilter(label) {
       window._activeLedgerFilter = label;
       document.querySelectorAll('.ledger-pill').forEach(btn => {
-        btn.className = 'ledger-pill px-3 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-full border border-rzp-border bg-rzp-card text-rzp-textSecondary hover:border-rzp-blue/50 hover:text-white';
+        btn.className = 'ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition';
         if ((label === 'ALL' && btn.textContent.startsWith('All')) || btn.textContent.toUpperCase().startsWith(label.replace(/_/g, ' '))) {
-          btn.className = 'ledger-pill px-3 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue/15 text-white';
+          btn.className = 'ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm';
         }
       });
       applyLedgerFilters();
@@ -1202,24 +1318,24 @@
     function renderLedgerRows(rows) {
       const tbody = document.getElementById('ledger-table-body');
       const labelBadge = {
-        AUTO_MATCH: 'bg-emerald-500/10 border-emerald-500/30 text-rzp-emerald',
-        LIKELY_MATCH: 'bg-amber-500/10 border-amber-500/30 text-rzp-amber',
-        EXCEPTION: 'bg-rose-500/10 border-rose-500/30 text-rzp-crimson',
-        AI_RESOLVED_MATCH: 'bg-indigo-500/10 border-indigo-500/30 text-rzp-violet'
+        AUTO_MATCH: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+        LIKELY_MATCH: 'bg-amber-50 border-amber-200 text-amber-700',
+        EXCEPTION: 'bg-rose-50 border-rose-200 text-rose-700',
+        AI_RESOLVED_MATCH: 'bg-purple-50 border-purple-200 text-purple-700'
       };
       tbody.innerHTML = rows.slice(0, 300).map((a, idx) => `
-        <tr class="hover:bg-rzp-card vivid-transition cursor-pointer" onclick="openInspector(${idx}, '${a.source_a_id}')">
-          <td class="p-3.5 font-mono text-white">${escapeHtml(a.source_a_id)} <span class="text-rzp-textMuted text-[10px]">(${escapeHtml(a.source_a)})</span></td>
-          <td class="p-3.5 font-mono text-white">${escapeHtml(a.source_b_id)} <span class="text-rzp-textMuted text-[10px]">(${escapeHtml(a.source_b)})</span></td>
-          <td class="p-3.5 font-mono ${(a.confidence >= 0.95) ? 'text-rzp-emerald font-bold' : 'text-rzp-textSecondary'}">${(a.confidence * 100).toFixed(1)}%</td>
-          <td class="p-3.5"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider border ${labelBadge[a.label] || 'border-rzp-border text-rzp-textSecondary'}">${escapeHtml(a.label)}</span></td>
+        <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="openInspector(${idx}, '${a.source_a_id}')">
+          <td class="p-3.5 font-mono text-rzp-navy font-bold">${escapeHtml(a.source_a_id)} <span class="text-slate-400 text-[10px] font-sans">(${escapeHtml(a.source_a)})</span></td>
+          <td class="p-3.5 font-mono text-rzp-navy font-bold">${escapeHtml(a.source_b_id)} <span class="text-slate-400 text-[10px] font-sans">(${escapeHtml(a.source_b)})</span></td>
+          <td class="p-3.5 font-mono ${(a.confidence >= 0.95) ? 'text-emerald-600 font-bold' : 'text-slate-500'}">${(a.confidence * 100).toFixed(1)}%</td>
+          <td class="p-3.5"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${labelBadge[a.label] || 'border-slate-200 text-slate-600'}">${escapeHtml(a.label)}</span></td>
           <td class="p-3.5 font-mono">INR ${(a.a_amount_paise / 100).toFixed(2)}</td>
           <td class="p-3.5 font-mono">INR ${(a.b_amount_paise / 100).toFixed(2)}</td>
-          <td class="p-3.5 font-mono text-[11px] text-rzp-textSecondary">${(a.a_utr && a.a_utr === a.b_utr) ? '<span class="text-white font-semibold">' + escapeHtml(a.a_utr) + '</span>' : escapeHtml(a.a_utr || '--')}</td>
+          <td class="p-3.5 font-mono text-[11px] text-slate-500">${(a.a_utr && a.a_utr === a.b_utr) ? '<span class="text-rzp-navy font-bold">' + escapeHtml(a.a_utr) + '</span>' : escapeHtml(a.a_utr || '--')}</td>
         </tr>
       `).join('');
       if (rows.length > 300) {
-        tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="7" class="p-4 text-center text-rzp-textMuted text-xs">${rows.length - 300} more rows not shown</td></tr>`);
+        tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="7" class="p-4 text-center text-slate-400 text-xs">${rows.length - 300} more rows not shown</td></tr>`);
       }
     }
 
@@ -1234,67 +1350,72 @@
 
       const modal = document.getElementById('inspector-modal');
       const body = document.getElementById('inspector-body');
-      const labelBadge = { AUTO_MATCH: 'bg-emerald-500/10 border-emerald-500/30 text-rzp-emerald', LIKELY_MATCH: 'bg-amber-500/10 border-amber-500/30 text-rzp-amber', EXCEPTION: 'bg-rose-500/10 border-rose-500/30 text-rzp-crimson', AI_RESOLVED_MATCH: 'bg-indigo-500/10 border-indigo-500/30 text-rzp-violet' };
+      const labelBadge = {
+        AUTO_MATCH: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+        LIKELY_MATCH: 'bg-amber-50 border-amber-200 text-amber-700',
+        EXCEPTION: 'bg-rose-50 border-rose-200 text-rose-700',
+        AI_RESOLVED_MATCH: 'bg-purple-50 border-purple-200 text-purple-700'
+      };
 
       body.innerHTML = `
         <div class="space-y-5 font-sans">
-          <div class="flex items-center justify-between border-b border-rzp-border pb-3">
-            <h3 class="text-base font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-              <svg class="w-4 h-4 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor"><path d="M13.4 2L4 13.6h7.2L9.6 22 20 10.4h-7.2L13.4 2z"/></svg>
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <h3 class="text-base font-bold text-rzp-navy uppercase tracking-wider flex items-center space-x-2">
+              <svg class="w-4 h-4 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
               <span>Transaction Evidence Inspector</span>
             </h3>
-            <span class="px-3 py-0.5 rounded-full text-xs font-mono uppercase tracking-wider border ${labelBadge[a.label] || 'border-rzp-border text-rzp-textSecondary'}">${escapeHtml(a.label)}</span>
+            <span class="px-3 py-0.5 rounded-full text-xs font-mono uppercase tracking-wider font-bold border ${labelBadge[a.label] || 'border-slate-200 text-slate-600'}">${escapeHtml(a.label)}</span>
           </div>
 
           <!-- Side-by-side source records -->
           <div class="grid grid-cols-2 gap-3.5">
-            <div class="bg-rzp-card p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-              <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">${escapeHtml(a.source_a)} Record</div>
-              <div class="text-xs text-white font-mono font-bold">${escapeHtml(a.source_a_id)}</div>
-              <div class="text-xs text-rzp-textSecondary">Amount: <span class="text-white font-mono">INR ${(a.a_amount_paise / 100).toFixed(2)}</span></div>
-              <div class="text-xs text-rzp-textSecondary">UTR: <span class="text-white font-mono">${escapeHtml(a.a_utr || '--')}</span></div>
-              <div class="text-xs text-rzp-textSecondary">Order: <span class="text-white font-mono">${escapeHtml(a.a_order_id || '--')}</span></div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+              <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">${escapeHtml(a.source_a)} Record</div>
+              <div class="text-xs text-rzp-navy font-mono font-bold">${escapeHtml(a.source_a_id)}</div>
+              <div class="text-xs text-slate-600">Amount: <span class="text-rzp-navy font-mono font-bold">INR ${(a.a_amount_paise / 100).toFixed(2)}</span></div>
+              <div class="text-xs text-slate-600">UTR: <span class="text-rzp-navy font-mono font-bold">${escapeHtml(a.a_utr || '--')}</span></div>
+              <div class="text-xs text-slate-600">Order: <span class="text-rzp-navy font-mono">${escapeHtml(a.a_order_id || '--')}</span></div>
             </div>
-            <div class="bg-rzp-card p-4 rounded-blade-lg border border-rzp-border space-y-1.5">
-              <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">${escapeHtml(a.source_b)} Record</div>
-              <div class="text-xs text-white font-mono font-bold">${escapeHtml(a.source_b_id)}</div>
-              <div class="text-xs text-rzp-textSecondary">Amount: <span class="text-white font-mono">INR ${(a.b_amount_paise / 100).toFixed(2)}</span></div>
-              <div class="text-xs text-rzp-textSecondary">UTR: <span class="text-white font-mono">${escapeHtml(a.b_utr || '--')}</span></div>
-              <div class="text-xs text-rzp-textSecondary">Order: <span class="text-white font-mono">${escapeHtml(a.b_order_id || '--')}</span></div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+              <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">${escapeHtml(a.source_b)} Record</div>
+              <div class="text-xs text-rzp-navy font-mono font-bold">${escapeHtml(a.source_b_id)}</div>
+              <div class="text-xs text-slate-600">Amount: <span class="text-rzp-navy font-mono font-bold">INR ${(a.b_amount_paise / 100).toFixed(2)}</span></div>
+              <div class="text-xs text-slate-600">UTR: <span class="text-rzp-navy font-mono font-bold">${escapeHtml(a.b_utr || '--')}</span></div>
+              <div class="text-xs text-slate-600">Order: <span class="text-rzp-navy font-mono">${escapeHtml(a.b_order_id || '--')}</span></div>
             </div>
           </div>
 
           <!-- Confidence & Evidence -->
-          <div class="bg-rzp-card p-4 rounded-blade-lg border border-rzp-border space-y-2.5">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Fellegi-Sunter Evidence Score: <span class="text-white font-mono font-bold">${(conf * 100).toFixed(1)}%</span></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Fellegi-Sunter Evidence Score: <span class="text-rzp-navy font-mono font-black">${(conf * 100).toFixed(1)}%</span></div>
             <div class="space-y-1.5 text-xs">
-              <div class="flex justify-between"><span class="text-rzp-textSecondary">UTR Match (weight 0.60)</span><span class="${utrMatch ? 'text-rzp-emerald font-semibold' : 'text-rzp-crimson'}">${utrMatch ? '✓ Exact' : '✗ Missing/Mismatch'}</span></div>
-              <div class="flex justify-between"><span class="text-rzp-textSecondary">Amount Match (weight 0.25)</span><span class="${amtDiff === 0 ? 'text-rzp-emerald font-semibold' : amtDiff <= 100 ? 'text-rzp-amber font-semibold' : 'text-rzp-crimson'}">${amtDiff === 0 ? '✓ Exact' : '∆ ' + (amtDiff / 100).toFixed(2) + ' INR'}</span></div>
-              <div class="flex justify-between"><span class="text-rzp-textSecondary">Date Proximity (weight 0.10)</span><span class="text-rzp-textMuted">T+0 to T+3 Window</span></div>
-              <div class="flex justify-between"><span class="text-rzp-textSecondary">Description Tokens (weight 0.05)</span><span class="text-rzp-textMuted">Fuzzy Lexical Overlap</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">UTR Match (weight 0.60)</span><span class="${utrMatch ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${utrMatch ? '✓ Exact' : '✗ Missing/Mismatch'}</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Amount Match (weight 0.25)</span><span class="${amtDiff === 0 ? 'text-emerald-600 font-bold' : amtDiff <= 100 ? 'text-amber-600 font-bold' : 'text-rose-600 font-bold'}">${amtDiff === 0 ? '✓ Exact' : '∆ ' + (amtDiff / 100).toFixed(2) + ' INR'}</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Date Proximity (weight 0.10)</span><span class="text-slate-500">T+0 to T+3 Window</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Description Tokens (weight 0.05)</span><span class="text-slate-500">Fuzzy Lexical Overlap</span></div>
             </div>
           </div>
 
           <!-- Invariant Verification -->
-          <div class="bg-rzp-card p-4 rounded-blade-lg border border-rzp-border space-y-2">
-            <div class="text-[11px] uppercase tracking-wider text-rzp-textMuted font-semibold">Deterministic Accounting Invariant Gate</div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Deterministic Accounting Invariant Gate</div>
             <div class="space-y-1.5 text-xs">
-              <div class="flex items-center space-x-2"><span class="${amtDiff <= 100 ? 'text-rzp-emerald font-bold' : 'text-rzp-crimson font-bold'}">${amtDiff <= 100 ? '✓' : '✗'}</span><span class="text-rzp-textSecondary">Amount Invariant (≤ ₹1.00 tolerance)</span></div>
-              <div class="flex items-center space-x-2"><span class="text-rzp-emerald font-bold">✓</span><span class="text-rzp-textSecondary">Date Invariant (≤ ${a.label === 'EXCEPTION' ? 'FAILED' : '3'} days gap)</span></div>
-              <div class="flex items-center space-x-2"><span class="text-rzp-emerald font-bold">✓</span><span class="text-rzp-textSecondary">Direction Invariant (bank settlement credit, not debit)</span></div>
+              <div class="flex items-center space-x-2"><span class="${amtDiff <= 100 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${amtDiff <= 100 ? '✓' : '✗'}</span><span class="text-slate-600">Amount Invariant (≤ ₹1.00 tolerance)</span></div>
+              <div class="flex items-center space-x-2"><span class="text-emerald-600 font-bold">✓</span><span class="text-slate-600">Date Invariant (≤ ${a.label === 'EXCEPTION' ? 'FAILED' : '3'} days gap)</span></div>
+              <div class="flex items-center space-x-2"><span class="text-emerald-600 font-bold">✓</span><span class="text-slate-600">Direction Invariant (bank settlement credit, not debit)</span></div>
             </div>
           </div>
 
           ${a.competing_candidates > 0 ? `
-          <div class="bg-rzp-card p-4 rounded-blade-lg border border-amber-500/40 space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-rzp-amber font-semibold">Competing Candidates: ${a.competing_candidates}</div>
-            <div class="text-xs text-rzp-textSecondary">${escapeHtml(a.abstention_reason || 'Near-tie detected — held for human review')}</div>
+          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 space-y-1">
+            <div class="text-[10px] uppercase tracking-wider text-amber-800 font-bold">Competing Candidates: ${a.competing_candidates}</div>
+            <div class="text-xs text-amber-700">${escapeHtml(a.abstention_reason || 'Near-tie detected — held for human review')}</div>
           </div>` : ''}
 
           ${a.label === 'LIKELY_MATCH' && a.abstention_reason ? `
-          <div class="bg-rzp-card p-4 rounded-blade-lg border border-amber-500/40 space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-rzp-amber font-semibold">Abstention Reason</div>
-            <div class="text-xs text-rzp-textSecondary">${escapeHtml(a.abstention_reason)}</div>
+          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 space-y-1">
+            <div class="text-[10px] uppercase tracking-wider text-amber-800 font-bold">Abstention Reason</div>
+            <div class="text-xs text-amber-700">${escapeHtml(a.abstention_reason)}</div>
           </div>` : ''}
         </div>`;
 
@@ -1335,36 +1456,36 @@
     function renderDecisionAuto(a) {
       const el = document.getElementById('decision-auto-body');
       if (!a) {
-        el.innerHTML = '<div class="text-rzp-textMuted">No AUTO_MATCH assignment in this batch.</div>';
+        el.innerHTML = '<div class="text-slate-400">No AUTO_MATCH assignment in this batch.</div>';
         return;
       }
       el.innerHTML = `
         <div class="grid grid-cols-2 gap-3.5">
-          <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">Source A</div>
-            <div class="font-mono text-white font-bold">${escapeHtml(a.source_a_id)} <span class="text-rzp-textMuted font-sans">(${escapeHtml(a.source_a)})</span></div>
-            <div class="text-rzp-textSecondary text-[11px]">INR ${(Number(a.a_amount_paise) / 100).toFixed(2)} &middot; UTR ${escapeHtml(a.a_utr || '--')}</div>
+          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Source A</div>
+            <div class="font-mono text-rzp-navy font-bold">${escapeHtml(a.source_a_id)} <span class="text-slate-400 font-sans">(${escapeHtml(a.source_a)})</span></div>
+            <div class="text-slate-600 text-[11px]">INR ${(Number(a.a_amount_paise) / 100).toFixed(2)} &middot; UTR ${escapeHtml(a.a_utr || '--')}</div>
           </div>
-          <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">Source B</div>
-            <div class="font-mono text-white font-bold">${escapeHtml(a.source_b_id)} <span class="text-rzp-textMuted font-sans">(${escapeHtml(a.source_b)})</span></div>
-            <div class="text-rzp-textSecondary text-[11px]">INR ${(Number(a.b_amount_paise) / 100).toFixed(2)} &middot; UTR ${escapeHtml(a.b_utr || '--')}</div>
+          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Source B</div>
+            <div class="font-mono text-rzp-navy font-bold">${escapeHtml(a.source_b_id)} <span class="text-slate-400 font-sans">(${escapeHtml(a.source_b)})</span></div>
+            <div class="text-slate-600 text-[11px]">INR ${(Number(a.b_amount_paise) / 100).toFixed(2)} &middot; UTR ${escapeHtml(a.b_utr || '--')}</div>
           </div>
         </div>
         <div class="flex justify-between items-center pt-1 text-xs">
-          <span class="text-rzp-textSecondary">Classification</span>
-          <span class="px-2.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-rzp-emerald font-mono font-semibold">${escapeHtml(a.label)}</span>
+          <span class="text-slate-600 font-medium">Classification</span>
+          <span class="px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 font-mono font-bold">${escapeHtml(a.label)}</span>
         </div>
         <div class="flex justify-between items-center text-xs">
-          <span class="text-rzp-textSecondary">Confidence Scored</span>
-          <span class="font-mono text-rzp-emerald font-bold">${(Number(a.confidence) * 100).toFixed(1)}%</span>
+          <span class="text-slate-600 font-medium">Confidence Scored</span>
+          <span class="font-mono text-emerald-600 font-bold">${(Number(a.confidence) * 100).toFixed(1)}%</span>
         </div>
-        <div class="p-3 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-          <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">Why This Matched</div>
-          <div class="text-white text-xs">${buildAutoMatchWhy(a)}</div>
+        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Why This Matched</div>
+          <div class="text-slate-700 text-xs">${buildAutoMatchWhy(a)}</div>
         </div>
-        <div class="p-3 rounded-blade-md bg-rzp-card border border-rzp-border text-[11px] text-rzp-textSecondary">
-          <span class="text-white font-semibold">Audit trace:</span> matched 1:1 on the ${escapeHtml(a.source_a)}&harr;${escapeHtml(a.source_b)} leg, verified against deterministic accounting invariants before booking.
+        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
+          <span class="text-rzp-navy font-bold">Audit trace:</span> matched 1:1 on the ${escapeHtml(a.source_a)}&harr;${escapeHtml(a.source_b)} leg, verified against deterministic accounting invariants before booking.
         </div>
       `;
     }
@@ -1372,7 +1493,7 @@
     function renderDecisionAbstained(a) {
       const el = document.getElementById('decision-abstained-body');
       if (!a) {
-        el.innerHTML = '<div class="text-rzp-textMuted">No LIKELY_MATCH (abstained) assignment in this batch.</div>';
+        el.innerHTML = '<div class="text-slate-400">No LIKELY_MATCH (abstained) assignment in this batch.</div>';
         return;
       }
       const competing = Number(a.competing_candidates) || 0;
@@ -1380,37 +1501,37 @@
       const confPct = (Number(a.confidence) * 100).toFixed(1);
       el.innerHTML = `
         <div class="grid grid-cols-2 gap-3.5">
-          <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">Source A</div>
-            <div class="font-mono text-white font-bold">${escapeHtml(a.source_a_id)} <span class="text-rzp-textMuted font-sans">(${escapeHtml(a.source_a)})</span></div>
+          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Source A</div>
+            <div class="font-mono text-rzp-navy font-bold">${escapeHtml(a.source_a_id)} <span class="text-slate-400 font-sans">(${escapeHtml(a.source_a)})</span></div>
           </div>
-          <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">Source B</div>
-            <div class="font-mono text-white font-bold">${escapeHtml(a.source_b_id)} <span class="text-rzp-textMuted font-sans">(${escapeHtml(a.source_b)})</span></div>
+          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Source B</div>
+            <div class="font-mono text-rzp-navy font-bold">${escapeHtml(a.source_b_id)} <span class="text-slate-400 font-sans">(${escapeHtml(a.source_b)})</span></div>
           </div>
         </div>
         <div class="flex justify-between items-center pt-1 text-xs">
-          <span class="text-rzp-textSecondary">Confidence Scored</span>
-          <span class="font-mono text-rzp-amber font-bold">${confPct}%</span>
+          <span class="text-slate-600 font-medium">Confidence Scored</span>
+          <span class="font-mono text-amber-600 font-bold">${confPct}%</span>
         </div>
         <div class="flex justify-between items-center text-xs">
-          <span class="text-rzp-textSecondary">Auto-Match Bar</span>
-          <span class="font-mono text-white">95.0%</span>
+          <span class="text-slate-600 font-medium">Auto-Match Bar</span>
+          <span class="font-mono text-rzp-navy font-bold">95.0%</span>
         </div>
-        <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-          <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">Competing Candidates</div>
-          <div class="text-2xl font-bold text-white font-mono">${competing}</div>
+        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Competing Candidates</div>
+          <div class="text-2xl font-bold text-rzp-navy font-mono">${competing}</div>
         </div>
-        <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-          <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">Abstention Reason</div>
-          <div class="text-white text-xs">${
+        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Abstention Reason</div>
+          <div class="text-slate-700 text-xs">${
             reason
               ? escapeHtml(reason)
               : 'Confidence (' + confPct + '%) scored below the 95% auto-match bar &mdash; held for human verification.'
           }</div>
         </div>
-        <div class="p-3 rounded-blade-md bg-rzp-card border border-rzp-border text-[11px] text-rzp-textSecondary">
-          <span class="text-white font-semibold">Required action:</span> route to manual review &mdash; human confirms counterpart before ledger booking.
+        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
+          <span class="text-rzp-navy font-bold">Required action:</span> route to manual review &mdash; human confirms counterpart before ledger booking.
         </div>
       `;
     }
@@ -1418,32 +1539,32 @@
     function renderDecisionException(exc) {
       const el = document.getElementById('decision-exception-body');
       if (!exc) {
-        el.innerHTML = '<div class="text-rzp-textMuted">No exceptions in this batch.</div>';
+        el.innerHTML = '<div class="text-slate-400">No exceptions in this batch.</div>';
         return;
       }
       el.innerHTML = `
         <div class="flex items-center justify-between pt-1 text-xs">
-          <span class="text-rzp-textSecondary">Record</span>
-          <span class="font-mono text-white font-bold">${escapeHtml(exc.record_id)} <span class="text-rzp-textMuted font-sans">(${escapeHtml(exc.source)})</span></span>
+          <span class="text-slate-600 font-medium">Record</span>
+          <span class="font-mono text-rzp-navy font-bold">${escapeHtml(exc.record_id)} <span class="text-slate-400 font-sans">(${escapeHtml(exc.source)})</span></span>
         </div>
         <div class="flex items-center justify-between text-xs">
-          <span class="text-rzp-textSecondary">Category</span>
-          <span class="px-2.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rzp-crimson font-mono font-semibold">${escapeHtml(exc.category)}</span>
+          <span class="text-slate-600 font-medium">Category</span>
+          <span class="px-2.5 py-0.5 rounded-full border border-rose-200 bg-rose-50 text-rose-700 font-mono font-bold">${escapeHtml(exc.category)}</span>
         </div>
         <div class="flex items-center justify-between text-xs">
-          <span class="text-rzp-textSecondary">Severity</span>
-          <span class="font-mono text-white">${escapeHtml(exc.severity)}</span>
+          <span class="text-slate-600 font-medium">Severity</span>
+          <span class="font-mono text-rzp-navy font-bold">${escapeHtml(exc.severity)}</span>
         </div>
-        <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-          <div class="text-[10px] uppercase tracking-wider text-rzp-textMuted font-semibold">Root Cause / Source Conflict</div>
-          <div class="text-white text-xs">${escapeHtml(exc.root_cause)}</div>
+        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Root Cause / Source Conflict</div>
+          <div class="text-slate-700 text-xs">${escapeHtml(exc.root_cause)}</div>
         </div>
         <div class="flex items-center justify-between text-xs">
-          <span class="text-rzp-textSecondary">Unexplained Exposure</span>
-          <span class="font-mono text-rzp-crimson font-bold">INR ${(Number(exc.unexplained_amount_paise) / 100).toFixed(2)}</span>
+          <span class="text-slate-600 font-medium">Unexplained Exposure</span>
+          <span class="font-mono text-rose-600 font-black">INR ${(Number(exc.unexplained_amount_paise) / 100).toFixed(2)}</span>
         </div>
-        <div class="p-3 rounded-blade-md bg-rzp-card border border-rzp-border text-[11px] text-rzp-textSecondary">
-          <span class="text-white font-semibold">Why automation stopped:</span> deterministic matcher could not reconcile record within invariants. <span class="text-white">Action:</span> ${escapeHtml(exc.suggested_action)}
+        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
+          <span class="text-rzp-navy font-bold">Why automation stopped:</span> deterministic matcher could not reconcile record within invariants. <span class="text-rzp-navy font-bold">Action:</span> ${escapeHtml(exc.suggested_action)}
         </div>
       `;
     }
@@ -1452,10 +1573,11 @@
       document.querySelectorAll('.decision-filter-btn').forEach(btn => {
         const active = btn.dataset.decisionFilter === state;
         btn.classList.toggle('border-rzp-blue', active);
-        btn.classList.toggle('bg-rzp-blue/15', active);
+        btn.classList.toggle('bg-rzp-blue', active);
         btn.classList.toggle('text-white', active);
-        btn.classList.toggle('border-rzp-border', !active);
-        btn.classList.toggle('text-rzp-textSecondary', !active);
+        btn.classList.toggle('border-slate-200', !active);
+        btn.classList.toggle('text-slate-600', !active);
+        btn.classList.toggle('bg-white', !active);
       });
       document.querySelectorAll('[data-decision-state]').forEach(card => {
         card.classList.toggle('hidden', state !== 'all' && card.dataset.decisionState !== state);
@@ -1487,13 +1609,13 @@
       const tbody = document.getElementById('baseline-table-body');
       const note = document.getElementById('baseline-note');
       status.innerText = 'Computing…';
-      tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-rzp-textMuted">Running Baselines A/B/C against ground truth&hellip;</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Running Baselines A/B/C against ground truth&hellip;</td></tr>';
       try {
         const res = await fetch('/api/baselines');
         const data = await res.json();
         if (!res.ok || data.error) {
           status.innerText = 'Unavailable';
-          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-rzp-textMuted">${escapeHtml(data.error || 'Baseline comparison unavailable.')}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">${escapeHtml(data.error || 'Baseline comparison unavailable.')}</td></tr>`;
           note.innerText = '';
           return;
         }
@@ -1505,14 +1627,14 @@
           const m = r.metrics || {};
           const isSg = k === 'settlegraph';
           const fabr = m.false_auto_book_rate !== undefined ? (m.false_auto_book_rate * 100).toFixed(2) + '%' : '--';
-          const fabrClass = (m.false_auto_book_rate || 0) > 0 ? 'text-rzp-crimson font-bold' : 'text-white';
+          const fabrClass = (m.false_auto_book_rate || 0) > 0 ? 'text-rose-600 font-bold' : 'text-rzp-navy';
           return `
-            <tr class="hover:bg-rzp-card vivid-transition ${isSg ? 'bg-rzp-blue/5 border-l-2 border-l-rzp-blue' : ''}">
-              <td class="p-3.5 ${isSg ? 'text-white font-bold' : 'text-rzp-textSecondary'}">${escapeHtml(r.label)}</td>
-              <td class="p-3.5 font-mono text-white">${m.precision !== undefined ? (m.precision * 100).toFixed(1) + '%' : '--'}</td>
-              <td class="p-3.5 font-mono text-white">${m.recall !== undefined ? (m.recall * 100).toFixed(1) + '%' : '--'}</td>
-              <td class="p-3.5 font-mono text-white">${m.true_positives !== undefined ? m.true_positives : '--'}</td>
-              <td class="p-3.5 font-mono text-white">${m.false_positives !== undefined ? m.false_positives : '--'}</td>
+            <tr class="hover:bg-slate-50 transition ${isSg ? 'bg-blue-50/50 border-l-4 border-l-rzp-blue' : ''}">
+              <td class="p-3.5 ${isSg ? 'text-rzp-navy font-bold' : 'text-slate-600'}">${escapeHtml(r.label)}</td>
+              <td class="p-3.5 font-mono text-rzp-navy font-semibold">${m.precision !== undefined ? (m.precision * 100).toFixed(1) + '%' : '--'}</td>
+              <td class="p-3.5 font-mono text-rzp-navy font-semibold">${m.recall !== undefined ? (m.recall * 100).toFixed(1) + '%' : '--'}</td>
+              <td class="p-3.5 font-mono text-rzp-navy">${m.true_positives !== undefined ? m.true_positives : '--'}</td>
+              <td class="p-3.5 font-mono text-rzp-navy font-bold">${m.false_positives !== undefined ? m.false_positives : '--'}</td>
               <td class="p-3.5 font-mono ${fabrClass}">${fabr}</td>
             </tr>
           `;
@@ -1533,46 +1655,46 @@
         note.innerText = noteText;
       } catch (err) {
         status.innerText = 'Error';
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-rzp-textMuted">Error computing baselines.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Error computing baselines.</td></tr>';
         console.error(err);
       }
     }
 
     async function runFailureSimulations() {
       const container = document.getElementById('sandbox-scenarios-container');
-      container.innerHTML = '<div class="text-xs text-rzp-textMuted p-6"><i class="fa-solid fa-spinner fa-spin mr-2 text-rzp-blue"></i>Executing failure containment probes across 7 deterministic scenarios...</div>';
+      container.innerHTML = '<div class="text-xs text-slate-500 p-6"><i class="fa-solid fa-spinner fa-spin mr-2 text-rzp-blue"></i>Executing failure containment probes across 7 deterministic scenarios...</div>';
       try {
         const res = await fetch('/api/simulate-failures');
         const scenarios = await res.json();
         container.innerHTML = scenarios.map(s => `
-          <div class="bg-rzp-surface p-5 rounded-blade-xl border border-rzp-border space-y-3.5 shadow-blade-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rzp-border pb-3">
+          <div class="bg-white p-5 rounded-xl border border-slate-200 space-y-3.5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
               <div class="flex items-center space-x-3">
-                <span class="px-2.5 py-0.5 text-xs font-mono rounded-blade-sm bg-rzp-card border border-rzp-border text-white font-bold">${escapeHtml(s.scenario_id)}</span>
-                <span class="text-sm font-bold text-white">${escapeHtml(s.name)}</span>
+                <span class="px-2.5 py-0.5 text-xs font-mono rounded-md bg-slate-100 border border-slate-200 text-rzp-navy font-bold">${escapeHtml(s.scenario_id)}</span>
+                <span class="text-sm font-bold text-rzp-navy">${escapeHtml(s.name)}</span>
               </div>
-              <span class="text-xs font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${s.passed ? 'text-rzp-emerald border-emerald-500/40 bg-emerald-500/10' : 'text-rzp-crimson border-red-500 bg-red-500/10'}">
+              <span class="text-xs font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold border ${s.passed ? 'text-emerald-700 border-emerald-200 bg-emerald-50' : 'text-rose-700 border-rose-200 bg-rose-50'}">
                 ${s.passed ? '[PASS] CONTAINED' : '[FAIL] NOT CONTAINED'}
               </span>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
-              <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-                <div class="text-rzp-textMuted uppercase tracking-wider text-[10px] font-semibold">Injected Failure Mode</div>
-                <div class="text-white font-mono pt-0.5">${escapeHtml(s.injected_failure)}</div>
+              <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <div class="text-slate-500 uppercase tracking-wider text-[10px] font-bold">Injected Failure Mode</div>
+                <div class="text-rzp-navy font-mono pt-0.5 font-bold">${escapeHtml(s.injected_failure)}</div>
               </div>
-              <div class="p-3.5 rounded-blade-md bg-rzp-card border border-rzp-border space-y-1">
-                <div class="text-rzp-textMuted uppercase tracking-wider text-[10px] font-semibold">Shield Containment Response</div>
-                <div class="text-white font-mono pt-0.5">${escapeHtml(s.system_response)}</div>
+              <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <div class="text-slate-500 uppercase tracking-wider text-[10px] font-bold">Shield Containment Response</div>
+                <div class="text-rzp-navy font-mono pt-0.5 font-bold">${escapeHtml(s.system_response)}</div>
               </div>
             </div>
-            <div class="text-xs text-rzp-textSecondary flex items-center space-x-2 pt-1">
-              <span class="text-white font-semibold">Proof:</span>
+            <div class="text-xs text-slate-600 flex items-center space-x-2 pt-1">
+              <span class="text-rzp-navy font-bold">Proof:</span>
               <span>${escapeHtml(s.safe_containment_proof)}</span>
             </div>
           </div>
         `).join('');
       } catch (err) {
-        container.innerHTML = '<div class="text-xs text-rzp-textMuted p-4">Error running simulations.</div>';
+        container.innerHTML = '<div class="text-xs text-slate-400 p-4">Error running simulations.</div>';
       }
     }
 
@@ -1595,7 +1717,7 @@
     async function triggerReconciliation() {
       const btn = document.getElementById('btn-reconcile');
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i><span>Running...</span>';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs mr-1"></i><span>Running...</span>';
       try {
         await fetch('/api/run-reconciliation', { method: 'POST' });
         await fetchData();
@@ -1603,7 +1725,7 @@
         alert('Error triggering pipeline: ' + err);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-play text-[10px]"></i><span>Reconcile</span>';
+        btn.innerHTML = '<i class="fa-solid fa-play text-[10px]"></i><span>Reconcile Batch &rarr;</span>';
       }
     }
 
