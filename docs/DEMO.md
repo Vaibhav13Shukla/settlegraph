@@ -204,10 +204,14 @@ python scripts/eval_holdout.py --records 600 --seed 20260905
 - **Noise sweep — HEALTHY.** Precision held at 100% from 0% to 30%
   corruption while abstention rose 5.1% → 9.2% and recall absorbed the cost.
   It trades recall for safety, not precision for recall.
-- **Chaos batch — SAFE but NOT RESILIENT.** Precision never broke. The
-  breaking point is a **hard crash at 20% structural damage**: ingest is
-  all-or-nothing, so one unparseable timestamp aborts the file. Real,
-  measured, and named as a limitation.
+- **Chaos batch — SAFE and RESILIENT.** Precision held **100% at every level
+  from 0% to 50%** structural damage, 0 invariant violations, with abstention
+  climbing 9.19% → 34.15% and 592 duplicates intercepted at the worst level.
+  Worth telling: on its *first* run this harness hard-crashed from 20% damage
+  onward — ingest was all-or-nothing, so one bad timestamp killed the file.
+  Bad rows are now quarantined to `quarantine.json` and counted in
+  `summary.json`. The harness found the defect; the fix followed.
+  Honest limit: at 50% damage recall is 13.32% — never wrong, nearly useless.
 - **Held-out — no overfitting.** On a seed the system was never tuned
   against, precision held at **exactly 100.00%**, recall moved −1.82pp.
 

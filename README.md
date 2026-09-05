@@ -105,12 +105,12 @@ Reproduce with `settlegraph benchmark`.
 
 Stress-tested at **20,000 records (~60,000 total across all three sources)** with `scripts/stress_test.py`: zero false positives, zero invariant violations held at scale, ~1,600 records/sec after fixing two real bottlenecks the stress run surfaced (see DEVLOG Day 4 — a quadratic candidate-matching loop and an over-eager drift detector, both measured and fixed, 12.8× faster on the worse of the two).
 
-Beyond the single batch, three harnesses exist because one number proves nothing:
+Beyond the single batch, four harnesses exist because one number proves nothing:
 
 | Harness | Question it answers | Result |
 | :--- | :--- | :--- |
 | `scripts/noise_sweep.py` | Does the system stay confident as data quality collapses? | **Healthy** — precision held 100% from 0→30% corruption while abstention rose 5.1%→9.2% and recall absorbed the cost |
-| `scripts/chaos_batch.py` | Where is the actual breaking point under mixed structural damage? | **Safe but not resilient** — precision never broke; it hard-crashes at 20% damage because ingest has no row-level fault tolerance |
+| `scripts/chaos_batch.py` | Where is the actual breaking point under mixed structural damage? | **Safe and resilient** — precision held 100% at every level 0→50%; bad rows are quarantined, not fatal (this harness found the crash that forced that fix) |
 | `scripts/eval_holdout.py` | Does it hold up on a split development never saw? | **No overfitting** — precision held at exactly 100% on a different seed, recall −1.82pp |
 | `settlegraph replay` | Would you get the same decision twice? | **2,284/2,284 identical, 100% stability** |
 
@@ -136,7 +136,7 @@ SettleGraph resists Goodharting by being **Precision-Constrained**:
 
 ## 5. AI-Assisted Exception Resolution (Optional, Off by Default)
 
-The four zero-recall anomaly kinds above (§3) share one property: the deterministic
+The three zero-recall anomaly kinds above (§3) share one property: the deterministic
 candidate graph produces nothing for the scorer to accept or reject. `engine/ai_reasoner.py`
 lets a Claude call attempt those specifically — and only those — under the same rule this
 project has followed since Day 1:
@@ -165,80 +165,63 @@ path calls out to Anthropic.
 
 ## 6. Quickstart
 
-### Installation & Environment
 ```bash
-# Set up virtual environment
 py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev]"
-
-# Run test suite (197 passing tests, including property-based / fuzz / adversarial tests)
-.venv\Scripts\python -m pytest -q --basetemp .pytest-tmp
+.venv\Scripts\python -m pytest -q --basetemp .pytest-tmp   # 288 tests
 ```
 
-### End-to-End Execution
+**The whole demo, in two commands:**
 ```bash
-# 1. Generate synthetic financial realities (Razorpay, Bank, Merchant, and hidden Ground Truth)
-.venv\Scripts\python -m settlegraph.cli generate --total-records 1000 --seed 42
+python -m settlegraph.cli generate --total-records 1000 --seed 42
+python -m settlegraph.cli run
+```
+`run` is one rail: settlement matching, GST tax-line reconciliation, Route
+split reconciliation, the audit report, the plain-language digest, and a
+recorded run-history row.
 
-# 2. Run the full reconciliation pipeline -- this alone produces everything:
-#    settlement matching, tax-line (GST) reconciliation, Route split
-#    reconciliation, the audit report, the plain-language digest, and a
-#    recorded row in the run-history database. One command, one rail.
-.venv\Scripts\python -m settlegraph.cli run
-
-# 3. Run benchmark against naive baseline
-.venv\Scripts\python -m settlegraph.cli benchmark
-
-# 4. Run all 7 failure-injection scenarios
-.venv\Scripts\python -m settlegraph.cli simulate
-
-# 5. Stress test at 20,000 records (isolated workspace, doesn't touch data/generated)
-.venv\Scripts\python scripts/stress_test.py --records 20000
-
-# 6. (optional) Re-run one satellite surface on its own -- step 2 above
-#    already ran each of these automatically as part of the pipeline
-.venv\Scripts\python -m settlegraph.cli tax-match
-.venv\Scripts\python -m settlegraph.cli route-reconcile
-.venv\Scripts\python -m settlegraph.cli digest
-
-# 7. Run history + real cross-run drift (needs a few `run`s to accumulate --
-#    step 2 already recorded one row per run automatically)
-.venv\Scripts\python -m settlegraph.cli history
-
-# 8. Ask the Settlement Q&A Agent a question (needs `pip install -e ".[llm]"`
-#    and either ANTHROPIC_API_KEY or an authenticated `claude` CLI session)
-.venv\Scripts\python -m settlegraph.cli ask "Why wasn't payment X matched?"
+**Prove the claims:**
+```bash
+python -m settlegraph.cli benchmark    # vs. all three baselines
+python -m settlegraph.cli simulate     # 7 failure-injection scenarios
+python -m settlegraph.cli replay       # every decision re-derives identically
+python scripts/stress_test.py  --records 20000
+python scripts/noise_sweep.py  --records 500
+python scripts/chaos_batch.py  --records 400
+python scripts/eval_holdout.py --records 600 --seed 20260905
 ```
 
-See `docs/adr/0006-pdf-compliance.md` for the full, honest checklist against
-the official Track 04 brief.
+**Also available:** `serve` (dashboard on :8080), `history` (cross-run drift),
+`digest`, `tax-match`, `route-reconcile`, and `ask "Why wasn't payment X
+matched?"` (needs `pip install -e ".[llm]"` plus a key or an authenticated
+`claude` CLI session).
 
-Outputs are written to `results/`:
-- `assignments.csv`: All matched records with confidence scores and labels.
-- `unmatched.csv`: Orphan records identified across sources.
-- `exceptions.json`: Full diagnostic root-cause reports for every exception.
-- `revenue_assurance.json`: High-level financial totals and exposure metrics.
-- `AUDIT_REPORT.md`: Comprehensive markdown audit log ready for finance controllers.
+Outputs land in `results/`: `assignments.csv`, `unmatched.csv`,
+`exceptions.json`, `quarantine.json`, `revenue_assurance.json`,
+`evaluation.json`, `summary.json`, `AUDIT_REPORT.md`, `DIGEST.md`.
+
+`docs/adr/0006-pdf-compliance.md` is the honest checklist against the
+official Track 04 brief.
 
 ---
 
-## 7. What Broke & How We Got Out
+## 7. What Broke & How We Found It
 
-The Day 1–3 finds are below. Day 4 (business edge cases, a quadratic candidate-matching
-bug and an over-eager drift detector found by stress-testing at scale, a test that was
-silently overwriting the real demo dataset) is written up in full in `DEVLOG.md` — kept
-there rather than duplicated here because the numbers move fast enough during active
-work that one place to update is worth more than a tidy README.
+Full engineering log in **[`DEVLOG.md`](DEVLOG.md)**. Two entries matter most,
+because they are the argument for how this project was built:
 
-1. **Denominators in Multi-Source Probabilistic Scoring:**
-   - *Failure:* Initial scoring evaluated all 5 signals against a fixed denominator of 1.0. Because bank statements lack `order_id` and `payment_id`, the maximum possible Razorpay-Bank score was capped at 0.55, causing all true matches to be misclassified as exceptions.
-   - *Recovery:* Refactored `score_edge` to use source-aware Fellegi-Sunter conditioning, evaluating only the discriminating features available for that specific pair type.
-2. **Leg Competition in Global Bipartite Assignment:**
-   - *Failure:* When global assignment tracked consumed records in a single flat set, a Razorpay record matching Merchant ledger caused the same Razorpay record to be marked as unavailable for its corresponding Bank settlement credit!
-   - *Recovery:* Separated assignment state into pairwise reconciliation legs (`(razorpay, bank)` and `(razorpay, merchant)`), ensuring each leg is solved with independent 1-to-1 exclusivity.
-3. **Net-Zero Settlement Credits:**
-   - *Failure:* When transactions experienced a 100% refund deduction before batch settlement, net bank credit became ₹0, triggering a Pydantic `gt=0` validation error on NormalizedRecord.
-   - *Recovery:* Adjusted monetary constraints to `ge=0` while preserving non-negative credit assertions, enabling valid representations of net-zero settlement line items.
+**A green test suite proved nothing.** The worst defect in this codebase — a
+recycled UTR causing a confident `AUTO_MATCH` to the **wrong** payment — was
+live while 130+ tests passed, precision read 100%, and a 20,000-record stress
+run was clean. It was found by `datagen/adversarial.py`, a corpus written
+specifically to make the engine confidently wrong. Two defects surfaced that
+way; both are now closed with tests asserting the safe behaviour.
+
+**The harnesses found their own bugs.** `scripts/chaos_batch.py` hard-crashed
+the pipeline on its first run at 20% structural damage — ingest was
+all-or-nothing, so one bad timestamp killed an entire file. Bad rows are now
+quarantined with their row number and validation error. The harness existed
+before the fix, which is the point of building it.
 
 ---
 
@@ -292,13 +275,13 @@ every failure path (timeout, refusal, malformed JSON, hallucinated candidate,
 invariant failure) leaves the record exactly where the deterministic layer
 put it.
 
-**It refuses rather than degrades on malformed input.** `engine/ingest.py`
-builds records all-or-nothing, so a *single* unparseable timestamp anywhere
-in a source file aborts the entire batch. Measured: the chaos harness
-hard-crashes at 20% structural damage. For a ledger, refusing a corrupted
-feed beats reconciling half of it — but a merchant with one bad row in a
-20,000-row file currently gets nothing, rather than 19,999 reconciled records
-and one quarantined line. Row-level ingest quarantine is not built.
+**Under heavy corruption it becomes safe but nearly useless.** Malformed rows
+are now quarantined rather than fatal (`results/quarantine.json`, counted in
+`summary.json`), so the pipeline completes at every chaos level — but at 50%
+structural damage recall falls to 13.32%. It is still never *wrong*; almost
+everything simply lands in review. A wholly missing source file still raises
+`FileNotFoundError`, deliberately: "nothing to reconcile" is a different
+failure from "one bad row".
 
 **Storage and concurrency are single-process.** Flat files, one writer. A
 multi-process deployment would need the run-history and idempotency state

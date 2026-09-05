@@ -166,39 +166,45 @@ rows, and malformed timestamps — escalating across chaos levels.
 | Chaos | Status | Precision | Recall | Auto | Abstained | Exceptions | Abstain % | Invariant viol. | Duplicates caught |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0% | OK | **100.00%** | 77.81% | 798 | 81 | 2 | 9.19% | 0 | 0 |
-| 10% | OK | **100.00%** | 57.96% | 635 | 117 | 46 | 14.66% | 0 | **119** |
-| 20% | **CRASHED** | — | — | — | — | — | — | — | — |
-| 30–50% | **CRASHED** | — | — | — | — | — | — | — | — |
+| 10% | OK | **100.00%** | 57.96% | 635 | 117 | 46 | 14.66% | 0 | 119 |
+| 20% | OK | **100.00%** | 41.25% | 486 | 153 | 102 | 20.65% | 0 | 238 |
+| 30% | OK | **100.00%** | 29.50% | 372 | 164 | 139 | 24.30% | 0 | 357 |
+| 40% | OK | **100.00%** | 20.63% | 269 | 197 | 164 | 31.27% | 0 | 475 |
+| 50% | OK | **100.00%** | 13.32% | 211 | 209 | 192 | 34.15% | 0 | 592 |
 
-**VERDICT: SAFE, but not RESILIENT.**
+**VERDICT: SAFE, and — after a fix this harness forced — RESILIENT.**
 
-1. **Precision never broke.** It held at 100.00% at every level that
-   completed. There is no false-auto-book cliff to report, and none was
-   manufactured to make the table look dramatic.
-2. **The real breaking point is a hard crash at 20% structural damage** — and
-   the cause is worth naming precisely. `engine/ingest.py` builds records with
-   an all-or-nothing comprehension (`[Model(**row) for row in rows]`), so a
-   *single* unparseable timestamp anywhere in `razorpay_settlements.csv`
-   aborts the entire batch. **Zero row-level fault tolerance at ingest.**
-   That is a genuine, previously-undocumented brittleness, not an artefact of
-   the harness.
-3. **Abstention rose as chaos rose** (9.19% → 14.66%) and recall absorbed the
-   damage (77.81% → 57.96%) — the same healthy shape as the noise sweep.
-4. **119 duplicates were intercepted** by `IdempotencyShield` at level 10% and
-   never inflated the match counts — the dedup wiring working on adversarial
-   input, not just in its unit test.
+1. **Precision never broke.** 100.00% at every level, 0 invariant violations
+   throughout. No false-auto-book cliff exists to report and none was
+   manufactured.
+2. **Abstention rises monotonically** (9.19% → 34.15%) while recall absorbs
+   the damage (77.81% → 13.32%). The system degrades into review, never into
+   wrong answers.
+3. **Duplicates are caught at scale under adversarial input** — 592 at the
+   worst level, none inflating the match counts.
 
-Independently corroborated by a direct probe: empty-but-well-formed CSVs
-complete cleanly, a missing source file raises `FileNotFoundError`, and
-garbage content raises a Pydantic `ValidationError` naming the exact field.
-The system refuses rather than guesses.
+**What this harness found, and what it forced.** On its first run the pipeline
+**hard-crashed from 20% damage onward**. `engine/ingest.py` built records with
+an all-or-nothing comprehension, so a *single* unparseable timestamp anywhere
+in a source file aborted the whole batch — zero row-level fault tolerance. A
+merchant with one bad row in a 20,000-row file would have got nothing.
 
-**Is that the right behaviour?** For a ledger, refusing a corrupted feed
-beats reconciling half of it, so failing closed is defensible. What is *not*
-defensible is that it fails closed with a raw traceback and no partial-batch
-reporting: a merchant with one bad row in a 20,000-row file gets nothing,
-not 19,999 reconciled records and one quarantined line. Row-level
-quarantine at ingest is the obvious next piece of work, and it is not built.
+That is now fixed: `load_all_with_quarantine` isolates each failing row into
+`results/quarantine.json` with its source file, 1-indexed row number, raw
+content and exact validation error, and `summary.json` carries a
+`quarantined_records` count. Valid rows process normally.
+
+**Quarantine, deliberately, not skipping.** Silently dropping unparseable rows
+would be far worse than crashing: the batch would report clean while money
+vanished from the reconciliation entirely. A quarantined batch can never look
+identical to a clean one — the count appears in the console, in
+`summary.json`, and in its own file.
+
+**The honest limit that remains:** at 50% structural damage recall is 13.32%.
+The system is still never *wrong*, but it is close to useless — nearly
+everything lands in review. Fail-closed is preserved at the whole-file level
+too: a wholly missing source file still raises `FileNotFoundError`, because
+"there is nothing to reconcile" is a different failure from "one row is bad".
 
 Reproduce: `python scripts/chaos_batch.py --records 400`.
 
@@ -424,13 +430,13 @@ python -m pytest -q && python scripts/run_e2e.py
   all. Those would need generator work, not just new assertions, and the
   claim "confidence decreases on unfamiliar patterns" is therefore only
   demonstrated for the identifier and noise axes, not universally.
-- **Catastrophic input fails closed, but not gracefully.** Probed directly:
-  empty-but-well-formed CSVs complete cleanly; a *missing* source file raises
-  `FileNotFoundError`; unparseable content raises a Pydantic `ValidationError`
-  naming the exact missing field. Nothing is silently coerced or partially
-  processed, which is the right call for a ledger — refusing a corrupted
-  feed beats reconciling half of it. But it surfaces as a raw traceback
-  rather than an actionable operator message, and no test pins that
-  behaviour. Deliberately left as-is rather than wrapped in a broad
-  `except`: swallowing ingest errors to look tidy is exactly how a
-  half-ingested batch would get reported as a clean run.
+- **Malformed input is now survivable, but a whole-file failure still is
+  not — deliberately.** Probed directly: empty-but-well-formed CSVs complete
+  cleanly; individual unparseable rows are quarantined (§4a) with their row
+  number and validation error; a *wholly missing* source file still raises
+  `FileNotFoundError` and always will, because "there is nothing to
+  reconcile" is a different failure from "one row is bad". Nothing is
+  silently coerced. The remaining rough edge is that the missing-file case
+  surfaces as a raw traceback rather than an actionable operator message.
+  Not wrapped in a broad `except` on purpose: swallowing ingest errors to
+  look tidy is exactly how a half-ingested batch gets reported as clean.
