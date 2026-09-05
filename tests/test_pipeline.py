@@ -14,7 +14,10 @@ from __future__ import annotations
 from datetime import date
 
 from settlegraph.config import PipelineConfig
+from settlegraph.engine.assign import global_assign
+from settlegraph.engine.match import build_candidate_graph
 from settlegraph.engine.pipeline import deduplicate_normalized_records, enforce_invariant_gate
+from settlegraph.engine.score import score_all
 from settlegraph.models import NormalizedRecord
 
 
@@ -156,6 +159,60 @@ def test_duplicate_webhook_replay_is_filtered_before_candidate_generation() -> N
     assert [r.record_id for r in bank_unique] == ["bank_norm_1"]
     assert merch_unique == []
     assert len(duplicate_events) == 2
+
+
+def test_resent_event_with_a_new_id_is_never_double_booked() -> None:
+    """A re-issued webhook that mints a NEW event id for the same underlying
+    settlement is not caught by `IdempotencyShield` -- its fingerprint
+    includes `source_record_id`, so a new id is a new fingerprint.
+    `docs/RED_TEAM.md` rated that MEDIUM. This test is the correction: the
+    case is handled, just by a different control.
+
+    Widening the fingerprint to a business key (source + amount + date, with
+    no id) would be the obvious fix and is the wrong one. Two genuinely
+    different payments that share an amount and a date -- routine in any real
+    batch -- would collide, and one would be **silently dropped**. Losing a
+    real financial record is strictly worse than processing a duplicate,
+    because the money then vanishes from reconciliation entirely with no
+    exception raised.
+
+    What actually protects this case: a re-sent event and a genuinely reused
+    reference number are indistinguishable from the data alone, and both
+    degrade into the same shape -- two records competing for one counterpart.
+    Near-tie suppression (`config.ambiguity_margin`) holds that for review
+    rather than booking either. So the outcome is an honest hold, not a
+    double-booking.
+
+    The guarantee is therefore precise, and narrower than "duplicate webhook
+    protection" implies: *identical re-imports are intercepted by fingerprint;
+    re-sends carrying a new id are caught downstream as ambiguity.* Both are
+    safe. Neither is silent.
+    """
+    config = PipelineConfig()
+    original = _rzp(record_id="rzp_norm_pay_1", source_record_id="pay_1")
+    # Same settlement, re-issued by the gateway under a fresh event id.
+    resent = _rzp(record_id="rzp_norm_pay_1_resend", source_record_id="pay_1_resend")
+    bank = _bank(record_id="bank_norm_1")
+
+    rzp_unique, bank_unique, _, duplicate_events = deduplicate_normalized_records(
+        [original, resent], [bank], []
+    )
+
+    # Confirm the premise: the shield does NOT intercept this one.
+    assert duplicate_events == []
+    assert len(rzp_unique) == 2
+
+    assignments = global_assign(
+        score_all(build_candidate_graph(rzp_unique, bank_unique, [], config)), config
+    )
+
+    # The single bank credit is claimed at most once, and never auto-booked.
+    assert len(assignments) == 1
+    decision = assignments[0]
+    assert decision["label"] != "AUTO_MATCH", (
+        "a re-sent event must not be confidently booked against the same credit"
+    )
+    assert decision["competing_candidates"] >= 1
 
 
 def test_no_duplicates_leaves_every_record_untouched() -> None:

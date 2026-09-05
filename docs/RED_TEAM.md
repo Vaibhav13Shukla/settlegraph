@@ -31,6 +31,10 @@ the docs — all are disclosed — but together they mean the system is proven
 *safe* far more convincingly than it is proven *useful*.
 
 **Findings: 0 CRITICAL · 3 HIGH · 5 MEDIUM · 3 LOW.**
+*Update after follow-up work: H-? (unmeasured legs) and M-4 (re-sent events)
+were both investigated and closed — one fixed, one withdrawn as overstated
+after testing. Each is marked inline below rather than deleted, because a red
+team that quietly edits out its own wrong calls is not auditable either.*
 
 ---
 
@@ -48,13 +52,24 @@ Razorpay data has ever touched this code**, and the docs say so — but a
 reviewer should read "100% precision" as "100% against our own imagination of
 what goes wrong."
 
-**M-1 · MEDIUM — the bank↔merchant leg is a weak cross-check carrying real weight.**
+**M-1 · CLOSED (was MEDIUM) — the bank↔merchant leg is no longer unmeasured.**
 `_score_bank_merchant` (`engine/score.py`) produces only a handful of discrete
-values (0.6/0.4 on amount, +0.4/+0.2 on date). On the current batch it
-contributes 293 AUTO_MATCHes. Ties are routine there by construction, and it
-has no identifier signal at all — only amount and date. It is not scored
-against ground truth by `evaluate()` (which only measures the razorpay↔bank
-leg), so **293 automatic decisions per batch are effectively unmeasured**.
+values (0.6/0.4 on amount, +0.4/+0.2 on date), has no identifier signal at
+all, and contributes 293 AUTO_MATCHes per batch. `evaluate()` scored only the
+razorpay↔bank leg, so **1,283 of 2,106 automatic decisions were unscored**
+(293 bank↔merchant + 990 razorpay↔merchant).
+
+Fixed: `evaluate_secondary_legs` scores both — razorpay↔merchant directly via
+`true_merchant_record_id`, bank↔merchant by derivation (correct when some
+payment's ground truth names both records). Measured result: razorpay↔merchant
+precision **100%** (990 tp / 0 fp, recall 99%), bank↔merchant precision
+**100%** (293 tp / 0 fp).
+
+The decisions were right all along; nobody had checked. That distinction
+matters — the finding was about absent measurement, not about wrong answers,
+and it is worth recording that the audit found no errors here rather than
+implying it caught some. All 2,106 automatic matches are now ground-truth
+verified with zero false positives across all three legs.
 
 **L-1 · LOW — `ambiguity_margin = 0.05` is a judgement call, not a tuned value.**
 It was chosen when the near-tie defect was fixed, and no sweep has justified
@@ -94,13 +109,29 @@ exceptions. That is safe, and honestly documented, but for a merchant whose
 gateway consolidates aggressively the review queue would be dominated by
 correct-but-unresolvable cases the system structurally cannot close.
 
-**M-4 · MEDIUM — the idempotency fingerprint would miss a genuine re-send with a new id.**
-`compute_fingerprint` hashes `(source, source_record_id, amount, date,
-currency)`. A retry that arrives with a **new** `source_record_id` — which is
-what a gateway re-issuing an event actually looks like — produces a different
-fingerprint and is not intercepted. The shield catches literal re-imports of
-the same row, which is a narrower guarantee than "duplicate webhook
-protection" suggests.
+**M-4 · WITHDRAWN after testing — re-sends are handled, by a different control.**
+Original finding: `compute_fingerprint` hashes `(source, source_record_id,
+amount, date, currency)`, so a gateway retry arriving with a **new**
+`source_record_id` produces a different fingerprint and is not intercepted.
+
+That much is true, but the conclusion was wrong. Tested directly
+(`tests/test_pipeline.py::test_resent_event_with_a_new_id_is_never_double_booked`):
+the re-sent record and the original both survive dedup, both become
+candidates for the same bank credit, and near-tie suppression holds the
+result — `label != AUTO_MATCH`, `competing_candidates >= 1`. **No double
+booking occurs.**
+
+Worth stating why the obvious fix would have been a regression: widening the
+fingerprint to a business key (source + amount + date, no id) would make two
+genuinely different payments sharing an amount and a date — routine in any
+real batch — collide, and one would be **silently dropped**. Losing a real
+record is strictly worse than processing a duplicate, because the money then
+vanishes from reconciliation with no exception raised.
+
+The accurate guarantee is narrower than "duplicate webhook protection"
+implies, and should be stated that way: *identical re-imports are intercepted
+by fingerprint; re-sends carrying a new id are caught downstream as
+ambiguity.* Both safe, neither silent.
 
 ### 4. Skeptical hackathon judge
 
@@ -175,9 +206,9 @@ constrain regressions.
 - **The dashboard is the least adversarial surface.** It shows a clean batch
   reconciling well. The chaos batch, the noise curve and the held-out run —
   where the honest numbers are — are CLI-only.
-- **`AUTO_MATCH: 2106` is not 2,106 verified financial decisions.** 823 are on
-  the ground-truth-scored razorpay↔bank leg; 990 are razorpay↔merchant and 293
-  are bank↔merchant, and `evaluate()` scores neither of the latter.
+- ~~`AUTO_MATCH: 2106` is not 2,106 verified financial decisions.~~ **Fixed
+  (M-1).** It now is: 823 razorpay↔bank + 990 razorpay↔merchant + 293
+  bank↔merchant, all ground-truth scored, 0 false positives on each leg.
 - **The 175 abstentions look like diligence.** ~98% of them were unnecessary.
 - **Docker was never built locally** (not installed on the dev machine); the
   container is exercised only by CI. Disclosed in `ARCHITECTURE.md` §11.
@@ -186,7 +217,7 @@ constrain regressions.
 
 | Metric | Why it misleads alone | Quote it with |
 | --- | --- | --- |
-| Precision 100% | Only measures the razorpay↔bank leg | Which leg, and n |
+| Precision 100% | Headline figure is the razorpay↔bank leg | The per-leg numbers (all three now scored) |
 | Dangerous Miss Rate 0% | n = 16 | The denominator |
 | Exception Recall 100% | Same n = 16 | The denominator |
 | ECE 0.0304 | 88% of mass at conf ≈1.0 | The reliability bins |
@@ -197,8 +228,10 @@ constrain regressions.
 
 1. If the abstention rate stayed at ~13% with 98% of it unjustified once real
    merchant data arrived — the queue would be abandoned in a month.
-2. If the bank↔merchant leg (293 unmeasured auto-decisions per batch) were
-   ever treated as booked rather than as a cross-check.
+2. ~~If the bank↔merchant leg (293 unmeasured auto-decisions per batch) were
+   ever treated as booked rather than as a cross-check.~~ **Closed** — the leg
+   is now scored (precision 100%, 0 fp). It remains a weak signal by design
+   (amount + date only), so it should still be read as a cross-check.
 3. If anyone quoted "0% dangerous misses" without "n=16".
 4. If the server were deployed with its current unauthenticated
    `POST /api/run-reconciliation`.
