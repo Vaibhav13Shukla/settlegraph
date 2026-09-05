@@ -119,6 +119,27 @@ final performance. The `calibration` split exists and is now verified
 leak-free (§5), which is where that work belongs. A number tuned on its own
 test set would be worth less than reporting this honestly.
 
+**And the study was run — the answer is "keep 0.95".** `scripts/threshold_study.py`
+sweeps `auto_match_threshold` across 0.80–0.97 on the **calibration split
+only**. Result: precision holds at 100% with zero false positives at *every*
+swept value, and recall is **identical (80.46%) from 0.80 through 0.95**.
+Dropping the threshold would gain **+0.00pp recall and +0.0000 abstention
+precision** while shedding safety margin.
+
+That is a real finding about the root cause: **the abstention problem is not
+a threshold problem.** Lowering the bar does not release those 120 unjustified
+holds, because they are not sitting just under 0.95 — the date-proximity
+component collapses to zero on delayed settlements, so they land well below
+any threshold worth setting. The fix belongs in `score_edge`'s date handling,
+not in `config.auto_match_threshold`.
+
+Worth recording how that conclusion was reached: the study's first version
+recommended dropping 0.95 → 0.80, because it picked "the lowest threshold
+that keeps precision at 100%" without requiring the change to *buy* anything.
+Its own docstring already said a gainless-but-safe threshold is not a reason
+to touch a working default; the code did not enforce it. Now it does, with a
+0.5pp materiality bar.
+
 ---
 
 ## 4. Progressive noise — how the system degrades

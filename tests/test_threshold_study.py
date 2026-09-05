@@ -84,6 +84,44 @@ def _row(
 # --- parse_thresholds ---------------------------------------------------------
 
 
+def test_safe_but_gainless_lower_threshold_does_not_justify_a_change() -> None:
+    """The case the first real sweep actually produced, and the reason this
+    guard exists.
+
+    Recall was identical (80.46%) from 0.80 through 0.95, so "the lowest
+    threshold that keeps precision at 100%" recommended dropping the default
+    from 0.95 to 0.80 for **+0.00pp recall and +0.0000 abstention precision**
+    -- spending safety margin for zero measured return. The docstring on
+    `recommend_threshold` always said a gainless-but-safe threshold is not a
+    reason to touch a working default; the code did not enforce it.
+    """
+    rows = [
+        _row(0.80, recall=0.8046, abstention_precision=0.0),
+        _row(0.95, recall=0.8046, abstention_precision=0.0),
+    ]
+
+    rec = recommend_threshold(rows, current_threshold=0.95)
+
+    assert rec["lowest_safe_threshold"] == 0.80
+    assert rec["change_supported_by_evidence"] is False
+    assert "buys nothing measurable" in rec["reason"]
+
+
+def test_material_recall_gain_does_justify_a_change() -> None:
+    """The complement: when a lower threshold genuinely buys throughput at
+    zero false positives, the study must say so -- otherwise the guard would
+    just be a way of never recommending anything."""
+    rows = [
+        _row(0.85, recall=0.90, abstention_precision=0.02),
+        _row(0.95, recall=0.83, abstention_precision=0.02),
+    ]
+
+    rec = recommend_threshold(rows, current_threshold=0.95)
+
+    assert rec["change_supported_by_evidence"] is True
+    assert rec["recall_gain"] == 0.07
+
+
 def test_parse_thresholds_splits_sorts_and_dedupes() -> None:
     assert parse_thresholds("0.95,0.80,0.90,0.80") == [0.80, 0.90, 0.95]
 

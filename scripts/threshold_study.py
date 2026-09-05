@@ -187,6 +187,12 @@ def format_threshold_table(rows: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+# Smallest improvement worth spending safety margin on: 0.5pp of recall, or
+# the same movement in abstention precision. Below this, a "safe" lower
+# threshold is just a narrower margin for no return.
+MATERIAL_GAIN = 0.005
+
+
 def recommend_threshold(rows: list[dict[str, Any]], current_threshold: float) -> dict[str, Any]:
     """Pure recommendation logic, answering the three questions this study
     exists to answer, in priority order:
@@ -233,10 +239,22 @@ def recommend_threshold(rows: list[dict[str, Any]], current_threshold: float) ->
             lowest_safe_row["abstention_precision"] - current_row["abstention_precision"], 4
         )
 
+    # A lower threshold that is merely "just as safe" but buys nothing is not
+    # a reason to touch a working default -- it spends safety margin for zero
+    # measured return. The docstring above always said this; the code did not
+    # enforce it, and on the first real sweep that produced a recommendation
+    # to drop 0.95 -> 0.80 for +0.00pp recall and +0.0000 abstention
+    # precision. Requiring a material gain is what makes the recommendation
+    # mean something.
+    has_material_gain = (recall_gain is not None and recall_gain >= MATERIAL_GAIN) or (
+        abstention_precision_gain is not None and abstention_precision_gain >= MATERIAL_GAIN
+    )
+
     change_supported_by_evidence = (
         lowest_safe_row is not None
         and current_row is not None
         and lowest_safe_row["threshold"] < current_row["threshold"]
+        and has_material_gain
     )
 
     if lowest_safe_row is None:
@@ -256,6 +274,14 @@ def recommend_threshold(rows: list[dict[str, Any]], current_threshold: float) ->
             f"threshold {lowest_safe_row['threshold']} is lower than the current default "
             f"({current_row['threshold']}) and still holds precision at 100% with zero false "
             "positives across this calibration sweep"
+        )
+    elif lowest_safe_row["threshold"] < current_row["threshold"]:
+        reason = (
+            f"threshold {lowest_safe_row['threshold']} is safe but buys nothing measurable "
+            f"versus the current default ({current_row['threshold']}): recall "
+            f"{recall_gain:+.4f}, abstention precision {abstention_precision_gain:+.4f}, "
+            f"both under the {MATERIAL_GAIN} materiality bar. Lowering the bar for no gain "
+            "spends safety margin and buys no throughput -- keep the current default"
         )
     else:
         reason = (
