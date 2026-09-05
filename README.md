@@ -214,8 +214,17 @@ because they are the argument for how this project was built:
 recycled UTR causing a confident `AUTO_MATCH` to the **wrong** payment — was
 live while 130+ tests passed, precision read 100%, and a 20,000-record stress
 run was clean. It was found by `datagen/adversarial.py`, a corpus written
-specifically to make the engine confidently wrong. Two defects surfaced that
-way; both are now closed with tests asserting the safe behaviour.
+specifically to make the engine confidently wrong. **Three** defects surfaced
+that way; all are now closed with tests asserting the safe behaviour.
+
+The third is the sharpest illustration: a Razorpay `adjustment` row scored
+**0.95** against a bank settlement credit — byte-identical to an ordinary
+payment — and was auto-booked, because `normalize_razorpay` hardcoded
+`record_type="payment"` and `score_edge` never inspects it. No generated
+batch could reach it (the generator only emits `entity_type="payment"`), so
+it was reachable on **real** merchant data and not on ours. It still scores
+0.95 today; `verify_record_type_invariant` demotes it to `EXCEPTION`.
+Scoring is not the gate.
 
 **The harnesses found their own bugs.** `scripts/chaos_batch.py` hard-crashed
 the pipeline on its first run at 20% structural damage — ingest was

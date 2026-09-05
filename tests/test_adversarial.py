@@ -30,6 +30,7 @@ from datagen.adversarial import (
 from settlegraph.config import PipelineConfig
 from settlegraph.engine.assign import classify_unmatched, global_assign
 from settlegraph.engine.match import build_candidate_graph
+from settlegraph.engine.pipeline import enforce_invariant_gate
 from settlegraph.engine.score import score_all, score_edge
 
 
@@ -336,23 +337,29 @@ def test_unusual_settlement_timing_drops_confidence_and_holds() -> None:
     assert decision["label"] == "LIKELY_MATCH"
 
 
-def test_new_transaction_category_is_confidently_auto_matched_anyway() -> None:
+def test_new_transaction_category_is_rejected_by_the_invariant_gate() -> None:
     """An `adjustment`-type Razorpay record (a category `score_edge` has no
     dedicated path for) matched against an ordinary bank `settlement_credit`,
     with UTR, amount, and date all otherwise perfect.
 
-    KNOWN GAP: `record_type` is invisible to both `build_candidate_graph` and
-    `score_edge` -- the score is byte-identical to the ordinary-`payment`
-    happy path (0.60 UTR + 0.25 exact amount + 0.10 same-day = 0.95), which
-    clears the auto-match threshold with no competing candidate.
-    `global_assign` emits a confident AUTO_MATCH for a transaction category
-    the system has never validated a scoring path against -- exactly the
-    "confident hallucination on an unfamiliar pattern" failure mode this
-    module exists to catch. This is NOT the same as the already-enforced
-    `verify_direction_invariant` (which checks the bank record's
-    `provenance["direction"]`, not the Razorpay side's `record_type`) and is
-    not caught anywhere in the `build_candidate_graph -> score_all ->
-    global_assign` path under test here.
+    GAP CLOSED. This test previously documented a real defect: `record_type`
+    is invisible to both `build_candidate_graph` and `score_edge`, so the
+    score is byte-identical to the ordinary-`payment` happy path (0.60 UTR +
+    0.25 exact amount + 0.10 same-day = 0.95) and cleared the auto-match
+    threshold with no competing candidate. A transaction category the system
+    has never validated a scoring path against was confidently booked --
+    exactly the "confident hallucination on an unfamiliar pattern" failure
+    this module exists to catch.
+
+    Two changes close it: `normalize_razorpay` no longer hardcodes
+    `record_type="payment"` (it preserves Razorpay's `entity_type`, so the
+    category survives normalization at all), and `verify_record_type_invariant`
+    rejects any non-payment Razorpay record matched to a settlement credit.
+    `pipeline.enforce_invariant_gate` then demotes it to EXCEPTION.
+
+    Note what did NOT change: the *score* is still 0.95. Scoring is not the
+    gate, and this is the clearest demonstration of that in the suite -- the
+    confidence number is unchanged and the outcome is completely different.
     """
     config = PipelineConfig()
     case = new_transaction_category()
@@ -367,13 +374,16 @@ def test_new_transaction_category_is_confidently_auto_matched_anyway() -> None:
 
     assignments = _run_pipeline(case, config)
     assert len(assignments) == 1
-    decision = assignments[0]
-    # KNOWN GAP: this SHOULD abstain (no validated scoring path for this
-    # category) but the real engine confidently auto-matches it. Asserting
-    # the actual behavior, not the ideal one.
-    assert decision["label"] == "AUTO_MATCH"
-    assert decision["confidence"] == 0.95
-    assert decision["competing_candidates"] == 0
+    assert assignments[0]["label"] == "AUTO_MATCH", (
+        "premise: scoring alone still auto-matches it -- the gate is what rejects it"
+    )
+
+    norm_map = {r.record_id: r for r in (*case.rzp, *case.bank)}
+    gated, reports, violations = enforce_invariant_gate(assignments, norm_map, config)
+
+    assert gated[0]["label"] == "EXCEPTION"
+    assert violations >= 1
+    assert any("Record type" in v for r in reports for v in r.evidence["violations"])
 
 
 def test_unexpected_identifier_format_abstains_at_the_cost_of_recall() -> None:

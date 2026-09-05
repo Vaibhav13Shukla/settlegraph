@@ -297,13 +297,13 @@ writes `duplicates.json`; `summary.json` carries `duplicates_intercepted`.
 
 ---
 
-## 6a. Adversarial corpus — two real defects it found
+## 6a. Adversarial corpus — three real defects it found
 
-`datagen/adversarial.py` builds eight scenarios whose purpose is to make the
+`datagen/adversarial.py` builds twelve scenarios whose purpose is to make the
 engine produce a **confident but wrong** answer, and `tests/test_adversarial.py`
 runs each through the real `build_candidate_graph → score_all → global_assign`
-path. Two of the eight found genuine defects. Both are now fixed; the tests
-that documented them now assert the safe behaviour instead.
+path. Three of the twelve found genuine defects. All three are now fixed; the
+tests that documented them now assert the safe behaviour instead.
 
 | Scenario | Outcome |
 | --- | --- |
@@ -315,6 +315,27 @@ that documented them now assert the safe behaviour instead.
 | Date tolerance boundary (2/3/4 days) | Safe, deliberate |
 | Unicode / case / homoglyph UTR drift | Safe — strict `==` creates no false candidate |
 | Prompt injection in `description` | Safe — confirmed identical label to a clean twin |
+| Unusual fee structure (out-of-band MDR) | Safe — gap is not absorbed as "probably fees" |
+| Unusual settlement timing (T+30) | Safe — date proximity contributes nothing, held |
+| **New transaction category (`adjustment`)** | **Was a defect → fixed** |
+| Unexpected identifier format | Safe, at a recall cost — abstains rather than mismatching |
+
+**Defect 3 — a non-payment record was booked as a settlement.**
+`normalize_razorpay` hardcoded `record_type="payment"` for every Razorpay
+row, discarding `entity_type` (payment / refund / transfer / adjustment)
+before anything downstream could act on it — and `score_edge` never inspects
+`record_type` anyway. An `adjustment` with a matching UTR, exact amount and
+same-day date therefore scored **0.95**, byte-identical to the ordinary
+payment path, and was confidently `AUTO_MATCH`ed: a settlement booked
+against a record that is not a settlement.
+
+It was invisible to the entire suite because `datagen/generator.py` only ever
+emits `entity_type="payment"`, so **no generated batch could reach it** —
+reachable on real merchant data and not on ours, the worst combination.
+Fixed by preserving the category through normalization and adding
+`verify_record_type_invariant`. The score is *still* 0.95; the invariant gate
+demotes it to `EXCEPTION`. It is the clearest demonstration in the suite that
+scoring is not the gate.
 
 **Defect 1 — reused UTR silently erased the true counterpart.**
 `build_candidate_graph` indexed Razorpay records into a plain

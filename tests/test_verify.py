@@ -265,6 +265,54 @@ def test_perfect_score_inputs_still_fail_the_direction_invariant() -> None:
     assert any("Direction violation" in str(v) for v in violations)
 
 
+def test_non_payment_razorpay_record_cannot_satisfy_a_settlement_credit() -> None:
+    """A Razorpay `adjustment` or `refund` row is not a payment, and must not
+    be booked against a bank settlement credit as though it were one.
+
+    Found by `datagen/adversarial.py::new_transaction_category`. `score_edge`
+    never inspects `record_type`, so an adjustment with a matching UTR,
+    exact amount and same-day date scores 0.95 -- byte-identical to the
+    ordinary payment happy path -- and was confidently AUTO_MATCHed. That is
+    a confident wrong booking on an unfamiliar transaction category, which is
+    precisely the failure this project exists to prevent.
+
+    It was invisible to the whole test suite because `datagen/generator.py`
+    only ever emits `entity_type="payment"`, so no generated batch could
+    reach it. Real Razorpay settlement feeds contain refunds, transfers and
+    adjustments, so the gap is reachable on real data and not on ours -- the
+    worst combination.
+
+    Direction is a separate invariant: `verify_direction_invariant` checks
+    the *bank* side's credit/debit provenance. This checks the *Razorpay*
+    side's transaction category. Both are needed.
+    """
+    config = PipelineConfig(date_tolerance_days=3)
+    bank = _make_bank(amount=9764, transaction_date=date(2026, 1, 17))
+
+    for bad_type in ("refund", "adjustment"):
+        rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+        rzp = rzp.model_copy(update={"record_type": bad_type})
+
+        # Premise: it still scores at the top of the range.
+        assert score_edge(rzp, bank) >= config.auto_match_threshold
+
+        violations = verify_settlegraph_invariants(rzp, bank, config)
+        assert any("Record type" in str(v) for v in violations), (
+            f"a {bad_type} record must not satisfy a settlement-credit match"
+        )
+
+
+def test_ordinary_payment_still_passes_the_record_type_invariant() -> None:
+    """The complement: the gate must not reject the normal case, or it would
+    simply block every match in the batch."""
+    config = PipelineConfig(date_tolerance_days=3)
+    rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+    bank = _make_bank(amount=9764, transaction_date=date(2026, 1, 17))
+
+    assert rzp.record_type == "payment"
+    assert verify_settlegraph_invariants(rzp, bank, config) == []
+
+
 def test_perfect_utr_and_date_do_not_excuse_an_amount_violation() -> None:
     """Same shape, amount invariant: a matching UTR is the single
     highest-weighted signal in the scorer (0.60), so a record can carry

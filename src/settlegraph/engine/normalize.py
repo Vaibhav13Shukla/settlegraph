@@ -26,12 +26,27 @@ def _parse_date(value: Any) -> date:
     raise ValueError(f"Cannot parse date: {value}")
 
 
+# Razorpay's settlement feed is not only payments: `entity_type` is one of
+# payment / refund / transfer / adjustment. This used to be hardcoded to
+# "payment", which discarded that distinction before anything downstream
+# could act on it -- and `score_edge` never inspects record_type either, so a
+# refund with a matching UTR/amount/date scored 0.95 and was confidently
+# auto-matched to a settlement credit. Preserving the category is what lets
+# `verify_record_type_invariant` reject it. See that function's docstring.
+_RZP_ENTITY_TO_RECORD_TYPE: dict[str, str] = {
+    "payment": "payment",
+    "refund": "refund",
+    "transfer": "adjustment",
+    "adjustment": "adjustment",
+}
+
+
 def normalize_razorpay(record: RazorpaySettlementRecord) -> NormalizedRecord:
     return NormalizedRecord(
         record_id=f"rzp_norm_{record.entity_id}",
         source="razorpay",
         source_record_id=record.entity_id,
-        record_type="payment",
+        record_type=_RZP_ENTITY_TO_RECORD_TYPE.get(record.entity_type, "unknown"),
         payment_id=record.entity_id,
         order_id=record.order_id,
         settlement_id=record.settlement_id,

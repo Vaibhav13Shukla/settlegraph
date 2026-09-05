@@ -226,13 +226,13 @@ def near_tie_scores() -> AdversarialCase:
     confidence in *which one* is correct should not clear the auto-match bar
     for either.
 
-    # KNOWN GAP: the engine does NOT do this. Both edges score exactly (or,
-    accounting for floating-point summation order, within 1e-16 of) 0.95 --
-    the auto-match threshold. `global_assign`'s per-edge exclusivity picks
-    one of the two (here, by a hair of floating-point noise rather than any
-    financial signal) and labels it AUTO_MATCH; the other is not merely
-    down-graded, it disappears entirely from the assignment list (no
-    EXCEPTION entry is produced for it at all -- it only resurfaces later as
+    # GAP CLOSED (was a real defect; kept as a regression guard). Both edges
+    score exactly (or, accounting for floating-point summation order, within
+    1e-16 of) 0.95 -- the auto-match threshold. The engine used to let
+    `global_assign`'s per-edge exclusivity pick one of the two (by a hair of
+    floating-point noise rather than any financial signal) and label it
+    AUTO_MATCH; the other was not merely down-graded, it disappeared entirely
+    from the assignment list (no EXCEPTION entry at all -- it only resurfaced as
     a plain "UNMATCHED" record via `classify_unmatched`, indistinguishable
     from a record that was never a candidate in the first place). The engine
     has no notion of "confidence in this edge, given how close the runner-up
@@ -267,9 +267,9 @@ def near_tie_scores() -> AdversarialCase:
         bank=[bank_exact_amount, bank_off_by_fee_with_desc_ref],
         merchant=[],
         expected_behavior=(
-            "Ideally: neither candidate should clear AUTO_MATCH when a near-"
-            "identical competitor exists for the same record. KNOWN GAP: the "
-            "engine picks a winner and AUTO_MATCHes it anyway -- see docstring."
+            "Neither candidate may clear AUTO_MATCH when a near-identical "
+            "competitor exists for the same record. GAP CLOSED: "
+            "PipelineConfig.ambiguity_margin now holds it for review."
         ),
     )
 
@@ -351,13 +351,13 @@ def high_confidence_wrong_match() -> AdversarialCase:
     identifier and, in this construction, also happens to share the amount
     and date.
 
-    # KNOWN GAP: the engine does NOT catch this, and the failure is worse
-    than a simple tie-break at scoring time -- it happens one layer earlier,
-    in `build_candidate_graph`. That function indexes Razorpay records by
-    UTR into a plain dict (`rzp_by_utr[r.utr] = r`); when two Razorpay
-    records share a UTR, the second one silently overwrites the first in
-    that dict *before scoring ever runs*. The bank credit then only ever
-    gets a candidate edge to whichever Razorpay record happened to be later
+    # GAP CLOSED (was the worst defect found; kept as a regression guard).
+    The failure was worse than a tie-break at scoring time -- it happened one
+    layer earlier, in `build_candidate_graph`. That function used to index
+    Razorpay records by UTR into a plain dict (`rzp_by_utr[r.utr] = r`); when
+    two Razorpay records shared a UTR, the second silently overwrote the
+    first *before scoring ever ran*. The bank credit then only ever
+    got a candidate edge to whichever Razorpay record happened to be later
     in the input list -- the true counterpart never becomes a candidate at
     all, and there is no signal anywhere in the output that a collision
     occurred. In this construction the surviving edge scores UTR (0.60) +
@@ -393,11 +393,10 @@ def high_confidence_wrong_match() -> AdversarialCase:
         bank=[bank],
         merchant=[],
         expected_behavior=(
-            "Ideally: a UTR collision across two Razorpay records should be "
-            "detected and force the affected edges to EXCEPTION, never "
-            "AUTO_MATCH. KNOWN GAP: the engine confidently AUTO_MATCHes the "
-            "bank credit to one of the two candidates (silently dropping the "
-            "other from consideration entirely) -- see docstring."
+            "A UTR collision across two Razorpay records must force the "
+            "affected edges away from AUTO_MATCH. GAP CLOSED: match.py keeps "
+            "every colliding record so the competition survives into scoring, "
+            "and ambiguity_margin then holds it for review."
         ),
     )
 
@@ -762,12 +761,12 @@ def new_transaction_category() -> AdversarialCase:
     reduce confidence -- no confident match, because there is no scoring
     path that has ever been validated for this category.
 
-    # KNOWN GAP: `score_edge`/`_score_razorpay_bank` never inspects
-    `record_type` at all -- neither as a scoring input nor as a gate on
-    candidate generation in `build_candidate_graph`. Every discriminating
-    field it uses (UTR, net amount, date, description) is identical to the
-    happy-path case for an ordinary `payment`, so the score is identical to
-    an ordinary payment's: 0.60 (UTR) + 0.25 (exact amount) + 0.10 (same-day)
+    # GAP CLOSED (was a real defect; kept as a regression guard).
+    `score_edge`/`_score_razorpay_bank` still never inspects `record_type` --
+    neither as a scoring input nor as a gate on candidate generation. Every
+    discriminating field it uses (UTR, net amount, date, description) is
+    identical to the happy-path case for an ordinary `payment`, so the score
+    is identical to an ordinary payment's: 0.60 (UTR) + 0.25 (exact amount) + 0.10 (same-day)
     = 0.95, clearing the auto-match threshold with zero competing candidates.
     `global_assign` emits a confident AUTO_MATCH for a record whose category
     the system has never validated a scoring path against. This is exactly
@@ -804,12 +803,12 @@ def new_transaction_category() -> AdversarialCase:
         bank=[bank],
         merchant=[],
         expected_behavior=(
-            "Ideally: an `adjustment`-type Razorpay record is a category the "
-            "matcher has no validated scoring path for, and should not clear "
-            "AUTO_MATCH on that basis alone. KNOWN GAP: `record_type` is "
-            "invisible to `score_edge` and `build_candidate_graph`, so this "
-            "scores identically to an ordinary payment (0.95) and is "
-            "confidently AUTO_MATCHed -- see docstring."
+            "An `adjustment`-type Razorpay record is a category the matcher "
+            "has no validated scoring path for and must not be booked against "
+            "a settlement credit. GAP CLOSED: it still scores 0.95 (record_type "
+            "is invisible to score_edge), but normalize_razorpay now preserves "
+            "the category and verify_record_type_invariant rejects it, so the "
+            "invariant gate demotes it to EXCEPTION. Scoring is not the gate."
         ),
     )
 
