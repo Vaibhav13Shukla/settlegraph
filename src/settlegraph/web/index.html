@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SettleGraph — Razorpay Blade Financial Settlement Controller</title>
+  <title>SettleGraph — Autonomous Financial Settlement Controller</title>
   
-  <!-- Razorpay Blade Brand Fonts: Nunito Sans & JetBrains Mono -->
+  <!-- Razorpay Brand Fonts: Nunito Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,300;0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400;1,6..12,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21,7 +21,6 @@
               bg: '#F8FAFC',
               surface: '#FFFFFF',
               card: '#F8FAFC',
-              elevated: '#FFFFFF',
               border: '#E2E8F0',
               borderLight: '#EDF2F7',
               blue: '#0C83FF',
@@ -30,11 +29,8 @@
               blueFaint: 'rgba(12, 131, 255, 0.08)',
               teal: '#00D1B2',
               emerald: '#059669',
-              emeraldLight: '#ECFDF5',
               amber: '#D97706',
-              amberLight: '#FFFBEB',
               crimson: '#DC2626',
-              crimsonLight: '#FEF2F2',
               violet: '#7C3AED',
               navy: '#0C2340',
               textPrimary: '#0C2340',
@@ -46,19 +42,11 @@
             sans: ['"Nunito Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'SFMono-Regular', 'Consolas', 'monospace']
           },
-          borderRadius: {
-            'blade-sm': '4px',
-            'blade-md': '8px',
-            'blade-lg': '12px',
-            'blade-xl': '16px',
-            'blade-2xl': '20px',
-          },
           boxShadow: {
-            'blade-sm': '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-            'blade-md': '0 4px 20px -2px rgba(0, 0, 0, 0.06)',
-            'blade-lg': '0 10px 30px -4px rgba(0, 0, 0, 0.08)',
-            'blade-glow': '0 4px 14px 0 rgba(12, 131, 255, 0.25)',
-            'blade-sense': '0 0 25px rgba(0, 209, 178, 0.15)',
+            'rzp-sm': '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+            'rzp-md': '0 4px 16px -2px rgba(0, 0, 0, 0.06)',
+            'rzp-lg': '0 10px 25px -3px rgba(0, 0, 0, 0.08)',
+            'rzp-glow': '0 4px 14px 0 rgba(12, 131, 255, 0.25)',
           }
         }
       }
@@ -69,15 +57,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    :root {
-      --rzp-blue: #0C83FF;
-      --rzp-teal: #00D1B2;
-      --rzp-navy: #0C2340;
-      --rzp-bg: #F8FAFC;
-      --rzp-surface: #FFFFFF;
-      --rzp-border: #E2E8F0;
-    }
-
     body {
       background-color: #F8FAFC;
       color: #0C2340;
@@ -85,46 +64,31 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Ambient card glow inspired by Razorpay Build AI Native card visual */
-    .rzp-agent-card {
-      background: #FFFFFF;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .rzp-agent-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px -6px rgba(12, 131, 255, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
-      border-color: #CBD5E1;
-    }
-
-    .rzp-card-glow {
-      background: linear-gradient(180deg, #FFFFFF 60%, rgba(12, 131, 255, 0.08) 100%);
-    }
-
-    /* Active Tab Green Underline - Authentic Razorpay Style */
+    /* Active Tab Indicator - Crisp Mint Green Underline */
     .rzp-tab-active {
       color: #0C2340 !important;
       border-bottom: 2px solid #00D1B2 !important;
       font-weight: 700 !important;
     }
 
-    /* Floating Ask RAY Button */
-    .ask-ray-float {
+    /* Floating Assistant Button */
+    .assistant-float-btn {
       position: fixed;
       bottom: 24px;
       right: 24px;
       z-index: 50;
       background: #FFFFFF;
       border: 1px solid #00D1B2;
-      box-shadow: 0 8px 24px -4px rgba(0, 209, 178, 0.2), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 16px -2px rgba(0, 209, 178, 0.25), 0 2px 6px -1px rgba(0, 0, 0, 0.06);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .ask-ray-float:hover {
+    .assistant-float-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 30px -4px rgba(0, 209, 178, 0.3), 0 6px 16px -2px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 8px 24px -2px rgba(0, 209, 178, 0.35), 0 4px 8px -1px rgba(0, 0, 0, 0.1);
       border-color: #00BA9F;
     }
 
-    /* Custom Scrollbar */
+    /* Crisp Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -146,361 +110,230 @@
   <!-- Top Razorpay Blue Hairline Accent -->
   <div class="h-[3px] w-full bg-gradient-to-r from-rzp-blue via-rzp-teal to-rzp-blue"></div>
 
-  <!-- Primary Razorpay White Header Bar -->
+  <!-- Streamlined Razorpay Header Bar -->
   <header class="border-b border-rzp-border bg-white sticky top-0 z-40 shadow-sm">
-    <div class="max-w-[1440px] mx-auto px-6 lg:px-8 h-18 flex items-center justify-between py-3">
+    <div class="max-w-[1440px] mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
       
-      <!-- Brand Lockup: Slanted Bolt + Razorpay + SettleGraph -->
+      <!-- Brand Lockup -->
       <div class="flex items-center space-x-3.5">
-        <!-- Authentic Razorpay Slanted Bolt Logo Mark -->
         <div class="flex items-center space-x-2">
           <svg class="w-7 h-7 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor">
             <path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/>
           </svg>
-          <span class="text-2xl font-black tracking-tight text-rzp-navy font-sans">Razorpay</span>
+          <span class="text-xl font-black tracking-tight text-rzp-navy font-sans">Razorpay</span>
         </div>
 
-        <div class="h-5 w-[1px] bg-slate-300"></div>
+        <div class="h-4 w-[1px] bg-slate-300"></div>
 
-        <div class="flex items-center space-x-2.5">
+        <div class="flex items-center space-x-2">
           <span class="text-base font-extrabold tracking-tight text-rzp-navy">SettleGraph</span>
-          <span class="hidden sm:inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>RazorSense&trade;</span>
-          </span>
-          <span class="hidden md:inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">
-            Track 04
+          <span class="hidden sm:inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-rzp-blue border border-blue-200">
+            Autonomous Financial Controller
           </span>
         </div>
       </div>
 
-      <!-- Header Navigation Links & Action CTAs -->
-      <div class="flex items-center space-x-5">
-        <!-- Quick Links -->
-        <nav class="hidden lg:flex items-center space-x-6 text-xs font-semibold text-rzp-textSecondary">
-          <button onclick="switchTab('overview')" class="hover:text-rzp-blue transition">Agentic Stack</button>
-          <button onclick="switchTab('ledger')" class="hover:text-rzp-blue transition">Ledger</button>
-          <button onclick="switchTab('decisions')" class="hover:text-rzp-blue transition">Decisions</button>
-          <button onclick="switchTab('exceptions')" class="hover:text-rzp-blue transition">Exceptions</button>
-          <button onclick="switchTab('sandbox')" class="hover:text-rzp-blue transition">Sandbox</button>
-          <button onclick="switchTab('audit')" class="hover:text-rzp-blue transition">Audit</button>
-          <button onclick="switchTab('qa')" class="text-rzp-teal hover:text-emerald-700 font-bold transition flex items-center space-x-1">
-            <svg class="w-3.5 h-3.5 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
-            <span>Ask RAY</span>
-          </button>
-        </nav>
+      <!-- Action Controls -->
+      <div class="flex items-center space-x-3">
+        <!-- Live Replay Verification -->
+        <button id="btn-replay-check" onclick="triggerReplayCheck()" class="border border-slate-300 hover:border-rzp-blue text-slate-700 hover:text-rzp-blue font-bold text-xs px-3 py-2 rounded-md transition flex items-center space-x-1.5 shadow-sm bg-white cursor-pointer">
+          <i class="fa-solid fa-rotate-left text-[11px]"></i>
+          <span>Verify Replay</span>
+        </button>
 
-        <div class="hidden sm:flex items-center space-x-3">
-          <!-- Support Icon -->
-          <button title="Support Documentation" class="text-slate-500 hover:text-slate-700 p-2 rounded-md hover:bg-slate-100 transition">
-            <i class="fa-solid fa-headset text-sm"></i>
-          </button>
+        <!-- Primary Reconcile CTA -->
+        <button id="btn-reconcile" onclick="triggerReconciliation()" class="bg-rzp-blue hover:bg-rzp-blueDark active:bg-blue-800 text-white font-bold text-xs px-4 py-2 rounded-md shadow-rzp-glow transition flex items-center space-x-2 cursor-pointer">
+          <i class="fa-solid fa-play text-[10px]"></i>
+          <span>Reconcile Batch &rarr;</span>
+        </button>
 
-          <!-- Live Replay Verification (White Outlined Button like Login in Screenshot 2) -->
-          <button id="btn-replay-check" onclick="triggerReplayCheck()" class="border border-rzp-blue text-rzp-blue hover:bg-blue-50/60 font-bold text-xs px-3.5 py-2 rounded-md transition flex items-center space-x-1.5">
-            <i class="fa-solid fa-rotate-left text-[11px]"></i>
-            <span>Live Replay</span>
-          </button>
-
-          <!-- Primary Reconcile CTA (Electric Blue Button like Sign Up in Screenshot 2) -->
-          <button id="btn-reconcile" onclick="triggerReconciliation()" class="bg-rzp-blue hover:bg-rzp-blueDark active:bg-blue-800 text-white font-bold text-xs px-4 py-2 rounded-md shadow-blade-glow transition flex items-center space-x-2 cursor-pointer">
-            <i class="fa-solid fa-play text-[10px]"></i>
-            <span>Reconcile Batch &rarr;</span>
-          </button>
-
-          <!-- Refresh Data -->
-          <button onclick="fetchData()" title="Refresh Dashboard State" class="text-slate-500 hover:text-slate-800 p-2 rounded-md hover:bg-slate-100 transition">
-            <i class="fa-solid fa-arrow-rotate-right text-sm"></i>
-          </button>
-        </div>
+        <!-- Refresh Data -->
+        <button onclick="fetchData()" title="Refresh Dashboard State" class="text-slate-500 hover:text-slate-800 p-2 rounded-md hover:bg-slate-100 transition cursor-pointer">
+          <i class="fa-solid fa-arrow-rotate-right text-sm"></i>
+        </button>
       </div>
     </div>
 
-    <!-- Category Subnav Tabs (Directly Matching Screenshot 1 & 2 Tab Underline Style) -->
-    <div class="border-t border-slate-200/80 bg-white">
+    <!-- Subnav Tabs Bar -->
+    <div class="border-t border-slate-200 bg-white">
       <div class="max-w-[1440px] mx-auto px-6 lg:px-8 flex items-center space-x-8 text-sm font-semibold overflow-x-auto">
-        <button onclick="switchTab('overview')" id="tab-overview" class="rzp-tab-active py-3.5 text-rzp-navy border-b-2 border-rzp-teal transition flex items-center space-x-2 whitespace-nowrap">
+        <button onclick="switchTab('overview')" id="tab-overview" class="rzp-tab-active py-3 text-rzp-navy border-b-2 border-rzp-teal transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-chart-pie text-xs text-rzp-blue"></i>
-          <span>Overview &middot; Executive Cockpit</span>
+          <span>Executive Cockpit</span>
         </button>
-        <button onclick="switchTab('exceptions')" id="tab-exceptions" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+        <button onclick="switchTab('exceptions')" id="tab-exceptions" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-triangle-exclamation text-xs text-amber-500"></i>
           <span>Exceptions</span>
           <span id="badge-exceptions" class="bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-[11px] text-amber-700 font-mono font-bold">0</span>
         </button>
-        <button onclick="switchTab('ledger')" id="tab-ledger" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+        <button onclick="switchTab('ledger')" id="tab-ledger" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-book text-xs text-blue-500"></i>
           <span>Reconciled Ledger</span>
         </button>
-        <button onclick="switchTab('decisions')" id="tab-decisions" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+        <button onclick="switchTab('decisions')" id="tab-decisions" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-code-branch text-xs text-indigo-500"></i>
           <span>Decision Drill-Down</span>
         </button>
-        <button onclick="switchTab('sandbox')" id="tab-sandbox" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+        <button onclick="switchTab('sandbox')" id="tab-sandbox" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-shield-halved text-xs text-emerald-600"></i>
           <span>Failure Sandbox</span>
         </button>
-        <button onclick="switchTab('audit')" id="tab-audit" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap">
+        <button onclick="switchTab('audit')" id="tab-audit" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
           <i class="fa-solid fa-file-contract text-xs text-slate-500"></i>
           <span>Audit Report</span>
         </button>
-        <button onclick="switchTab('qa')" id="tab-qa" class="py-3.5 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-1.5 whitespace-nowrap">
-          <svg class="w-3.5 h-3.5 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
-          <span class="text-rzp-teal font-bold">RazorSense Q&amp;A</span>
+        <button onclick="switchTab('qa')" id="tab-qa" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-1.5 whitespace-nowrap cursor-pointer">
+          <i class="fa-solid fa-circle-question text-xs text-rzp-teal"></i>
+          <span class="text-rzp-teal font-bold">Financial Q&amp;A</span>
         </button>
       </div>
     </div>
   </header>
 
   <!-- Main Content Container -->
-  <main class="max-w-[1440px] mx-auto px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+  <main class="max-w-[1440px] mx-auto px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
 
-    <!-- TAB 1: EXECUTIVE OVERVIEW -->
-    <div id="view-overview" class="space-y-8">
+    <!-- TAB 1: EXECUTIVE COCKPIT / OVERVIEW -->
+    <div id="view-overview" class="space-y-6">
 
-      <!-- HERO SECTION: Matching Screenshot 1 "Build AI Native NEW" Layout -->
-      <section class="bg-white rounded-2xl border border-slate-200/90 p-8 shadow-blade-sm space-y-6">
+      <!-- Streamlined Batch Status Bar (Replaces Bulky Marketing Mockup) -->
+      <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div class="space-y-2 max-w-3xl">
-            <div class="flex items-center space-x-3">
-              <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-rzp-navy font-sans">
-                Build AI Native
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2.5">
+              <h1 class="text-xl font-bold tracking-tight text-rzp-navy">
+                Autonomous Settlement Controller
               </h1>
-              <span class="bg-black text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider uppercase">
-                NEW
-              </span>
-              <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                Track 04 &middot; Autonomous Settlement Controller
+              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                Active Batch
               </span>
             </div>
-            <p class="text-sm md:text-base text-rzp-textSecondary leading-relaxed">
-              Streamline multi-source payment reconciliation with bipartite graph matching, Fellegi-Sunter scoring, cryptographic stream deduplication, and zero-error invariant verification.
+            <p class="text-xs text-rzp-textSecondary">
+              Multi-source bipartite graph matching with Fellegi-Sunter scoring, cryptographic SHA-256 stream deduplication, and zero-error invariant verification.
             </p>
           </div>
 
-          <!-- Invariant Shield Pill -->
+          <!-- Invariant Shield Pill & Model Indicator -->
           <div class="flex flex-wrap gap-2.5 items-center">
-            <div class="flex items-center space-x-2 border border-emerald-200 rounded-lg px-3.5 py-2 bg-emerald-50 shadow-sm">
+            <div class="flex items-center space-x-2 border border-emerald-200 rounded-lg px-3.5 py-1.5 bg-emerald-50 shadow-sm">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="invariant-shield-dot"></span>
               <span class="text-xs text-emerald-900 font-bold">Invariant Shield: <strong class="font-mono text-emerald-700" id="invariant-shield-text">--</strong></span>
             </div>
-            <div class="border border-slate-200 rounded-lg px-3.5 py-2 bg-slate-50 text-xs font-semibold text-slate-700">
-              Model: <strong class="font-mono text-rzp-navy">Fellegi-Sunter</strong>
+            <div class="border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 text-xs font-semibold text-slate-700">
+              Model: <strong class="font-mono text-rzp-navy">Fellegi-Sunter (1969)</strong>
             </div>
           </div>
-        </div>
-
-        <!-- 4 AGENT CARDS GRID: Profoundly Matching Screenshot 1 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
-          
-          <!-- Card 1: Agentic Payments / Bipartite Auto-Reconciliation -->
-          <div class="rzp-agent-card rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-4 shadow-sm">
-            <div class="h-36 rounded-lg bg-slate-50 border border-slate-100 flex flex-col items-center justify-center p-3 relative overflow-hidden rzp-card-glow">
-              <div class="w-full bg-white rounded-md border border-slate-200 p-2 space-y-1 shadow-sm text-center">
-                <div class="text-[10px] font-bold text-rzp-blue uppercase tracking-wider flex items-center justify-center space-x-1">
-                  <i class="fa-solid fa-cloud text-[9px]"></i>
-                  <span>razorpay_settlements</span>
-                </div>
-                <div class="text-[9px] text-slate-500 font-mono truncate">UTR: RZPX202609051401</div>
-                <div class="text-xs font-bold text-emerald-600 font-mono">INR 2,450.00 &check;</div>
-              </div>
-              <div class="absolute bottom-2 text-[10px] font-bold text-rzp-blue bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
-                Payment Complete!
-              </div>
-            </div>
-            <div class="space-y-1.5">
-              <h3 class="font-bold text-base text-rzp-navy">Agentic Payments</h3>
-              <p class="text-xs text-rzp-textSecondary leading-relaxed">
-                Turn 3-way multi-source settlement streams into zero-error matched ledgers with instant double-entry proof.
-              </p>
-            </div>
-          </div>
-
-          <!-- Card 2: Agent Studio / Autonomous Triage -->
-          <div class="rzp-agent-card rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-4 shadow-sm">
-            <div class="h-36 rounded-lg bg-slate-50 border border-slate-100 flex flex-col items-center justify-center p-2 relative overflow-hidden rzp-card-glow space-y-1.5">
-              <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center space-x-1">
-                <i class="fa-solid fa-robot text-[8px] text-rzp-blue"></i>
-                <span>AGENT/ SUBSCRIPTION RECOVERY</span>
-              </span>
-              <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center space-x-1">
-                <i class="fa-solid fa-chart-line text-[8px] text-amber-500"></i>
-                <span>AGENT/ REVENUE DROP DETECTOR</span>
-              </span>
-              <span class="px-3 py-1 rounded-full text-[10px] font-extrabold bg-rzp-blue text-white shadow-blade-glow flex items-center space-x-1">
-                <i class="fa-solid fa-check text-[9px]"></i>
-                <span>AGENT/ AUTO-CAPTURE</span>
-              </span>
-              <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center space-x-1">
-                <i class="fa-solid fa-shield text-[8px] text-emerald-600"></i>
-                <span>AGENT/ RTO SHIELDER</span>
-              </span>
-            </div>
-            <div class="space-y-1.5">
-              <h3 class="font-bold text-base text-rzp-navy">Agent Studio</h3>
-              <p class="text-xs text-rzp-textSecondary leading-relaxed">
-                Autonomous 6-category failure triage with deterministic root-cause remediation instructions.
-              </p>
-            </div>
-          </div>
-
-          <!-- Card 3: Payments for AI Builders / Ingestion Engine -->
-          <div class="rzp-agent-card rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-4 shadow-sm">
-            <div class="h-36 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-around p-3 relative overflow-hidden rzp-card-glow">
-              <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-center">
-                <svg class="w-5 h-5 text-rzp-blue mx-auto" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
-                <div class="text-[9px] font-bold text-slate-700 mt-1">Razorpay</div>
-              </div>
-              <div class="text-slate-400 font-bold">&harr;</div>
-              <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-center">
-                <i class="fa-solid fa-building-columns text-emerald-600 text-sm"></i>
-                <div class="text-[9px] font-bold text-slate-700 mt-1">Bank CBS</div>
-              </div>
-              <div class="text-slate-400 font-bold">&harr;</div>
-              <div class="p-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-center">
-                <i class="fa-solid fa-receipt text-indigo-600 text-sm"></i>
-                <div class="text-[9px] font-bold text-slate-700 mt-1">ERP Ledger</div>
-              </div>
-            </div>
-            <div class="space-y-1.5">
-              <h3 class="font-bold text-base text-rzp-navy">Payments for AI Builders</h3>
-              <p class="text-xs text-rzp-textSecondary leading-relaxed">
-                Cryptographic SHA-256 stream deduplication preventing double bookings across all nodes.
-              </p>
-            </div>
-          </div>
-
-          <!-- Card 4: Agentic Business Banking / Invariant Gate -->
-          <div class="rzp-agent-card rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-4 shadow-sm">
-            <div class="h-36 rounded-lg bg-slate-50 border border-slate-100 flex flex-col items-center justify-center p-2 relative overflow-hidden rzp-card-glow space-y-1.5">
-              <span class="w-4/5 text-center py-0.5 rounded text-[9px] font-semibold bg-white border border-slate-200 text-slate-600">REPORTING AGENT</span>
-              <span class="w-4/5 text-center py-0.5 rounded text-[9px] font-semibold bg-white border border-slate-200 text-slate-600">PAYROLL AGENT</span>
-              <span class="w-4/5 text-center py-1 rounded text-[10px] font-bold bg-white border border-blue-300 text-rzp-navy shadow-sm">CASHFLOW INSIGHTS AGENT</span>
-              <span class="w-4/5 text-center py-0.5 rounded text-[9px] font-semibold bg-white border border-slate-200 text-slate-600">TAX &amp; GST AGENT</span>
-              <span class="w-4/5 text-center py-1 rounded text-[10px] font-extrabold bg-blue-600 text-white shadow-sm">INVARIANT TRUTH GATE</span>
-            </div>
-            <div class="space-y-1.5">
-              <h3 class="font-bold text-base text-rzp-navy">Agentic Business Banking</h3>
-              <p class="text-xs text-rzp-textSecondary leading-relaxed">
-                Expertise of a world-class financial controller with 100.0% precision invariant enforcement.
-              </p>
-            </div>
-          </div>
-
         </div>
       </section>
 
-      <!-- Batch Telemetry Overview Matrix -->
-      <div class="space-y-3.5">
-        <div class="flex items-center justify-between">
-          <h2 class="text-base font-bold tracking-tight text-rzp-navy uppercase">Batch Telemetry Overview</h2>
-          <span class="text-xs font-semibold text-slate-500 font-mono">Track 04 Live Telemetry</span>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Total Records Processed</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-total-records">--</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Match Rate</div>
-            <div class="text-2xl font-bold tracking-tight text-emerald-600 font-mono" id="pdf-match-rate">--%</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Accuracy</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-accuracy">--%</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Avg Processing Time</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-avg-time">-- ms/rec</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Automatically Matched</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-blue font-mono" id="pdf-auto-matched">--</div>
-            <div class="text-[11px] text-slate-500 truncate" id="pdf-auto-matched-sub">-- verified correct on evaluated leg</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Auto-Resolved Exceptions</div>
-            <div class="text-2xl font-bold tracking-tight text-purple-600 font-mono" id="pdf-ai-resolved">--</div>
-            <div class="text-[11px] text-slate-500">AI hypothesis, invariant-verified</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Abstained (Held Safe)</div>
-            <div class="text-2xl font-bold tracking-tight text-amber-600 font-mono" id="pdf-abstained">--</div>
-            <div class="text-[11px] text-slate-500">Evidence insufficient &mdash; held, not guessed</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Escalated Exceptions</div>
-            <div class="text-2xl font-bold tracking-tight text-rose-600 font-mono" id="pdf-escalated">--</div>
-            <div class="text-[11px] text-slate-500">Awaiting human review</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Drift Detected</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-drift">--</div>
-            <div class="text-[11px] text-slate-500">Within-batch score-distribution shift</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Tax-Line (GST) Match Rate</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-tax-rate">--</div>
-            <div class="text-[11px] text-slate-500 truncate" id="pdf-tax-sub">Not run for this batch</div>
-          </div>
-          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Route Split Verified</div>
-            <div class="text-2xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-route-rate">--</div>
-            <div class="text-[11px] text-slate-500 truncate" id="pdf-route-sub">Not run for this batch</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Financial KPI Cards -->
+      <!-- Core Financial KPI Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <!-- Card 1: Reconciliation Rate -->
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-rzp-blue transition space-y-2">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
           <div class="flex items-center justify-between">
             <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Reconciliation Rate</span>
-            <span class="text-emerald-600 bg-emerald-50 p-2 rounded-lg"><i class="fa-solid fa-chart-line text-sm"></i></span>
+            <span class="text-emerald-600 bg-emerald-50 p-1.5 rounded-lg"><i class="fa-solid fa-chart-line text-xs"></i></span>
           </div>
-          <div class="text-3xl font-black text-rzp-navy font-mono" id="stat-rate">--%</div>
-          <div class="text-xs text-slate-500">Automated settlement throughput</div>
+          <div class="text-2xl font-extrabold text-rzp-navy font-mono" id="stat-rate">--%</div>
+          <div class="text-[11px] text-slate-500">Automated settlement throughput</div>
         </div>
 
         <!-- Card 2: Gross Sales -->
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-rzp-blue transition space-y-2">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Merchant Sales Ingested</span>
-            <span class="text-rzp-blue bg-blue-50 p-2 rounded-lg"><i class="fa-solid fa-receipt text-sm"></i></span>
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Merchant Sales</span>
+            <span class="text-rzp-blue bg-blue-50 p-1.5 rounded-lg"><i class="fa-solid fa-receipt text-xs"></i></span>
           </div>
-          <div class="text-3xl font-black text-rzp-navy font-mono" id="stat-gross">INR --</div>
-          <div class="text-xs text-slate-500">Gross merchant sales orders</div>
+          <div class="text-2xl font-extrabold text-rzp-navy font-mono" id="stat-gross">INR --</div>
+          <div class="text-[11px] text-slate-500">Gross merchant orders ingested</div>
         </div>
 
         <!-- Card 3: Reconciled Volume -->
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-rzp-blue transition space-y-2">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Verified Settlement Credits</span>
-            <span class="text-teal-600 bg-teal-50 p-2 rounded-lg"><i class="fa-solid fa-building-columns text-sm"></i></span>
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Settlement Credits</span>
+            <span class="text-teal-600 bg-teal-50 p-1.5 rounded-lg"><i class="fa-solid fa-building-columns text-xs"></i></span>
           </div>
-          <div class="text-3xl font-black text-rzp-navy font-mono" id="stat-reconciled">INR --</div>
-          <div class="text-xs text-slate-500">Double-entry verified bank credits</div>
+          <div class="text-2xl font-extrabold text-rzp-navy font-mono" id="stat-reconciled">INR --</div>
+          <div class="text-[11px] text-slate-500">Double-entry verified bank credits</div>
         </div>
 
         <!-- Card 4: Unexplained Exposure -->
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:border-rose-300 transition space-y-2">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
           <div class="flex items-center justify-between">
             <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Unexplained Exposure</span>
-            <span class="text-rose-600 bg-rose-50 p-2 rounded-lg"><i class="fa-solid fa-triangle-exclamation text-sm"></i></span>
+            <span class="text-rose-600 bg-rose-50 p-1.5 rounded-lg"><i class="fa-solid fa-triangle-exclamation text-xs"></i></span>
           </div>
-          <div class="text-3xl font-black text-rose-600 font-mono" id="stat-exposure">INR --</div>
-          <div class="text-xs text-slate-500">At-risk discrepancy flagged for review</div>
+          <div class="text-2xl font-extrabold text-rose-600 font-mono" id="stat-exposure">INR --</div>
+          <div class="text-[11px] text-slate-500">At-risk discrepancy flagged for review</div>
         </div>
       </div>
 
-      <!-- 3-Way Ingestion Flow & Evaluator Ground Truth Benchmark -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Batch Telemetry Overview -->
+      <div class="space-y-3">
+        <h2 class="text-xs font-bold tracking-wider text-slate-500 uppercase">Batch Telemetry</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Total Records</div>
+            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-total-records">--</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Match Rate</div>
+            <div class="text-xl font-bold tracking-tight text-emerald-600 font-mono" id="pdf-match-rate">--%</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Accuracy</div>
+            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-accuracy">--%</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Avg Processing Time</div>
+            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-avg-time">-- ms/rec</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Auto Matched</div>
+            <div class="text-xl font-bold tracking-tight text-rzp-blue font-mono" id="pdf-auto-matched">--</div>
+            <div class="text-[10px] text-slate-500 truncate" id="pdf-auto-matched-sub">-- verified correct on evaluated leg</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">AI-Resolved</div>
+            <div class="text-xl font-bold tracking-tight text-purple-600 font-mono" id="pdf-ai-resolved">--</div>
+            <div class="text-[10px] text-slate-500">Hypothesis verified</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Abstained</div>
+            <div class="text-xl font-bold tracking-tight text-amber-600 font-mono" id="pdf-abstained">--</div>
+            <div class="text-[10px] text-slate-500">Held safe, not guessed</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Escalated Exceptions</div>
+            <div class="text-xl font-bold tracking-tight text-rose-600 font-mono" id="pdf-escalated">--</div>
+            <div class="text-[10px] text-slate-500">Awaiting human review</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Score Drift</div>
+            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-drift">--</div>
+            <div class="text-[10px] text-slate-500">Score-distribution shift</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Tax Match Rate</div>
+            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-tax-rate">--</div>
+            <div class="text-[10px] text-slate-500 truncate" id="pdf-tax-sub">Not run for this batch</div>
+          </div>
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Route Split Verified</div>
+            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-route-rate">--</div>
+            <div class="text-[10px] text-slate-500 truncate" id="pdf-route-sub">Not run for this batch</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ingestion Flow & Truth Gate Benchmark -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         
         <!-- Multi-Source Ingestion Funnel -->
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-2 space-y-5">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3.5">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
             <div class="flex items-center space-x-2">
               <span class="w-2.5 h-2.5 rounded-full bg-rzp-blue"></span>
               <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Multi-Source Ingestion &amp; Assignment</h2>
@@ -508,28 +341,28 @@
             <span class="text-xs uppercase tracking-wider text-slate-500 font-mono font-semibold">3-Way Bipartite Graph</span>
           </div>
 
-          <div class="grid grid-cols-3 gap-4 text-center">
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+          <div class="grid grid-cols-3 gap-3.5 text-center">
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
               <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Razorpay Feed</div>
-              <div class="text-2xl font-bold text-rzp-navy font-mono pt-0.5" id="flow-rzp">--</div>
-              <div class="text-[11px] text-slate-500">Gateway Settlements</div>
+              <div class="text-2xl font-bold text-rzp-navy font-mono" id="flow-rzp">--</div>
+              <div class="text-[10px] text-slate-500">Gateway Settlements</div>
             </div>
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
               <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Bank Statements</div>
-              <div class="text-2xl font-bold text-rzp-navy font-mono pt-0.5" id="flow-bank">--</div>
-              <div class="text-[11px] text-slate-500">NEFT / RTGS Items</div>
+              <div class="text-2xl font-bold text-rzp-navy font-mono" id="flow-bank">--</div>
+              <div class="text-[10px] text-slate-500">NEFT / RTGS Items</div>
             </div>
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
               <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Merchant Ledger</div>
-              <div class="text-2xl font-bold text-rzp-navy font-mono pt-0.5" id="flow-merchant">--</div>
-              <div class="text-[11px] text-slate-500">ERP Sales Records</div>
+              <div class="text-2xl font-bold text-rzp-navy font-mono" id="flow-merchant">--</div>
+              <div class="text-[10px] text-slate-500">ERP Sales Records</div>
             </div>
           </div>
 
-          <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 flex items-center justify-between">
+          <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between">
             <div class="space-y-0.5">
-              <div class="text-xs font-bold uppercase tracking-wider text-emerald-900">AUTO_MATCH High-Confidence Output</div>
-              <div class="text-xs text-emerald-700">Scored \(\ge 0.95\) &amp; double-entry verified with zero invariant breaches</div>
+              <div class="text-xs font-bold uppercase tracking-wider text-emerald-900">AUTO_MATCH Output</div>
+              <div class="text-xs text-emerald-700">Confidence \(\ge 0.95\) &amp; double-entry verified</div>
             </div>
             <div class="text-right">
               <div class="text-2xl font-bold text-emerald-700 font-mono" id="flow-auto">--</div>
@@ -539,9 +372,9 @@
         </div>
 
         <!-- Ground Truth Evaluator Benchmark -->
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-5">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
           <div>
-            <div class="border-b border-slate-200 pb-3.5 mb-4 flex items-center justify-between">
+            <div class="border-b border-slate-200 pb-3 mb-3 flex items-center justify-between">
               <div class="flex items-center space-x-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                 <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Evaluator Truth Gate</h2>
@@ -550,69 +383,67 @@
             </div>
 
             <div class="space-y-2 text-xs">
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">Precision (Zero-Error)</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">Precision (Zero-Error)</span>
                 <span class="font-mono font-bold text-emerald-600" id="eval-precision">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">Recall (Throughput)</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">Recall (Throughput)</span>
                 <span class="font-mono text-rzp-navy font-semibold" id="eval-recall">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">F1 Score</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">F1 Score</span>
                 <span class="font-mono text-rzp-navy font-semibold" id="eval-f1">--</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">False Positives</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">False Positives</span>
                 <span class="font-mono font-bold text-emerald-600" id="eval-fp">--</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">Safe Auto-Resolution Rate</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">Safe Auto-Resolution Rate</span>
                 <span class="font-mono text-rzp-navy" id="eval-safe-auto-rate">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">False Auto-Book Rate</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">False Auto-Book Rate</span>
                 <span class="font-mono text-rzp-navy font-bold" id="eval-false-book-rate">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">Dangerous Miss Rate</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">Dangerous Miss Rate</span>
                 <span class="font-mono text-rzp-navy" id="eval-dangerous-miss-rate">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">Exception Recall</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">Exception Recall</span>
                 <span class="font-mono text-rzp-navy" id="eval-exception-recall">--%</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">Calibration Error (ECE)</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">Calibration Error (ECE)</span>
                 <span class="font-mono text-rzp-blue font-bold" id="eval-ece">--</span>
               </div>
-              <div class="flex justify-between items-center py-1.5 border-b border-slate-100">
-                <span class="text-slate-600 font-medium">Brier Score</span>
+              <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                <span class="text-slate-600">Brier Score</span>
                 <span class="font-mono text-rzp-blue font-bold" id="eval-brier">--</span>
               </div>
-              <div class="flex justify-between items-center py-1.5">
-                <div class="flex items-center space-x-2">
-                  <span class="text-slate-600 font-medium">Replay Stability</span>
-                </div>
+              <div class="flex justify-between items-center py-1">
+                <span class="text-slate-600">Replay Stability</span>
                 <span class="font-mono font-bold text-emerald-600" id="eval-replay">100.0%</span>
               </div>
             </div>
           </div>
 
-          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 leading-relaxed">
-            <span class="text-rzp-navy font-bold">Ground Truth Isolation:</span> Evaluator truth records remain encrypted and inaccessible to matching logic, verifying true blind accuracy.
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-500 leading-relaxed">
+            <span class="text-rzp-navy font-semibold">Ground Truth Isolation:</span> Truth records remain encrypted and inaccessible to matching logic, verifying true blind accuracy.
           </div>
         </div>
       </div>
 
       <!-- Per-Anomaly Safety Breakdown Table -->
-      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-200 pb-3.5">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3.5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-200 pb-3">
           <div>
             <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Per-Anomaly Safety &amp; Robustness Matrix</h2>
             <p class="text-xs text-slate-500 mt-0.5">Verification that zero false positives occur under each injected financial anomaly type.</p>
           </div>
-          <span class="text-[11px] uppercase tracking-wider text-emerald-700 font-bold border border-emerald-200 px-3 py-1 rounded-full bg-emerald-50">
+          <span class="text-[11px] uppercase tracking-wider text-emerald-700 font-bold border border-emerald-200 px-3 py-0.5 rounded-full bg-emerald-50">
             0 False Positives Across All Scenarios
           </span>
         </div>
@@ -696,11 +527,11 @@
 
       <!-- Decision State Filter -->
       <div class="flex flex-wrap gap-2.5" id="decision-filter-bar">
-        <button data-decision-filter="all" onclick="filterDecisions('all')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-rzp-blue text-white bg-rzp-blue font-bold shadow-sm transition">All States</button>
-        <button data-decision-filter="auto" onclick="filterDecisions('auto')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition">Correct Auto-Match</button>
-        <button data-decision-filter="abstained" onclick="filterDecisions('abstained')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition">Ambiguous / Abstained</button>
-        <button data-decision-filter="exception" onclick="filterDecisions('exception')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition">Genuine Exception</button>
-        <button data-decision-filter="failclosed" onclick="filterDecisions('failclosed')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition">System Failure Safety</button>
+        <button data-decision-filter="all" onclick="filterDecisions('all')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-rzp-blue text-white bg-rzp-blue font-bold shadow-sm transition cursor-pointer">All States</button>
+        <button data-decision-filter="auto" onclick="filterDecisions('auto')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition cursor-pointer">Correct Auto-Match</button>
+        <button data-decision-filter="abstained" onclick="filterDecisions('abstained')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition cursor-pointer">Ambiguous / Abstained</button>
+        <button data-decision-filter="exception" onclick="filterDecisions('exception')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition cursor-pointer">Genuine Exception</button>
+        <button data-decision-filter="failclosed" onclick="filterDecisions('failclosed')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition cursor-pointer">System Failure Safety</button>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -793,7 +624,7 @@
           <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Live Failure Injection &amp; Containment Sandbox</h2>
           <p class="text-xs text-slate-500 mt-1">Simulate real-world catastrophic failure modes and verify deterministic containment.</p>
         </div>
-        <button onclick="runFailureSimulations()" class="bg-white hover:bg-slate-50 border border-slate-200 hover:border-rzp-blue text-rzp-navy rounded-lg px-4 py-2 text-xs uppercase tracking-wider font-bold shadow-sm transition flex items-center space-x-2">
+        <button onclick="runFailureSimulations()" class="bg-white hover:bg-slate-50 border border-slate-200 hover:border-rzp-blue text-rzp-navy rounded-lg px-4 py-2 text-xs uppercase tracking-wider font-bold shadow-sm transition flex items-center space-x-2 cursor-pointer">
           <i class="fa-solid fa-bolt text-amber-500 text-[10px]"></i>
           <span>Execute All 7 Scenarios</span>
         </button>
@@ -811,7 +642,7 @@
           <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Executive Audit Ledger (`AUDIT_REPORT.md`)</h2>
           <p class="text-xs text-slate-500 mt-1">Formal verification evidence ledger for CFO and Controller audit sign-off.</p>
         </div>
-        <button onclick="copyAuditReport()" class="border border-slate-200 hover:border-slate-400 rounded-lg px-3.5 py-1.5 text-xs uppercase tracking-wider text-rzp-navy bg-white shadow-sm transition flex items-center space-x-1.5 font-bold">
+        <button onclick="copyAuditReport()" class="border border-slate-200 hover:border-slate-400 rounded-lg px-3.5 py-1.5 text-xs uppercase tracking-wider text-rzp-navy bg-white shadow-sm transition flex items-center space-x-1.5 font-bold cursor-pointer">
           <i class="fa-regular fa-copy text-xs"></i>
           <span>Copy Markdown</span>
         </button>
@@ -821,7 +652,7 @@
       </div>
     </div>
 
-    <!-- TAB 7: RAZORSENSE FINANCIAL CONTROLLER Q&A -->
+    <!-- TAB 7: FINANCIAL ASSISTANT Q&A -->
     <div id="view-qa" class="hidden space-y-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div class="flex items-center space-x-3">
@@ -830,10 +661,10 @@
           </div>
           <div>
             <h2 class="text-xl font-bold tracking-tight text-rzp-navy flex items-center space-x-2">
-              <span>RazorSense&trade; AI Finance Controller</span>
+              <span>Financial AI Controller Assistant</span>
               <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold uppercase">/api/ask</span>
             </h2>
-            <p class="text-xs text-slate-500 mt-0.5">Natural language query engine over reconciliation telemetry, MDR anomalies, and deterministic audit proofs.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Query settlement telemetry, MDR anomalies, fee leakage, and deterministic audit proofs.</p>
           </div>
         </div>
         <div class="flex items-center space-x-2">
@@ -842,25 +673,25 @@
         </div>
       </div>
 
-      <!-- Quick Preset Queries (Action Chips) -->
+      <!-- Quick Preset Queries -->
       <div class="space-y-2.5">
-        <p class="text-xs uppercase tracking-wider text-slate-500 font-bold">Recommended Controller Audits</p>
+        <p class="text-xs uppercase tracking-wider text-slate-500 font-bold">Quick Audit Questions</p>
         <div class="flex flex-wrap gap-2">
-          <button onclick="askQuestionPreset('What is our reconciliation precision and false positive rate?')" class="border border-slate-200 hover:border-rzp-blue rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium">
+          <button onclick="askQuestionPreset('What is our reconciliation precision and false positive rate?')" class="border border-slate-200 hover:border-rzp-blue rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium cursor-pointer">
             <svg class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
-            <span>Precision &amp; False Positive Proof</span>
+            <span>Precision &amp; Zero-FP Proof</span>
           </button>
-          <button onclick="askQuestionPreset('Which merchants have unexplained fee leakages?')" class="border border-slate-200 hover:border-amber-400 rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium">
+          <button onclick="askQuestionPreset('Which merchants have unexplained fee leakages?')" class="border border-slate-200 hover:border-amber-400 rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium cursor-pointer">
             <i class="fa-solid fa-triangle-exclamation text-amber-500 text-[10px]"></i>
             <span>Fee Leakage &amp; Discrepancies</span>
           </button>
-          <button onclick="askQuestionPreset('How many exceptions were flagged and what are the top categories?')" class="border border-slate-200 hover:border-rzp-blue rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium">
+          <button onclick="askQuestionPreset('How many exceptions were flagged and what are the top categories?')" class="border border-slate-200 hover:border-rzp-blue rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium cursor-pointer">
             <i class="fa-solid fa-filter text-rzp-blue text-[10px]"></i>
             <span>Exception Triage Summary</span>
           </button>
-          <button onclick="askQuestionPreset('Explain the double-entry accounting invariant and any violations.')" class="border border-slate-200 hover:border-teal-400 rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium">
+          <button onclick="askQuestionPreset('Explain the double-entry accounting invariant and any violations.')" class="border border-slate-200 hover:border-teal-400 rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium cursor-pointer">
             <i class="fa-solid fa-scale-balanced text-teal-600 text-[10px]"></i>
-            <span>Conservation Invariant Status</span>
+            <span>Double-Entry Conservation</span>
           </button>
         </div>
       </div>
@@ -870,11 +701,11 @@
         <form onsubmit="submitQuestion(event)" class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <svg class="w-4 h-4 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
+              <i class="fa-solid fa-magnifying-glass text-xs"></i>
             </div>
-            <input type="text" id="qa-input" placeholder="Ask RazorSense about settlement discrepancies, fee drift, anomalies, or invariants..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-sm text-rzp-navy placeholder-slate-400 focus:outline-none focus:border-rzp-blue focus:bg-white transition font-sans">
+            <input type="text" id="qa-input" placeholder="Ask about settlement discrepancies, fee drift, anomalies, or invariants..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-rzp-navy placeholder-slate-400 focus:outline-none focus:border-rzp-blue focus:bg-white transition font-sans">
           </div>
-          <button type="submit" id="qa-submit-btn" class="bg-rzp-blue hover:bg-rzp-blueDark text-white font-bold rounded-lg px-6 py-2.5 text-xs uppercase tracking-wider shadow-blade-glow transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer">
+          <button type="submit" id="qa-submit-btn" class="bg-rzp-blue hover:bg-rzp-blueDark text-white font-bold rounded-lg px-6 py-2.5 text-xs uppercase tracking-wider shadow-rzp-glow transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer">
             <i class="fa-solid fa-arrow-right text-xs"></i>
             <span>Ask Controller</span>
           </button>
@@ -890,7 +721,7 @@
             </span>
             <span id="qa-timestamp" class="text-xs text-slate-400 font-mono font-medium">--</span>
           </div>
-          <button onclick="copyQAResponse()" class="text-xs text-slate-500 hover:text-rzp-navy transition flex items-center space-x-1 font-semibold">
+          <button onclick="copyQAResponse()" class="text-xs text-slate-500 hover:text-rzp-navy transition flex items-center space-x-1 font-semibold cursor-pointer">
             <i class="fa-regular fa-copy text-[11px]"></i>
             <span>Copy</span>
           </button>
@@ -903,20 +734,20 @@
 
   </main>
 
-  <!-- Floating Ask RAY / RazorSense Action Button (Profoundly Featured as in Screenshots) -->
-  <button onclick="switchTab('qa')" class="ask-ray-float py-2.5 px-4 rounded-lg flex items-center space-x-2 cursor-pointer" title="Ask RAY Financial Assistant">
+  <!-- Floating Ask Assistant Action Button -->
+  <button onclick="switchTab('qa')" class="assistant-float-btn py-2.5 px-4 rounded-lg flex items-center space-x-2 cursor-pointer" title="Ask Financial Assistant">
     <svg class="w-4 h-4 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor">
       <path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/>
     </svg>
-    <span class="text-xs font-black tracking-wide text-rzp-navy">Ask RAY</span>
+    <span class="text-xs font-bold tracking-wide text-rzp-navy">Ask Assistant</span>
   </button>
 
-  <!-- Razorpay White Footer Bar -->
-  <footer class="border-t border-slate-200 bg-white py-6 mt-auto">
-    <div class="max-w-[1440px] mx-auto px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 tracking-wider uppercase space-y-3 md:space-y-0">
+  <!-- Clean Footer Bar -->
+  <footer class="border-t border-slate-200 bg-white py-5 mt-auto">
+    <div class="max-w-[1440px] mx-auto px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 tracking-wider uppercase space-y-2 md:space-y-0">
       <div class="flex items-center space-x-2 font-medium">
         <svg class="w-3.5 h-3.5 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
-        <span>SettleGraph &middot; Razorpay Buildathon 2026 &middot; Blade &amp; RazorSense</span>
+        <span>SettleGraph &middot; Autonomous Financial Settlement Controller</span>
       </div>
       <div class="flex items-center space-x-6 font-semibold">
         <span id="footer-precision-badge">Precision: --</span>
@@ -925,17 +756,17 @@
     </div>
   </footer>
 
-  <!-- Blade Transaction Inspector Modal -->
+  <!-- Transaction Inspector Modal -->
   <div id="inspector-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" onclick="if(event.target===this) closeInspector()">
     <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-xl relative text-rzp-navy">
-      <button onclick="closeInspector()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg p-2" aria-label="Close inspector">
+      <button onclick="closeInspector()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg p-2 cursor-pointer" aria-label="Close inspector">
         <i class="fa-solid fa-xmark"></i>
       </button>
       <div id="inspector-body"></div>
     </div>
   </div>
 
-  <!-- Dashboard JavaScript Logic (Identical Functionality & Bindings) -->
+  <!-- Dashboard JavaScript Logic (Preserves All 81 Element Bindings) -->
   <script>
     let globalData = {};
 
@@ -1196,10 +1027,10 @@
 
       const filterHtml = `
         <div class="col-span-2 flex flex-wrap gap-2 mb-2">
-          <button onclick="filterExceptions('ALL')" class="exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm">All (${sorted.length})</button>
+          <button onclick="filterExceptions('ALL')" class="exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm cursor-pointer">All (${sorted.length})</button>
           ${categories.map(c => {
             const count = sorted.filter(e => e.category === c).length;
-            return `<button onclick="filterExceptions('${c}')" class="exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition">${c.replace(/_/g, ' ')} (${count})</button>`;
+            return `<button onclick="filterExceptions('${c}')" class="exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition cursor-pointer">${c.replace(/_/g, ' ')} (${count})</button>`;
           }).join('')}
         </div>`;
 
@@ -1210,9 +1041,9 @@
       window._activeExcFilter = category;
       const filtered = category === 'ALL' ? window._allExceptions : window._allExceptions.filter(e => e.category === category);
       document.querySelectorAll('.exc-filter-pill').forEach(btn => {
-        btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition';
+        btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition cursor-pointer';
         if ((category === 'ALL' && btn.textContent.startsWith('All')) || btn.textContent.toUpperCase().startsWith(category.replace(/_/g, ' '))) {
-          btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm';
+          btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm cursor-pointer';
         }
       });
       const container = document.getElementById('exception-cards-container');
@@ -1275,11 +1106,11 @@
             <input type="text" id="ledger-search" placeholder="Search UTR, Order ID, or Record ID..."
               class="bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-rzp-navy w-72 focus:border-rzp-blue outline-none shadow-sm" oninput="applyLedgerFilters()">
           </div>
-          <button onclick="setLedgerFilter('ALL')" class="ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm">All (${assignments.length})</button>
+          <button onclick="setLedgerFilter('ALL')" class="ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm cursor-pointer">All (${assignments.length})</button>
           ${['AUTO_MATCH', 'LIKELY_MATCH', 'EXCEPTION', 'AI_RESOLVED_MATCH'].map(label => {
             const count = assignments.filter(a => a.label === label).length;
             if (count === 0) return '';
-            return `<button onclick="setLedgerFilter('${label}')" class="ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition">${label.replace(/_/g, ' ')} (${count})</button>`;
+            return `<button onclick="setLedgerFilter('${label}')" class="ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition cursor-pointer">${label.replace(/_/g, ' ')} (${count})</button>`;
           }).join('')}
         </div>`;
 
@@ -1289,9 +1120,9 @@
     function setLedgerFilter(label) {
       window._activeLedgerFilter = label;
       document.querySelectorAll('.ledger-pill').forEach(btn => {
-        btn.className = 'ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition';
+        btn.className = 'ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition cursor-pointer';
         if ((label === 'ALL' && btn.textContent.startsWith('All')) || btn.textContent.toUpperCase().startsWith(label.replace(/_/g, ' '))) {
-          btn.className = 'ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm';
+          btn.className = 'ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm cursor-pointer';
         }
       });
       applyLedgerFilters();
