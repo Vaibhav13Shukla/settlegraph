@@ -650,3 +650,358 @@ wrong," it's "the new answer is provably right instead of probably
 right," and those are different claims even when the digits match.
 
 128 tests, lint/format clean.
+
+---
+
+### [Day 6] The Track 04 "trust framing" headline pair, added honestly instead of wholesale
+
+The user brought a much longer, external write-up of what Track 04 "should"
+be (calibrated abstention, a five-tier metrics hierarchy, six stress-test
+levels, dev/val/hidden dataset splits, ECE/Brier calibration, decision
+stability rate). Read it against what's actually in this repo before
+touching anything: almost all of it already exists here under different
+names -- `LIKELY_MATCH` is that write-up's "Abstain," `EXCEPTION` is its
+"genuine exception," the ponytail SQLite question it asked was already
+answered and TDD-verified on Day 5 (see above), and `docs/adr/0006-pdf-
+compliance.md` is already the "honest checklist against the brief" it
+wanted. Said so plainly rather than re-deriving any of it.
+
+Picked one well-scoped, honestly-computable piece to actually add rather
+than attempting the whole write-up in one pass: the two metrics that
+write-up calls "the single best success criterion" --
+
+- **Safe Auto-Resolution Rate** = correct auto-bookings / all ground-truth
+  records in the batch
+- **False Auto-Book Rate** = incorrect auto-bookings / all ground-truth
+  records in the batch
+
+Deliberately *not* new computation: `evaluate()` already tracked
+`true_positives`/`false_positives` restricted to `AUTO_MATCH` +
+`AI_RESOLVED_MATCH` -- these two fields are just that same count divided by
+`len(gt_map)` instead of by the auto-match count, which is what makes the
+pair Goodhart-resistant (matching everything inflates the denominator's
+false side; abstaining on everything starves the numerator).
+
+**TDD:** wrote `test_evaluate_reports_safe_auto_resolution_and_false_auto_book_rate`
+first, watched it fail on `KeyError: 'total_records'`, then added the two
+fields to `evaluate()`'s return dict. Same pattern for the audit report:
+`test_audit_report_shows_safe_auto_resolution_and_false_auto_book_rate`
+red first (`AssertionError` on report text), then a two-row addition to
+`generate_markdown_audit_report`'s existing table -- no new section, same
+style as every other row in it. Added the matching dashboard tiles
+(`eval-safe-auto-rate`, `eval-false-book-rate`) by hand since this repo's
+JS has no unit-test harness; verified the inline `<script>` block still
+parses (`node --check`) the same way Day 5's security pass did.
+
+**Verified past the test suite**, same standard as every other change in
+this file: ran a real `generate` (60 records) → `run` cycle from scratch
+and grepped the actual output files -- `results/evaluation.json` and
+`results/summary.json` both carry `"safe_auto_resolution_rate": 0.9,
+"false_auto_book_rate": 0.0`, and `AUDIT_REPORT.md` renders both rows.
+Then started the real dashboard server (`settlegraph serve --port 8099` --
+8080 was already bound by an unrelated local service, caught by an empty
+server log and a `curl` that came back with someone else's SigNoz page
+instead of a connection error) and curled both `/` (both new tile ids
+present in the served HTML) and `/api/evaluation` (both fields in the
+live JSON). 130 tests, lint/format clean.
+
+**Deliberately deferred, not silently dropped:** Abstention Precision,
+Dangerous Miss Rate, Exception Recall, and calibration (ECE/Brier) from
+the same write-up. `GroundTruthRecord.relationship_type` already has a
+`no_counterpart` value that would ground Exception Recall / Dangerous Miss
+Rate honestly, but getting them right needs `unmatched.csv` threaded into
+`evaluate()` too (today it only reads `assignments.csv` + `ground_truth.csv`,
+so a record with zero candidate edges -- the exact failure mode Day 4's
+README section already documents for `split_settlement` and friends --
+is invisible to it). Abstention Precision needs a definition of "genuine
+competing ambiguity" that the current candidate graph doesn't expose past
+the winning edge. Rather than ship an approximate version of a
+safety-framed metric, they're left as the next well-scoped slice.
+
+---
+
+### [Day 6, continued] A full-codebase review found two claims the pipeline didn't back up
+
+A `/code-review` pass scoped to the whole codebase (not just the diff) found
+two things that were built, documented in an ADR or the audit report, and
+unit-tested in isolation -- but never actually reached by `run_pipeline`.
+Both are the exact failure mode this project's own "AI proposes, verification
+confirms" framing exists to prevent: a stated guarantee that wasn't true of
+the running system.
+
+**1. Invariant violations were counted, never acted on.** `pipeline.py`
+Phase 6 ran `verify_settlegraph_invariants` on every `AUTO_MATCH` and summed
+the violations into `summary["invariant_violations"]` -- but nothing
+relabeled the assignment. `report.py`'s own audit report said "any violation
+demotes to exception queue" next to that number; it didn't. Concretely
+reachable: scoring never inspects bank-credit direction, so a debit line (a
+refund payout, say) sharing a UTR/amount/date window with a real settlement
+could clear the 0.95 auto-match bar and still fail
+`verify_direction_invariant` -- and would have stayed `AUTO_MATCH`, booked
+into `reconciled_settled_inr`, regardless.
+
+Fixed with `enforce_invariant_gate` (new, `pipeline.py`): demotes the
+assignment to `EXCEPTION` in place and emits a dedicated
+`INVARIANT_VIOLATION` diagnostic naming the actual failure -- deliberately
+not routed through `investigate_exception`, which has no concept of an
+invariant failure and would have misattributed it as "confidence too low,"
+which is false and would mislead whoever reads the queue next. TDD:
+`tests/test_pipeline.py` (new file -- `pipeline.py` had no direct unit test
+before this, only indirect coverage via `test_e2e.py`'s full run on data that
+never happened to hit this path), four cases: demotes on a direction
+violation, leaves a clean AUTO_MATCH untouched, ignores non-AUTO_MATCH rows,
+ignores razorpay<->merchant pairs (the invariant only knows razorpay<->bank).
+
+**2. `IdempotencyShield` (ADR 0004) was never wired into the real pipeline.**
+ADR 0004 says the shield "guarantees zero duplicate ledger entries under
+network retry storms." True of the class -- `tests/test_idempotency.py`,
+`test_e2e.py::test_idempotency_shield_stream_e2e`, and `simulator.py`'s
+FAIL_01 scenario all exercise it directly and it's correct. But `run_pipeline`
+never imports or calls it; `load_all`/`normalize_all` feed straight into
+candidate generation. A retried settlement webhook landing twice in the real
+CSVs would have flowed through scoring, matching, and revenue-assurance
+totals ungated -- the sandbox tab's FAIL_01 card was proving the component
+works, not that the system uses it.
+
+Fixed with `deduplicate_normalized_records` (new, `pipeline.py`), called
+right after Phase 2 normalization, one `IdempotencyShield` instance shared
+across all three sources (safe: `compute_fingerprint` includes `source`, so
+cross-source collision is impossible). Intercepted duplicates are logged to
+`results/duplicates.json` (written only when non-empty, matching this
+project's existing convention for optional outputs) and counted in
+`summary["duplicates_intercepted"]`. TDD: two more cases in
+`tests/test_pipeline.py` -- a replayed record (same source_record_id/amount/
+date/currency, different record_id, simulating a retried webhook that got a
+fresh internal id) is filtered from all three source lists; distinct records
+are left alone.
+
+Both verified past the unit tests: full suite (136 passed, up from 130),
+ruff clean, and a real `scripts/run_e2e.py` run end to end (1,000-record
+batch, 7-scenario failure injection) -- unchanged 100% precision / 82.9%
+recall, 0 invariant violations on this batch's data (the generator doesn't
+inject a debit-collision case by default, which is exactly why this needed a
+crafted unit test rather than showing up in the existing e2e run), no
+`duplicates.json` written since this batch has no replays. Neither fix
+changed a single existing test's expected value -- both are additive gates
+that only fire on inputs the pipeline was never exercising before.
+
+---
+
+### [Day 7] Dangerous Miss Rate and Exception Recall, made measurable instead of declared
+
+Both metrics have been named as deferred since Day 6: `GroundTruthRecord.
+relationship_type` has declared `"no_counterpart"` a valid value since Day 1
+(a settlement that genuinely never reached the bank -- gateway/bank data
+loss, not corruption or delay), but the generator never actually produced
+one. Every "unmatched" record in every batch so far has always secretly had
+a real counterpart somewhere, just a hard-to-find one. That meant the two
+most safety-relevant questions in the whole "calibrated abstention" framing
+-- *does the system ever force a match onto a record that has no true
+counterpart at all, and does it correctly recognize when there is truly
+nothing to find* -- had never actually been exercised, let alone measured.
+
+**Generator** (`datagen/generator.py`): added `no_counterpart` as a twelfth
+anomaly kind. Unlike every other kind, which mutates a record in place,
+this one removes the bank row entirely (deferred to after the per-index
+mutation loop finishes, so no other anomaly kind's `bank[index]` access
+is disturbed mid-loop) and sets `relationship_type="no_counterpart"`,
+`true_bank_record_ids=[]`. The merchant ledger row is left untouched --
+the sale itself happened, only the settlement never arrived. TDD:
+`test_generator.py` now asserts these records actually exist in a generated
+batch (was silently allowed to be zero before) and that every one has a
+genuinely empty `true_bank_record_ids`, replacing a `len(bank) >= 1000`
+assertion that could no longer distinguish "correct" from "coincidentally
+close" now that bank count moves in both directions (split settlements
+add a row, no_counterpart removes one).
+
+**Evaluator** (`evaluate.py`): a `no_counterpart` record has no true match
+to find, so leaving it unmatched is *correct*, not a miss -- it must not
+inflate `false_negatives` or drag down recall, which is specifically about
+records that do have a true match. Excluded from that denominator entirely
+and tracked separately: `dangerous_misses` (a `no_counterpart` record that
+got `AUTO_MATCH`/`AI_RESOLVED_MATCH`'d onto an unrelated bank row anyway --
+worse than an ordinary false positive, since the ledger now claims a
+settlement that never happened at all) and `exception_recall` (the
+complement: correctly left unmatched). Found a small pre-existing quirk
+while touching `gt_map`'s construction: `"".split("|")` is `[""]`, not
+`[]` -- harmless for every relationship type that always had a real,
+non-empty `true_bank_record_ids`, but exactly wrong for `no_counterpart`.
+Fixed as part of this change, not left latent. TDD: three new cases in
+`test_evaluate.py` (correctly abstained, dangerously auto-matched, and the
+zero-`no_counterpart` default), plus two new rows on the audit report
+(`report.py` / `test_report.py`) so the numbers are visible to whoever
+reads `AUDIT_REPORT.md`, not just `evaluation.json`.
+
+**Verified past the unit tests**: a real `generate` (1,000 records, seed 42)
+→ `run` cycle found 16 genuine `no_counterpart` records in this batch --
+`dangerous_misses: 0`, `exception_recall: 1.0`. Every one was correctly
+left unmatched, none were forced. Re-ran the 20,000-record stress test
+(`scripts/stress_test.py`) end to end: 100% precision, 0 false positives, 0
+invariant violations held, unchanged. 141 tests passing (up from 137),
+ruff clean. The honest caveat, stated plainly rather than glossed over:
+`exception_recall: 1.0` at n=16 is a real, measured result on this batch's
+specific seed, not a guarantee -- it is now something the stress-test and
+noise-level work (still open, see the earlier Reality Audit's P2 items) can
+actually put pressure on, which it could not before this existed to
+measure.
+
+---
+
+### [Day 8] The adversarial corpus found two real defects, and one was the bad kind
+
+Built the evaluation surface the Buildathon brief actually asks for, in
+parallel: three baselines (`engine/baseline.py`), an adversarial scenario
+corpus (`datagen/adversarial.py`), a progressive-noise stress harness
+(`scripts/noise_sweep.py`), calibration/abstention/replay metrics
+(`engine/calibration.py`), split-leakage tests (`tests/test_splits.py`), an
+architecture document, an evaluation document, and a safety-gate CI workflow
+(`.github/workflows/evaluation.yml`). Full numbers live in
+`docs/EVALUATION.md`; this entry is about what building it *found*.
+
+**The defect that mattered.** `build_candidate_graph` indexed Razorpay
+records into a plain `dict[utr] -> record`. Two payments sharing a UTR --
+a recycled bank reference, which this repo's own generator has injected as
+`duplicate_utr_reuse` since Day 4 -- meant the second silently overwrote the
+first before scoring ran. The true counterpart never became a candidate, and
+the bank credit was confidently AUTO_MATCHed at 0.95 (UTR + exact amount +
+same-day date) to the *wrong* payment, with nothing anywhere in the output
+signalling a collision had happened.
+
+A confident, invariant-passing, factually wrong ledger entry is the single
+worst thing this system can emit, and it was reachable from an anomaly the
+generator was already producing. Every existing test passed while this was
+true, because no test had ever constructed the collision -- 130+ tests, a
+20,000-record stress run, 100% precision on every batch, and the hole was
+still there. That is the argument for adversarial corpora in one paragraph.
+
+**The second defect, same root cause.** Two candidates within floating-point
+noise of each other both cleared 0.95; assignment booked whichever rounding
+favoured and the runner-up vanished. Nothing lowered confidence in a winner
+because a near-identical competitor existed.
+
+Both trace to the same thing: this project's rule for automation has always
+been three-part -- *evidence above threshold, **AND no competing
+explanation**, AND invariants hold*. The first and third were enforced in
+code. The middle clause was in the README, in the architecture doc, and
+implemented nowhere. It was documentation.
+
+**Fix.** `match.py` keys the UTR index to a list so every colliding record
+survives into scoring; `global_assign` suppresses an AUTO_MATCH when a
+distinct alternative counterpart on the same leg scores within
+`config.ambiguity_margin` (0.05, per-merchant configurable like every other
+threshold), demoting to LIKELY_MATCH and writing `competing_candidates` and
+a plain-language `abstention_reason` into `assignments.csv` -- two of the
+decision-contract fields the brief asks for, now real.
+
+**Cost on real data: zero.** The 1,000-record batch after the fix is
+byte-identical on every metric -- 823 true positives, 0 false positives,
+precision 100%, recall 83.64% -- with **0 suppressions fired**, because that
+batch contains no genuine near-ties at 0.05. Targeted, not blunt.
+
+**A bug I introduced and caught by measuring, not by testing.** The first
+version counted competing *edges*, and `build_candidate_graph` legitimately
+proposes the same razorpay<->merchant pair twice (once on `order_id`, once on
+`payment_id`). Every such pair looked contested, and AUTO_MATCH fell 2106 ->
+1116 while 990 correct matches were wrongly held. All 197 tests still passed.
+It was only visible by running the real batch and reading the per-leg
+breakdown. Fixed by counting distinct counterpart records rather than edges.
+Worth recording plainly: the test suite would have shipped that.
+
+**Other findings, none of them flattering, all in `docs/EVALUATION.md`:**
+- **Baseline B (amount + date window) beats us on recall** -- 861 correct
+  matches to our 823, at the same 100% precision, on this batch. The safety
+  margin cost 38 correct matches and prevented zero errors *here*. What
+  justifies it is Baseline C: fuzzy matching without a verification gate
+  corrupted 277 ledger entries (27.70% false auto-book rate).
+- **Abstention precision is 0.0164** -- 120 of 122 abstentions held a
+  candidate that was already correct. The calibration data says why: 101
+  assignments scored at 0.749 confidence were 100% correct. The system is
+  materially *under*confident in the 0.7-0.8 band. Not fixed, deliberately:
+  the fix is a threshold change, and tuning it on this batch would be tuning
+  on the corpus used to report final performance. The `calibration` split
+  exists and is now verified leak-free, which is where that work belongs.
+- Noise sweep verdict: **HEALTHY.** Precision held at 100% from 0% to 30%
+  corruption while abstention rose monotonically (5.14% -> 9.19%) and recall
+  absorbed the cost. The system trades recall for safety, not precision for
+  recall. No breaking point found below 30% -- a bounded negative result, not
+  a located cliff.
+- Replay consistency measured directly at **100%**: two independent runs
+  produce byte-identical `assignments.csv`, `evaluation.json` and
+  `exceptions.json`.
+- Split discipline verified: no payment id appears in two splits, splits
+  partition the batch with no loss, and each split's ground truth covers
+  exactly its own payments.
+
+197 tests passing, ruff clean, e2e green, 7/7 failure scenarios contained,
+noise sweep HEALTHY.
+
+---
+
+### [Day 9] Closing the checklist: held-out proof, a breaking point, and a drill-down
+
+Finished the remaining Definition-of-Done items from the brief. 258 tests
+passing (up from 197), ruff clean, e2e green. Three findings are worth more
+than the feature list.
+
+**1. It does not overfit its own generator -- and now that is measured.**
+Every headline number until today came from `data/generated`, the corpus
+development happened against. `scripts/eval_holdout.py` generates a fresh
+batch with a seed the thresholds were never tuned against (20260905), runs
+the real pipeline against only the held-out `test` split, and scores all
+three baselines on it with the same harness. **Precision held at exactly
+100.00%** with 0 false positives and 0 invariant violations; recall moved
+-1.82pp (83.64% -> 81.82%); ECE/Brier essentially unchanged. Baseline C
+reproduced its danger profile on unseen data too (20 false positives, 11.11%
+false-auto-book). The argument for a verification gate is not an artefact of
+one batch. **VERDICT: HEALTHY, no overfitting.**
+
+**2. The breaking point is a crash, not a wrong answer.**
+`scripts/chaos_batch.py` pins anomaly rate at 0.30 and then inflicts
+structural damage on the written CSVs -- duplicated rows, nulled fields,
+mangled references, impossible amounts, out-of-order rows, malformed
+timestamps. Precision **never broke**: 100.00% at every level that completed.
+What broke is ingest: from 20% structural damage onward the pipeline
+**hard-crashes**, because `engine/ingest.py` builds records with an
+all-or-nothing comprehension and a single unparseable timestamp aborts the
+entire file. Zero row-level fault tolerance -- a real, previously
+undocumented brittleness, found by the harness rather than reasoned about.
+
+Independently corroborated by a direct probe: empty-but-well-formed CSVs
+complete cleanly, a missing file raises `FileNotFoundError`, garbage content
+raises a `ValidationError` naming the exact field. Nothing is silently
+coerced. For a ledger that is defensible -- refusing a corrupted feed beats
+reconciling half of it -- but a merchant with one bad row in a 20,000-row
+file currently gets nothing rather than 19,999 records and one quarantined
+line. Row-level ingest quarantine is named as not built.
+
+Verdict recorded honestly as **SAFE but not RESILIENT**: never wrong,
+but it refuses rather than degrades.
+
+**3. The baselines are now in the product, not just in a test.**
+`settlegraph benchmark` runs all three (exact ID / amount+date / fuzzy) and
+prints False Auto-Book Rate and Dangerous Miss Rate alongside precision and
+recall. The dashboard gained a `/api/baselines` endpoint and a comparison
+table showing the same four rows. Both surfaces state plainly that **Baseline
+B books 861 correct matches to SettleGraph's 823 at equal 100% precision** --
+the result is presented, not arranged around.
+
+**Also landed:** `settlegraph replay` re-derives every decision from the same
+inputs and requires them to match (2,284/2,284 identical, 100% stability,
+now pinned by a CLI test rather than a manual run); a Decisions drill-down in
+the dashboard covering the four states the brief names (auto-match with a
+"why" line assembled from the actual row, abstention with its competing-
+candidate count and reason, exception with root cause and exposure,
+fail-closed safety paraphrasing `ai_reasoner.py`'s real docstring);
+`tests/test_splits.py` proving the train/calibration/test/adversarial splits
+are genuinely disjoint with no leakage; invariant boundary tests covering
+each invariant three ways (obvious, exact boundary, and a violation carrying
+a >=0.95 score); `docs/ARCHITECTURE.md` and `docs/EVALUATION.md`; and
+`.github/workflows/evaluation.yml`, which gates CI on the safety metrics
+themselves rather than only on the suite being green.
+
+**Two claims corrected rather than defended.** The README's benchmark table
+had asserted the naive baseline matched SettleGraph's recall exactly; the
+real measurement is that two baselines beat it. And the architecture doc now
+states plainly that the container was never built locally (Docker is not
+installed on this machine) -- CI's `docker-build` job is the only evidence
+for that section, and saying so is cheaper than being caught.

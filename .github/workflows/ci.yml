@@ -110,6 +110,70 @@ jobs:
             results/exceptions.json
             results/evaluation.json
 
+  refundguard-lint-and-format:
+    name: RefundGuard · Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./refundguard[dev]"
+
+      - name: Run Ruff Lint
+        run: ruff check refundguard/src refundguard/tests refundguard/scripts
+
+      - name: Run Ruff Format Check
+        run: ruff format --check refundguard/src refundguard/tests refundguard/scripts
+
+  refundguard-tests:
+    name: RefundGuard · Tests, Batch Eval & Regression Gate
+    needs: refundguard-lint-and-format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./refundguard[dev]"
+
+      - name: Run Unit Tests
+        run: python -m pytest refundguard/tests -v
+
+      # Deterministic arms only (allow_all / rules_only / rules_evidence) --
+      # the live-model judge arm needs an authenticated `claude` CLI session
+      # or an ANTHROPIC_API_KEY, neither of which a CI runner has, and is
+      # evaluated separately/manually. See run_eval.py's own --judge flag.
+      - name: Run Batch Evaluation (deterministic arms)
+        run: |
+          python refundguard/scripts/run_eval.py --json refundguard-eval-results.json
+
+      - name: Check Evaluation Regression Gate
+        run: python refundguard/scripts/check_eval_regression.py refundguard-eval-results.json
+
+      - name: Upload Evaluation Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: refundguard-eval-results
+          path: refundguard-eval-results.json
+
   docker-build:
     name: Container Build & Verification
     needs: lint-and-format

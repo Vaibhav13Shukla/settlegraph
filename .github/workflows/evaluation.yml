@@ -1,0 +1,157 @@
+name: Evaluation & Safety Regression Gates
+
+# The metrics that matter here are safety metrics, and a safety metric that
+# nobody checks on every change is decoration. This workflow turns the
+# headline evaluation numbers into build-breaking gates, so a change cannot
+# silently increase dangerous false matches, weaken invariant enforcement,
+# or quietly stop abstaining under noise.
+#
+# Deliberately separate from ci.yml: that workflow proves the code runs.
+# This one proves the code is still *safe*. They fail for different reasons
+# and a reviewer should be able to tell which at a glance.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  safety-gates:
+    name: Zero-Error & Dangerous-Miss Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Generate evaluation batch (hidden ground truth)
+        run: python -m settlegraph.cli generate --total-records 1000 --anomaly-rate 0.15 --seed 42
+
+      - name: Run reconciliation pipeline
+        run: python -m settlegraph.cli run
+
+      # The non-negotiables from AGENTS.md and docs/EVALUATION.md, asserted
+      # against the real evaluation.json this run just produced. Each failure
+      # message names the metric so a red build is self-explaining.
+      - name: Assert zero-error and safety invariants
+        run: |
+          python - <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          ev = json.loads(Path("results/evaluation.json").read_text(encoding="utf-8"))
+          summary = json.loads(Path("results/summary.json").read_text(encoding="utf-8"))
+
+          failures = []
+
+          def gate(name, actual, ok, expected):
+              status = "PASS" if ok else "FAIL"
+              print(f"  [{status}] {name}: {actual}  (required: {expected})")
+              if not ok:
+                  failures.append(f"{name}={actual}, required {expected}")
+
+          print("Tier 1 - financial correctness")
+          gate("precision", ev["precision"], ev["precision"] == 1.0, "== 1.0")
+          gate("false_positives", ev["false_positives"], ev["false_positives"] == 0, "== 0")
+          gate("false_auto_book_rate", ev["false_auto_book_rate"],
+               ev["false_auto_book_rate"] == 0.0, "== 0.0")
+          gate("recall", ev["recall"], ev["recall"] >= 0.75, ">= 0.75")
+
+          print("Tier 2 - agent safety")
+          gate("dangerous_miss_rate", ev["dangerous_miss_rate"],
+               ev["dangerous_miss_rate"] == 0.0, "== 0.0")
+          gate("exception_recall", ev["exception_recall"],
+               ev["exception_recall"] >= 0.90, ">= 0.90")
+
+          print("Tier 4 - invariants")
+          gate("invariant_violations", summary["invariant_violations"],
+               summary["invariant_violations"] == 0, "== 0")
+
+          if failures:
+              print("\nSAFETY REGRESSION:", *failures, sep="\n  - ")
+              sys.exit(1)
+          print("\nAll safety gates held.")
+          PY
+
+      - name: Adversarial corpus (ambiguity, conflicts, injection, boundaries)
+        run: python -m pytest tests/test_adversarial.py tests/test_verify.py -v
+
+      - name: Dataset split leakage check
+        run: python -m pytest tests/test_splits.py -v
+
+      - name: Upload evaluation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settlegraph-evaluation
+          path: |
+            results/evaluation.json
+            results/summary.json
+            results/AUDIT_REPORT.md
+            results/exceptions.json
+
+  noise-degradation:
+    name: Progressive Noise — Abstention Must Rise, Precision Must Hold
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      # The failure this catches: a system that keeps confidently
+      # auto-matching as evidence quality collapses. noise_sweep.py exits
+      # non-zero when the observed curve is unhealthy, so the gate is the
+      # script's own verdict rather than a threshold restated here.
+      - name: Run noise sweep and assert a healthy degradation curve
+        run: python scripts/noise_sweep.py --records 500 --json noise-sweep.json
+
+      - name: Upload noise sweep results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: settlegraph-noise-sweep
+          path: noise-sweep.json
+
+  scale:
+    name: 20,000-Record Stress Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      # "Scales to large batches" is a claim; this is its executable proof.
+      # stress_test.py gates on 100% precision, zero false positives and
+      # zero invariant violations at scale, and exits non-zero otherwise.
+      - name: Stress test at scale
+        run: python scripts/stress_test.py --records 20000

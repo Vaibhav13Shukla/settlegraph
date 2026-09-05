@@ -22,7 +22,7 @@ def verify_amount_invariant(rzp: NormalizedRecord, bank: NormalizedRecord) -> bo
     rzp_net = rzp.net_amount_paise or rzp.amount_paise
     bank_credit = bank.net_amount_paise or bank.amount_paise
     diff = abs(rzp_net - bank_credit)
-    if diff > 100:  # 1 paise tolerance
+    if diff > 100:  # 100 paise == Rs 1.00 tolerance (boundary pinned in test_verify.py)
         raise InvariantViolation(
             f"Amount mismatch: Razorpay net={rzp_net}, bank credit={bank_credit}, diff={diff}",
             {"rzp_net": rzp_net, "bank_credit": bank_credit, "diff": diff},

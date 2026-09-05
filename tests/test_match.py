@@ -119,6 +119,40 @@ def test_utr_match_creates_candidate() -> None:
     assert len(rzp_bank_pairs) >= 1
 
 
+def test_utr_collision_keeps_every_competing_razorpay_record() -> None:
+    """A recycled/reused bank reference number must not silently erase a
+    payment from the candidate graph.
+
+    Found by the adversarial corpus (`datagen/adversarial.py::
+    high_confidence_wrong_match`): `build_candidate_graph` used to index
+    Razorpay records into a plain `dict[utr] -> record`, so when two payments
+    shared a UTR the second **overwrote** the first before scoring ever ran.
+    The true counterpart never became a candidate at all, and the bank credit
+    was then confidently AUTO_MATCHed to the wrong payment at 0.95 (UTR +
+    exact amount + same-day date) with nothing anywhere in the output
+    signalling that a collision had happened.
+
+    That is the single most dangerous failure this system can produce: a
+    confident, invariant-passing, factually wrong ledger entry. The fix is
+    not to pick a better winner -- it is to stop discarding the evidence that
+    a competition existed, so the ambiguity is visible to assignment (which
+    then abstains, see test_assign.py) instead of being resolved by dict
+    insertion order.
+    """
+    config = PipelineConfig()
+    rzp_true = _make_rzp("rzp_true", utr="RZP999")
+    rzp_impostor = _make_rzp("rzp_impostor", utr="RZP999")
+    bank = [_make_bank("bank_1", utr="RZP999")]
+
+    candidates = build_candidate_graph([rzp_true, rzp_impostor], bank, [], config)
+
+    rzp_ids = {a.record_id for a, b in candidates if a.source == "razorpay"}
+    assert rzp_ids == {"rzp_true", "rzp_impostor"}, (
+        "both payments sharing the UTR must reach the scorer; dropping one "
+        "hides the collision and produces a confident wrong match"
+    )
+
+
 def test_order_id_match_creates_candidate() -> None:
     config = PipelineConfig()
     rzp = [_make_rzp("rzp_1", order_id="order_1", payment_id="pay_1")]

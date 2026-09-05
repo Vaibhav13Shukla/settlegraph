@@ -14,6 +14,14 @@ class PipelineConfig(BaseSettings):
     date_tolerance_days: int = 3
     auto_match_threshold: float = 0.95
     exception_threshold: float = 0.70
+    # "No competing explanation" -- the middle clause of this project's rule
+    # for when automation is allowed to act. If the runner-up candidate for
+    # the same record, on the same reconciliation leg, scores within this
+    # margin of the winner, the win is a tie-break rather than evidence, and
+    # the record is held for review instead of auto-booked. Configurable per
+    # merchant like every other threshold: one with a higher tolerance for
+    # review volume can widen it.
+    ambiguity_margin: float = 0.05
     generated_data_directory: Path = Path("data/generated")
     llm_provider: str = "none"
     history_enabled: bool = True

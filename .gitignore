@@ -14,3 +14,16 @@ results/
 .pytest-tmp/
 .stress-tmp/
 *.egg-info/
+
+# isolated workspaces for the evaluation harnesses -- each generates and
+# reconciles its own throwaway batch so it can never touch data/generated or
+# results/. They are cleaned up on success; these entries keep an
+# interrupted run from ever being committed.
+.noise-sweep-tmp/
+.chaos-batch-tmp/
+.eval-holdout-tmp/
+.threshold-study-tmp/
+noise-sweep.json
+*.pdf
+refundguard/
+

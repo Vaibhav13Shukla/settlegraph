@@ -2,6 +2,12 @@
 
 **Find every rupee. Prove every match.**
 
+> **Reviewing this cold?** Start with **[`docs/DEMO.md`](docs/DEMO.md)** — a
+> 5-minute walkthrough with the exact commands. Then
+> **[`docs/EVALUATION.md`](docs/EVALUATION.md)** for every number and how it
+> was measured, **[`docs/RED_TEAM.md`](docs/RED_TEAM.md)** for what a hostile
+> reviewer found, and **§8 below** for what this system *cannot* safely do.
+
 > An evidence-first settlement reconciliation and revenue-assurance controller for Razorpay merchants. It reconciles Razorpay settlement records, bank-statement records, and merchant-ledger records; every accepted match must be verifiable, and unresolved money stays visible as an exception.
 
 ---
@@ -69,23 +75,50 @@ SettleGraph implements a **Shielded Constrained Architecture** (Altman CMDP, 199
 
 ## 3. Evaluation Benchmark (Hidden Ground Truth)
 
-Evaluated on a seeded, out-of-sample batch of **1,000 transaction realities** with 15% injected anomalies across **11 kinds** (UTR corruption, missing references, MDR fee variation, partial/full refunds, bank timing delays, split settlements, duplicate reference reuse, out-of-order arrival, unit-confusion-shaped amount errors, malformed descriptions, and currency drift — see `DEVLOG.md` Day 4 for why each was added):
+Evaluated on a seeded, out-of-sample batch of **1,000 transaction realities** with 15% injected anomalies across **12 kinds** (UTR corruption, missing references, MDR fee variation, partial/full refunds, bank timing delays, split settlements, duplicate reference reuse, out-of-order arrival, unit-confusion-shaped amount errors, malformed descriptions, currency drift, and settlements that genuinely never reached the bank — see `DEVLOG.md` Days 4 and 7):
 
-| Metric | SettleGraph (Probabilistic + Shielded) | Naive Exact-Match Baseline | Theoretical Limit / Guarantee |
-| :--- | :--- | :--- | :--- |
-| **Precision / Accuracy (Zero-Error)** | **100.0%** | 100.0% | **0 False Positives** (Mathematical Invariant Guarantee) |
-| **Recall / Match Rate (Throughput)** | **83.4%** | 83.4% | Clean automated throughput without over-flagging |
-| **F1 Score** | **0.9095** | 0.9095 | Optimal harmonic balance |
-| **False Match Rate** | **0.00%** | 0.00% | **Zero corrupted ledger entries** |
-| **Exception Diagnosis** | **Automated Root-Cause Classification** | None (silently drops rows) | 100% of exceptions categorized with remediation advice |
-| **Revenue Assurance + Forward Cash Position** | **Quantified ₹ Exposure & Cash Forecast per Batch** | None | Full audit trail in `AUDIT_REPORT.md` |
+Measured against **three** baselines, not one — a single exact-match strawman
+would flatter the result. Full numbers, method and caveats:
+**[`docs/EVALUATION.md`](docs/EVALUATION.md)**.
 
-Stress-tested at **20,000 records (60,255 total across all three sources)** with `scripts/stress_test.py`: zero false positives, zero invariant violations held at scale, ~684 records/sec after fixing two real bottlenecks the stress run surfaced (see DEVLOG Day 4 — a quadratic candidate-matching loop and an over-eager drift detector, both measured and fixed, 12.8× faster on the worse of the two).
+| Metric | A: Exact ID | B: Amount + Date | C: Fuzzy Heuristic | **SettleGraph** |
+| :--- | :--- | :--- | :--- | :--- |
+| **Precision** | 100.0% | 100.0% | 69.2% | **100.0%** |
+| **Recall** | 84.9% | **87.5%** | 86.5% | 83.6% |
+| **F1** | 0.9181 | 0.9333 | 0.7686 | 0.9109 |
+| **True Positives** | 835 | **861** | 621 | 823 |
+| **False Positives** | 0 | 0 | **277** | **0** |
+| **False Auto-Book Rate** | 0.00% | 0.00% | **27.70%** | **0.00%** |
+| **Dangerous Miss Rate** | 0.0% | 0.0% | 68.8% | **0.0%** |
+| **Exception Diagnosis** | None | None | None | **Root-cause classification + ₹ exposure** |
+
+**Read that honestly: Baseline B beats SettleGraph on recall on this batch**
+(861 correct matches to our 823, at the same 100% precision). The safety
+margin cost 38 correct matches and prevented zero errors *here*. What
+justifies it is column C: fuzzy matching without a verification gate
+corrupted **277 ledger entries**. And Baseline B's clean precision is a
+property of *this* batch, not of the approach — it has no UTR check, no
+invariant gate and no abstention, and the adversarial suite constructs the
+amount+date collision where it fails (`tests/test_baseline.py` asserts it).
+
+Reproduce with `settlegraph benchmark`.
+
+Stress-tested at **20,000 records (~60,000 total across all three sources)** with `scripts/stress_test.py`: zero false positives, zero invariant violations held at scale, ~1,600 records/sec after fixing two real bottlenecks the stress run surfaced (see DEVLOG Day 4 — a quadratic candidate-matching loop and an over-eager drift detector, both measured and fixed, 12.8× faster on the worse of the two).
+
+Beyond the single batch, three harnesses exist because one number proves nothing:
+
+| Harness | Question it answers | Result |
+| :--- | :--- | :--- |
+| `scripts/noise_sweep.py` | Does the system stay confident as data quality collapses? | **Healthy** — precision held 100% from 0→30% corruption while abstention rose 5.1%→9.2% and recall absorbed the cost |
+| `scripts/chaos_batch.py` | Where is the actual breaking point under mixed structural damage? | **Safe but not resilient** — precision never broke; it hard-crashes at 20% damage because ingest has no row-level fault tolerance |
+| `scripts/eval_holdout.py` | Does it hold up on a split development never saw? | **No overfitting** — precision held at exactly 100% on a different seed, recall −1.82pp |
+| `settlegraph replay` | Would you get the same decision twice? | **2,284/2,284 identical, 100% stability** |
 
 ### Anomaly Breakdown — the honest version, including what doesn't work yet
 - **Normal transactions:** 782/782, zero false positives.
 - **Recovers well without AI assistance** (UTR corruption, missing UTR, fee mismatch, refund deductions, currency mismatch, malformed descriptions, missing merchant record): each routes cleanly to its exception category with **zero false positives**, and most clear a majority of cases automatically.
-- **Currently 0% automated recall** — the honest gap the PDF asks for, not a rounding error: `split_settlement`, `duplicate_utr_reuse`, `extreme_amount_mismatch`, and `out_of_order_arrival` each corrupt the UTR-driven candidate graph itself, so no candidate edge ever reaches the deterministic scorer. This is the exact target set for the Claude-backed reasoning layer in `engine/ai_reasoner.py` (§7) — every promotion it makes still has to clear the same invariant gate `AUTO_MATCH` does, which is why it gets its own `AI_RESOLVED_MATCH` label rather than inflating the deterministic number above.
+- **Currently 0% automated recall** — the honest gap the PDF asks for, not a rounding error: `split_settlement`, `extreme_amount_mismatch`, and `out_of_order_arrival` each corrupt the UTR-driven candidate graph itself, so no candidate edge ever reaches the deterministic scorer. This is the exact target set for the Claude-backed reasoning layer in `engine/ai_reasoner.py` (§7) — every promotion it makes still has to clear the same invariant gate `AUTO_MATCH` does, which is why it gets its own `AI_RESOLVED_MATCH` label rather than inflating the deterministic number above.
+- **`duplicate_utr_reuse` was in that list until Day 8, for a worse reason than "unrecoverable."** The adversarial corpus (`datagen/adversarial.py`) found that a reused UTR made `build_candidate_graph` *silently overwrite* one of the two colliding payments, after which the bank credit was confidently `AUTO_MATCH`ed to the **wrong** payment at 0.95. Not a recall gap — a dangerous false match, reachable from an anomaly this repo's own generator already injected, with 130+ tests and a 20,000-record stress run green the whole time. Both colliding records now survive into scoring, and a win by less than `config.ambiguity_margin` is held rather than booked. See `DEVLOG.md` Day 8.
 
 ---
 
@@ -138,7 +171,7 @@ path calls out to Anthropic.
 py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev]"
 
-# Run test suite (74 passing unit tests, including property-based / fuzz tests)
+# Run test suite (197 passing tests, including property-based / fuzz / adversarial tests)
 .venv\Scripts\python -m pytest -q --basetemp .pytest-tmp
 ```
 
@@ -206,3 +239,70 @@ work that one place to update is worth more than a tidy README.
 3. **Net-Zero Settlement Credits:**
    - *Failure:* When transactions experienced a 100% refund deduction before batch settlement, net bank credit became ₹0, triggering a Pydantic `gt=0` validation error on NormalizedRecord.
    - *Recovery:* Adjusted monetary constraints to `ge=0` while preserving non-negative credit assertions, enabling valid representations of net-zero settlement line items.
+
+---
+
+## 8. What This System Cannot Safely Do
+
+A reconciliation system that only advertises its strengths is asking to be
+trusted rather than checked. These are the real boundaries, measured or
+reasoned, not softened.
+
+**It over-abstains, and we can prove it.** Abstention precision is **0.0164**
+— 120 of 122 held decisions were pointing at the *correct* counterpart. The
+calibration data shows why: 101 assignments scored at 0.749 confidence were
+100% correct, so the system is materially under-confident in the 0.7–0.8
+band. That is throughput left on the table, not risk mitigation. It is **not
+fixed**, deliberately: the fix is a threshold change and tuning it on the
+batch we report performance on would be tuning on our own test set. The
+`calibration` split exists and is verified leak-free; that is where the work
+belongs.
+
+**A simpler baseline beats it on recall.** Baseline B (amount + date window)
+books 861 correct matches to our 823 at the same 100% precision on this
+batch. Our safety margin cost 38 correct matches and prevented zero errors
+*here*. The margin is insurance against conditions this batch does not
+contain — which is an honest reason to keep it, not a demonstrated win.
+
+**Its evidence of scale is bounded.** 20,000 records is measured. Beyond
+~10⁶ records per batch the in-memory candidate graph is the first thing that
+breaks. The progressive-noise sweep found no precision cliff below 30%
+corruption — a bounded negative result, not a located breaking point.
+
+**Its data is synthetic.** Every number comes from `datagen/generator.py`.
+Split discipline (verified disjoint, no leakage) reduces but cannot eliminate
+the risk that good scores mean "generalises to what our own generator
+produces" rather than to a real merchant's feed. No real Razorpay data has
+ever touched this code.
+
+**Small denominators carry big-sounding rates.** `dangerous_miss_rate = 0%`
+and `exception_recall = 100%` rest on **n=16** no-counterpart records in this
+batch. Real and measured; also a small sample.
+
+**It cannot decide what it has no evidence for.** One payment to many
+invoices, many payments to one invoice, and aggregated settlements are not
+modelled as first-class relationships — they surface as exceptions rather
+than being resolved. A merchant with a heavily split-settlement profile would
+see a large review queue, correctly but expensively.
+
+**Its LLM layer is off by default and unmeasured on quality.** Every headline
+number here comes from the deterministic path. `engine/ai_reasoner.py` has no
+batch evaluation of its own hypothesis quality; what *is* proven is that
+every failure path (timeout, refusal, malformed JSON, hallucinated candidate,
+invariant failure) leaves the record exactly where the deterministic layer
+put it.
+
+**It refuses rather than degrades on malformed input.** `engine/ingest.py`
+builds records all-or-nothing, so a *single* unparseable timestamp anywhere
+in a source file aborts the entire batch. Measured: the chaos harness
+hard-crashes at 20% structural damage. For a ledger, refusing a corrupted
+feed beats reconciling half of it — but a merchant with one bad row in a
+20,000-row file currently gets nothing, rather than 19,999 reconciled records
+and one quarantined line. Row-level ingest quarantine is not built.
+
+**Storage and concurrency are single-process.** Flat files, one writer. A
+multi-process deployment would need the run-history and idempotency state
+shared before the duplicate and cumulative checks stay correct.
+
+Full method, commands to reproduce every number, and the two real defects the
+adversarial corpus found (and how they were fixed): **[`docs/EVALUATION.md`](docs/EVALUATION.md)**.

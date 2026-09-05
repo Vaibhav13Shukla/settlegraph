@@ -12,7 +12,11 @@ from rich.table import Table
 
 from datagen.generator import SyntheticDataGenerator
 from settlegraph.config import PipelineConfig
-from settlegraph.engine.baseline import run_naive_baseline
+from settlegraph.engine.baseline import (
+    run_amount_date_baseline,
+    run_fuzzy_baseline,
+    run_naive_baseline,
+)
 from settlegraph.engine.evaluate import evaluate as run_evaluate
 from settlegraph.engine.ingest import load_all, load_razorpay
 from settlegraph.engine.normalize import normalize_all
@@ -112,67 +116,66 @@ def benchmark(data_dir: str = "data/generated") -> None:
     rzp, bank, merchant = load_all(data_path)
     rzp_norm, bank_norm, merch_norm = normalize_all(rzp, bank, merchant)
 
-    # 1. Run Naive Baseline
-    naive_assignments = run_naive_baseline(rzp_norm, bank_norm, merch_norm)
-    tmp_naive_path = Path(".pytest-tmp") / "naive_assignments.csv"
-    tmp_naive_path.parent.mkdir(parents=True, exist_ok=True)
+    # Three baselines, not one. A single exact-match strawman would let
+    # SettleGraph look good for the wrong reason; the interesting comparison
+    # is against approaches that are *plausible*, because that is what a
+    # merchant would reach for first. Baseline B in particular beats
+    # SettleGraph on recall on the current batch -- that result is reported,
+    # not buried (see docs/EVALUATION.md).
+    tmp_dir = Path(".pytest-tmp")
+    tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    with tmp_naive_path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=list(naive_assignments[0].keys()))
-        writer.writeheader()
-        writer.writerows(naive_assignments)
+    baselines = [
+        ("A: Exact ID", run_naive_baseline(rzp_norm, bank_norm, merch_norm)),
+        ("B: Amount + Date", run_amount_date_baseline(rzp_norm, bank_norm, merch_norm)),
+        ("C: Fuzzy Heuristic", run_fuzzy_baseline(rzp_norm, bank_norm, merch_norm)),
+    ]
 
-    naive_eval = run_evaluate(tmp_naive_path, gt_path)
+    baseline_evals: list[tuple[str, dict]] = []
+    for name, assignments in baselines:
+        path = tmp_dir / f"baseline_{name[0].lower()}_assignments.csv"
+        with path.open("w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(fh, fieldnames=list(assignments[0].keys()))
+            writer.writeheader()
+            writer.writerows(assignments)
+        baseline_evals.append((name, run_evaluate(path, gt_path)))
 
-    # 2. Run SettleGraph
+    # Run SettleGraph itself
     config = PipelineConfig(generated_data_directory=data_path)
     sg_summary = run_pipeline(
         data_dir=data_path, output_dir=".pytest-tmp/sg_results", config=config
     )
     sg_eval = sg_summary.get("evaluation", {})
 
-    # Display Rich Comparison Table
-    table = Table(title="SettleGraph vs. Naive Baseline Benchmark")
+    table = Table(title="SettleGraph vs. Three Baselines (hidden ground truth)")
     table.add_column("Metric", style="cyan", no_wrap=True)
-    table.add_column("Naive Exact-Match Baseline", style="magenta")
-    table.add_column("SettleGraph (Probabilistic + Shielded)", style="green")
-    table.add_column("Impact / Edge", style="yellow")
+    for name, _ in baseline_evals:
+        table.add_column(name, style="magenta")
+    table.add_column("SettleGraph", style="green")
 
-    table.add_row(
-        "Precision (Zero-Error)",
-        f"{naive_eval['precision'] * 100:.1f}%",
-        f"[bold]{sg_eval.get('precision', 0) * 100:.1f}%[/bold]",
-        "Mathematically verified zero false matches",
-    )
-    recall_diff = (sg_eval.get("recall", 0) - naive_eval["recall"]) * 100
-    f1_diff = sg_eval.get("f1", 0) - naive_eval["f1"]
-    table.add_row(
-        "Recall (Throughput)",
-        f"{naive_eval['recall'] * 100:.1f}%",
-        f"[bold]{sg_eval.get('recall', 0) * 100:.1f}%[/bold]",
-        f"{recall_diff:+.1f}pp automated recovery of anomalies",
-    )
-    table.add_row(
-        "F1 Score",
-        f"{naive_eval['f1']:.4f}",
-        f"[bold]{sg_eval.get('f1', 0):.4f}[/bold]",
-        f"{f1_diff:+.4f} overall accuracy lift",
-    )
-    table.add_row(
-        "False Positives",
-        f"{naive_eval['false_positives']}",
-        f"[bold]{sg_eval.get('false_positives', 0)}[/bold]",
-        "Zero corrupted ledger entries",
-    )
-    table.add_row(
-        "Exception Diagnosis",
-        "None (drops failed rows)",
-        "[bold]Automated Root-Cause Classification[/bold]",
-        "Actionable accounting audit trail",
-    )
+    def _row(label: str, key: str, fmt) -> None:
+        cells = [fmt(e.get(key, 0)) for _, e in baseline_evals]
+        table.add_row(label, *cells, f"[bold]{fmt(sg_eval.get(key, 0))}[/bold]")
+
+    _row("Precision", "precision", lambda v: f"{v * 100:.1f}%")
+    _row("Recall", "recall", lambda v: f"{v * 100:.1f}%")
+    _row("F1", "f1", lambda v: f"{v:.4f}")
+    _row("True Positives", "true_positives", str)
+    _row("False Positives", "false_positives", str)
+    _row("False Auto-Book Rate", "false_auto_book_rate", lambda v: f"{v * 100:.2f}%")
+    _row("Dangerous Miss Rate", "dangerous_miss_rate", lambda v: f"{v * 100:.1f}%")
 
     console.print("")
     console.print(table)
+    console.print(
+        "\n[dim]False Auto-Book Rate is the column that matters: a baseline can win on "
+        "recall and still be the wrong system to run, because a false auto-match "
+        "corrupts the ledger while an abstention only costs review time.[/dim]"
+    )
+
+    # The historical naive-vs-SettleGraph note below works off Baseline A.
+    naive_eval = baseline_evals[0][1]
+    recall_diff = (sg_eval.get("recall", 0) - naive_eval["recall"]) * 100
 
     # A naive matcher with zero safety margin can score higher on raw
     # recall than a system that deliberately holds a suspicious-but-correct
@@ -221,6 +224,20 @@ def simulate() -> None:
         table.add_row(r.scenario_id, r.name, r.system_response, status_badge)
 
     console.print(table)
+
+    # The per-row badge above already reads r.passed correctly; this banner
+    # used to print an unconditional success message regardless of it --
+    # a demo/CI script that only reads this line, or a human skimming past
+    # the table, would see "All N ... contained" even if one scenario's own
+    # row said FAILED. Found by code review. A failure-injection suite must
+    # never assert a pass it didn't measure.
+    failed = [r for r in results if not r.passed]
+    if failed:
+        console.print(
+            f"\n[bold red][FAIL] {len(failed)} of {len(results)} failure scenario(s) "
+            f"did NOT contain safely: {', '.join(r.scenario_id for r in failed)}.[/bold red]\n"
+        )
+        raise typer.Exit(code=1)
     console.print(
         f"\n[bold green][PASS] All {len(results)} failure scenarios safely contained with zero false ledger entries.[/bold green]\n"
     )
@@ -351,6 +368,70 @@ def history(
             else "[bold green]None[/bold green]"
         )
         console.print(f"  Drift detected: {status} (current mean: {drift['current_mean']})")
+
+
+@app.command()
+def replay(
+    results_dir: str = "results",
+    data_dir: str = "data/generated",
+) -> None:
+    """Re-derive every decision from the same inputs and prove it reproduces.
+
+    "Every decision can be replayed" is a claim this project makes in its
+    README, its architecture doc and its audit report. This is the command
+    that makes it checkable rather than asserted: it re-runs the full
+    deterministic pipeline over the same source feeds into a scratch
+    directory, then diffs the freshly-derived assignments against the ones
+    already on disk, decision by decision.
+
+    A finance controller asking "why was this reconciled, and would you get
+    the same answer again" gets an actual answer. Any decision that does not
+    reproduce is printed with both versions -- an unstable financial decision
+    is a defect, not a curiosity, so this exits non-zero when stability is
+    not 100%.
+    """
+    import shutil
+    import tempfile
+
+    from settlegraph.engine.calibration import compute_replay_consistency
+
+    stored = Path(results_dir) / "assignments.csv"
+    if not stored.exists():
+        console.print(f"[red]No assignments at {stored}. Run 'settlegraph run' first.[/red]")
+        raise typer.Exit(code=1)
+
+    scratch = Path(tempfile.mkdtemp(prefix="settlegraph-replay-"))
+    try:
+        console.print(f"[dim]Re-deriving decisions from {data_dir} ...[/dim]\n")
+        run_pipeline(
+            data_dir=data_dir,
+            output_dir=scratch,
+            config=PipelineConfig(generated_data_directory=Path(data_dir)),
+        )
+        result = compute_replay_consistency(stored, scratch / "assignments.csv")
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    console.print("\n[bold cyan]=== Replay Consistency ===[/bold cyan]")
+    console.print(f"  Decisions compared: {result['total_decisions']}")
+    console.print(f"  Reproduced identically: [green]{result['stable_decisions']}[/green]")
+    console.print(f"  Changed: [red]{result['changed_decisions']}[/red]")
+    console.print(f"  Stability rate: [bold]{result['stability_rate'] * 100:.2f}%[/bold]")
+
+    changed = result.get("changed_examples") or []
+    if changed:
+        console.print("\n[bold red]Decisions that did not reproduce:[/bold red]")
+        for row in changed:
+            console.print(f"  {row}")
+        console.print(
+            "\n[red]A financial decision that changes between runs on identical "
+            "evidence cannot be audited. Investigate before trusting this batch.[/red]"
+        )
+        raise typer.Exit(code=1)
+
+    console.print(
+        "\n[green]Every decision re-derived identically from the same evidence.[/green]\n"
+    )
 
 
 @app.command()

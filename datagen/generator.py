@@ -324,6 +324,7 @@ class SyntheticDataGenerator:
         """
         count = int(len(truth) * self.anomaly_rate)
         extra_bank_records: list[BankStatementRecord] = []
+        indices_to_drop_from_bank: set[int] = set()
         kinds = [
             "missing_utr",
             "corrupted_utr",
@@ -336,6 +337,7 @@ class SyntheticDataGenerator:
             "extreme_amount_mismatch",
             "malformed_description",
             "currency_mismatch",
+            "no_counterpart",
         ]
         for index in self.rng.sample(range(len(truth)), count):
             kind = self.rng.choice(kinds)
@@ -404,6 +406,28 @@ class SyntheticDataGenerator:
                 bank[index].description = "NEFT/RAZORPAY/⚠️​<<<INJECTED>>>/" + "ട" * 200
             elif kind == "currency_mismatch":
                 merchant[index].currency = "USD"
+            elif kind == "no_counterpart":
+                # A settlement that genuinely never reached the bank -- not
+                # corrupted, not delayed, not split: it simply never
+                # arrived (a gateway/bank data-loss event, or a capture that
+                # was reversed downstream after ground truth was recorded).
+                # The merchant ledger still shows the sale -- that half of
+                # the business event actually happened -- but there is no
+                # true bank counterpart to find, ever, in this batch.
+                #
+                # relationship_type="no_counterpart" and
+                # true_bank_record_ids=[] have existed on GroundTruthRecord
+                # since Day 1 but were never actually produced until this,
+                # which is why Dangerous Miss Rate and Exception Recall
+                # stayed unmeasurable: there was nothing to measure them on.
+                # Marked for removal here rather than deleted immediately --
+                # `bank[index]` positions must stay stable for every other
+                # index this same loop still has to process.
+                indices_to_drop_from_bank.add(index)
+                truth[index].relationship_type = "no_counterpart"
+                truth[index].true_bank_record_ids = []
+        for i in sorted(indices_to_drop_from_bank, reverse=True):
+            del bank[i]
         bank.extend(extra_bank_records)
 
     def generate_gst_invoices(

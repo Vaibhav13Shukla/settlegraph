@@ -54,15 +54,32 @@ def build_candidate_graph(
     """
     candidates: list[tuple[NormalizedRecord, NormalizedRecord]] = []
 
-    # Razorpay -> Bank: UTR match (primary)
-    rzp_by_utr: dict[str, NormalizedRecord] = {}
+    # Razorpay -> Bank: UTR match (primary).
+    #
+    # Keyed to a *list*, not a single record. This used to be
+    # `dict[utr] -> record`, which meant that when two payments shared a UTR
+    # -- a recycled or corrupted bank reference number, which the generator
+    # injects as `duplicate_utr_reuse` and real banks genuinely do -- the
+    # second silently overwrote the first before scoring ever ran. The true
+    # counterpart never became a candidate, and the bank credit was then
+    # confidently AUTO_MATCHed to the wrong payment at 0.95 (UTR + exact
+    # amount + same-day date) with nothing in the output signalling the
+    # collision. A confident, invariant-passing, factually wrong ledger
+    # entry is the worst output this system can produce.
+    #
+    # Found by `datagen/adversarial.py::high_confidence_wrong_match`. Keeping
+    # every colliding record makes the competition visible to
+    # `global_assign`, which abstains on it rather than resolving it by dict
+    # insertion order.
+    rzp_by_utr: dict[str, list[NormalizedRecord]] = defaultdict(list)
     for r in rzp:
         if r.utr:
-            rzp_by_utr[r.utr] = r
+            rzp_by_utr[r.utr].append(r)
 
     for b in bank:
-        if b.utr and b.utr in rzp_by_utr:
-            candidates.append((rzp_by_utr[b.utr], b))
+        if b.utr:
+            for r in rzp_by_utr.get(b.utr, ()):
+                candidates.append((r, b))
 
     # Razorpay -> Bank: settlement_date + amount match (secondary, for missing UTR).
     # We only use this fallback when both sides have no UTR to avoid spurious links.

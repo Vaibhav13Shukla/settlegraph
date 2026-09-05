@@ -1,4 +1,21 @@
-# Execution Plan (Winning Path)
+# Execution Plan (Winning Path) — HISTORICAL
+
+> **This document is superseded and kept only as a record of the original
+> plan.** It was written on Day 2 and the project diverged from it almost
+> immediately. Reading it as a description of the current system will
+> mislead you.
+>
+> For what actually happened, day by day, including the defects found and how:
+> **[`../DEVLOG.md`](../DEVLOG.md)**.
+> For the current architecture: **[`ARCHITECTURE.md`](ARCHITECTURE.md)**.
+> For what is measured and what is still open: **[`EVALUATION.md`](EVALUATION.md)**.
+>
+> Notable divergences: the "calibration pipeline" of Day 5 landed as
+> `engine/calibration.py` on Day 8, not Day 5; the "active evidence
+> acquisition policy" of Day 9 was never built; and the ablation report of
+> Day 10 became `docs/EVALUATION.md`'s three-baseline comparison.
+
+---
 
 ## Day 2 (completed in this iteration)
 - Stabilize failing baseline tests.

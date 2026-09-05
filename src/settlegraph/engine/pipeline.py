@@ -10,12 +10,122 @@ from settlegraph.config import PipelineConfig
 from settlegraph.engine.assign import classify_unmatched, global_assign
 from settlegraph.engine.drift import ADWINDetector
 from settlegraph.engine.evaluate import evaluate as run_evaluate
-from settlegraph.engine.ingest import load_all
+from settlegraph.engine.exceptions import ExceptionReport
+from settlegraph.engine.idempotency import IdempotencyShield
+from settlegraph.engine.ingest import load_all_with_quarantine
 from settlegraph.engine.match import build_candidate_graph
 from settlegraph.engine.normalize import normalize_all
 from settlegraph.engine.score import score_all
 from settlegraph.engine.verify import verify_settlegraph_invariants
 from settlegraph.models import NormalizedRecord
+
+_INVARIANT_GATED_LABELS = {"AUTO_MATCH"}
+
+
+def deduplicate_normalized_records(
+    rzp: list[NormalizedRecord],
+    bank: list[NormalizedRecord],
+    merchant: list[NormalizedRecord],
+) -> tuple[list[NormalizedRecord], list[NormalizedRecord], list[NormalizedRecord], list[dict]]:
+    """Run every normalized source through `IdempotencyShield` before the
+    candidate graph ever sees it.
+
+    ADR 0004 ("Cryptographic SHA-256 Idempotency Shield") claims this
+    "guarantees zero duplicate ledger entries under network retry storms."
+    Until now that was true of `IdempotencyShield` in isolation -- it was
+    fully built and unit-tested (`tests/test_idempotency.py`,
+    `tests/test_e2e.py::test_idempotency_shield_stream_e2e`,
+    `simulator.py`'s FAIL_01 scenario) but `run_pipeline` never called it, so
+    a retried settlement webhook landing twice in the real ingest CSVs flowed
+    straight through scoring, matching, and revenue-assurance totals
+    ungated. Found by code review.
+
+    One shield instance across all three sources: `compute_fingerprint`
+    includes `record.source`, so a razorpay and a bank record can never
+    collide on fingerprint, and sharing the instance costs nothing while
+    keeping one duplicate log instead of three.
+    """
+    shield = IdempotencyShield()
+    rzp_unique, _ = shield.filter_duplicates(rzp)
+    bank_unique, _ = shield.filter_duplicates(bank)
+    merch_unique, _ = shield.filter_duplicates(merchant)
+    return rzp_unique, bank_unique, merch_unique, shield.intercepted_duplicates
+
+
+def enforce_invariant_gate(
+    assignments: list[dict],
+    norm_map: dict[str, NormalizedRecord],
+    config: PipelineConfig,
+) -> tuple[list[dict], list[ExceptionReport], int]:
+    """Demote any AUTO_MATCH that fails `verify_settlegraph_invariants` to
+    EXCEPTION, in place, and return a diagnostic report naming the actual
+    violation for each one demoted.
+
+    Before this existed, `verify_settlegraph_invariants` ran on every
+    AUTO_MATCH and its violation count was reported in
+    `summary["invariant_violations"]`, but nothing acted on that count -- the
+    assignment kept its AUTO_MATCH label regardless of the result. That
+    directly contradicted `report.py`'s own audit-report line ("any violation
+    demotes to exception queue") and AGENTS.md's non-negotiable "Precision =
+    100.0%" invariant: scoring never looks at bank-credit direction, so a
+    debit line (a refund payout, say) sharing a UTR/amount/date window with a
+    real settlement could clear the auto-match threshold and still fail
+    `verify_direction_invariant`. Found by code review, not by the test suite
+    -- the existing e2e test only asserts aggregate precision on generated
+    data that happens not to hit this path.
+
+    A dedicated `INVARIANT_VIOLATION` category is used rather than routing
+    through `investigate_exception` -- that function has no concept of an
+    invariant failure and would misattribute a high-confidence, invariant-
+    failing match as "confidence did not clear the auto-match threshold",
+    which is false and would mislead whoever reads the exception queue next.
+
+    Scoped to razorpay<->bank pairs, matching `verify_settlegraph_invariants`
+    itself (see its own docstring) -- a razorpay<->merchant AUTO_MATCH passes
+    through unexamined.
+    """
+    reports: list[ExceptionReport] = []
+    violation_count = 0
+    for a in assignments:
+        if a["label"] not in _INVARIANT_GATED_LABELS:
+            continue
+        a_norm = norm_map.get(a["source_a_id"])
+        b_norm = norm_map.get(a["source_b_id"])
+        if not (a_norm and b_norm and {a_norm.source, b_norm.source} == {"razorpay", "bank"}):
+            continue
+        rzp = a_norm if a_norm.source == "razorpay" else b_norm
+        bank = b_norm if b_norm.source == "bank" else a_norm
+
+        violations = verify_settlegraph_invariants(rzp, bank, config)
+        if not violations:
+            continue
+
+        violation_count += len(violations)
+        original_label = a["label"]
+        a["label"] = "EXCEPTION"
+        reports.append(
+            ExceptionReport(
+                record_id=rzp.record_id,
+                source=rzp.source,
+                category="INVARIANT_VIOLATION",
+                severity="HIGH",
+                root_cause=(
+                    f"Cleared confidence scoring ({a['confidence']}, originally {original_label}) "
+                    f"but failed deterministic invariant verification: {violations[0]}"
+                ),
+                unexplained_amount_paise=rzp.amount_paise,
+                suggested_action=(
+                    "Do not auto-book. A high confidence score does not override a failed "
+                    "accounting invariant -- investigate manually."
+                ),
+                evidence={
+                    "violations": [str(v) for v in violations],
+                    "counterpart_record_id": bank.record_id,
+                    "original_label": original_label,
+                },
+            )
+        )
+    return assignments, reports, violation_count
 
 
 def run_pipeline(
@@ -35,15 +145,39 @@ def run_pipeline(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Phase 1: Ingest
+    # Phase 1: Ingest. `load_all_with_quarantine` (not the plain `load_all`
+    # every other caller uses) so a row that fails Pydantic validation --
+    # a bad timestamp, a failed net_must_balance invariant, whatever -- is
+    # quarantined instead of either aborting the whole source file's ingest
+    # or, worse, being silently dropped. See engine/ingest.py's module
+    # docstring for the measured chaos_batch.py evidence this replaces.
+    # Quarantine must be LOUD: reported in the console log, written in full
+    # to results/quarantine.json, and counted in summary.json so a batch
+    # with quarantined rows can never look identical to a clean one.
     print("[1/7] Ingesting sources...")
-    rzp, bank, merchant = load_all(data_path)
+    rzp, bank, merchant, quarantined_rows = load_all_with_quarantine(data_path)
     print(f"  Loaded {len(rzp)} Razorpay, {len(bank)} bank, {len(merchant)} merchant records")
+    if quarantined_rows:
+        print(f"  Quarantined {len(quarantined_rows)} unparseable row(s) -- see quarantine.json")
+        with (output_path / "quarantine.json").open("w", encoding="utf-8") as fh:
+            json.dump([q.to_dict() for q in quarantined_rows], fh, indent=2)
 
     # Phase 2: Normalize
     print("[2/7] Normalizing records...")
     rzp_norm, bank_norm, merch_norm = normalize_all(rzp, bank, merchant)
     print(f"  Normalized {len(rzp_norm)} rzp, {len(bank_norm)} bank, {len(merch_norm)} merchant")
+
+    # Phase 2.5: Idempotency shield -- filter duplicate ingestion events
+    # (retried webhooks, re-sent batch files) before anything downstream
+    # can see them. See `deduplicate_normalized_records`'s own docstring for
+    # why this wasn't previously wired in despite ADR 0004's claim.
+    rzp_norm, bank_norm, merch_norm, duplicate_events = deduplicate_normalized_records(
+        rzp_norm, bank_norm, merch_norm
+    )
+    if duplicate_events:
+        print(f"  Intercepted {len(duplicate_events)} duplicate record(s) -- see duplicates.json")
+        with (output_path / "duplicates.json").open("w", encoding="utf-8") as fh:
+            json.dump(duplicate_events, fh, indent=2)
 
     # Phase 3: Build candidate graph
     print("[3/7] Building candidate graph...")
@@ -91,22 +225,25 @@ def run_pipeline(
     likely = sum(1 for a in assignments if a["label"] == "LIKELY_MATCH")
     print(f"  {auto_matches} AUTO_MATCH, {likely} LIKELY_MATCH, {exceptions} EXCEPTION")
 
-    # Phase 6: Invariant verification
+    # Phase 6: Invariant verification. Any AUTO_MATCH that fails a
+    # deterministic invariant (amount, date, credit direction) is demoted to
+    # EXCEPTION here, in place -- scoring alone is not the auto-match gate,
+    # this is. See `enforce_invariant_gate`'s own docstring for why this
+    # wasn't previously true despite the audit report claiming it was.
     print("[6/7] Verifying invariants...")
     norm_map: dict[str, NormalizedRecord] = {
         r.record_id: r for r in rzp_norm + bank_norm + merch_norm
     }
-    violations = 0
-    for a in assignments:
-        if a["label"] == "AUTO_MATCH":
-            a_norm = norm_map.get(a["source_a_id"])
-            b_norm = norm_map.get(a["source_b_id"])
-            if a_norm and b_norm and {a_norm.source, b_norm.source} == {"razorpay", "bank"}:
-                rzp = a_norm if a_norm.source == "razorpay" else b_norm
-                bank = b_norm if b_norm.source == "bank" else a_norm
-                v = verify_settlegraph_invariants(rzp, bank, config)
-                violations += len(v)
-    print(f"  {violations} invariant violations detected")
+    assignments, invariant_exception_reports, violations = enforce_invariant_gate(
+        assignments, norm_map, config
+    )
+    demoted_ids = {r.record_id for r in invariant_exception_reports}
+    demoted_note = ""
+    if demoted_ids:
+        auto_matches = sum(1 for a in assignments if a["label"] == "AUTO_MATCH")
+        exceptions = sum(1 for a in assignments if a["label"] == "EXCEPTION")
+        demoted_note = f" ({len(demoted_ids)} AUTO_MATCH demoted to EXCEPTION)"
+    print(f"  {violations} invariant violations detected{demoted_note}")
 
     # Phase 7: Unmatched records
     unmatched = classify_unmatched(
@@ -121,8 +258,20 @@ def run_pipeline(
     from settlegraph.engine.exceptions import generate_exception_reports
     from settlegraph.engine.report import compute_revenue_assurance, generate_markdown_audit_report
 
-    non_auto = [a for a in assignments if a["label"] != "AUTO_MATCH"]
+    # Gate-demoted records already have their own diagnostic report (naming
+    # the actual invariant failure) from `enforce_invariant_gate` -- excluded
+    # here so `investigate_exception` doesn't also generate a second, generic
+    # report for the same record_id that would misattribute the cause as low
+    # confidence.
+    non_auto = [
+        a
+        for a in assignments
+        if a["label"] != "AUTO_MATCH"
+        and a["source_a_id"] not in demoted_ids
+        and a["source_b_id"] not in demoted_ids
+    ]
     exception_reports = generate_exception_reports(unmatched, non_auto, scored, norm_map)
+    exception_reports.extend(invariant_exception_reports)
     print(f"  Diagnosed {len(exception_reports)} exception root causes")
 
     # Phase 7.5: AI-assisted resolution (optional, off by default). Gated
@@ -185,6 +334,8 @@ def run_pipeline(
             "bank": len(bank_norm),
             "merchant": len(merch_norm),
         },
+        "quarantined_records": len(quarantined_rows),
+        "duplicates_intercepted": len(duplicate_events),
         "candidates": len(candidates),
         "assignments": {
             "auto_match": auto_matches,

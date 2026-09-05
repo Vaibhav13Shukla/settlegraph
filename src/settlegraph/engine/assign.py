@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
+
 from settlegraph.config import PipelineConfig
 from settlegraph.models import NormalizedRecord
 
@@ -12,6 +14,53 @@ def _classify_assignment(confidence: float, config: PipelineConfig) -> str:
     if confidence >= config.exception_threshold:
         return "LIKELY_MATCH"
     return "EXCEPTION"
+
+
+def _leg(source_a: str, source_b: str) -> tuple[str, str]:
+    """Canonical key for a reconciliation leg, order-independent."""
+    first, second = sorted((source_a, source_b))
+    return (first, second)
+
+
+def _count_near_ties(
+    scored_edges: list[tuple[NormalizedRecord, NormalizedRecord, float]],
+    config: PipelineConfig,
+) -> dict[tuple[str, tuple[str, str]], int]:
+    """For each (record, leg), how many *other* candidates score within
+    `ambiguity_margin` of that record's best candidate on that leg.
+
+    Scoped per leg on purpose: a payment legitimately has both a bank
+    counterpart and a merchant counterpart, and those are answers to
+    different questions rather than competing explanations for the same one.
+    Counting them as competition would suppress every well-matched payment
+    in the batch.
+    """
+    # Keyed by *counterpart record id*, not by edge. `build_candidate_graph`
+    # can legitimately propose the same pair more than once through
+    # different routes -- a razorpay<->merchant pair is proposed once on
+    # order_id and again on payment_id -- and those duplicates are one
+    # candidate, not two competing ones. Counting edges instead of distinct
+    # counterparts made every such pair look contested and suppressed 990
+    # correct auto-matches on a real 1,000-record batch. Caught by measuring
+    # the batch after the change rather than by any test.
+    best_per_counterpart: dict[tuple[str, tuple[str, str]], dict[str, float]] = defaultdict(dict)
+    for a, b, score in scored_edges:
+        if a.source == b.source:
+            continue
+        leg = _leg(a.source, b.source)
+        for record, counterpart in ((a, b), (b, a)):
+            seen = best_per_counterpart[(record.record_id, leg)]
+            prior = seen.get(counterpart.record_id)
+            if prior is None or score > prior:
+                seen[counterpart.record_id] = score
+
+    near_ties: dict[tuple[str, tuple[str, str]], int] = {}
+    for key, per_counterpart in best_per_counterpart.items():
+        scores = list(per_counterpart.values())
+        best = max(scores)
+        # -1 excludes the winner itself from its own competitor count.
+        near_ties[key] = sum(1 for s in scores if best - s <= config.ambiguity_margin) - 1
+    return near_ties
 
 
 def global_assign(
@@ -47,6 +96,11 @@ def global_assign(
     # trail). Ordering on ids makes the result independent of whatever
     # order candidates were generated in, not just "usually the same."
     sorted_edges = sorted(scored_edges, key=lambda e: (-e[2], e[0].record_id, e[1].record_id))
+
+    # Computed over the full edge set before any exclusivity consumption, so
+    # a competitor still counts even though it will later lose the slot --
+    # that it existed at all is exactly the signal being preserved.
+    near_ties = _count_near_ties(scored_edges, config)
 
     assignments: list[dict] = []
 
@@ -89,6 +143,27 @@ def global_assign(
 
         label = _classify_assignment(confidence, config)
 
+        # "No competing explanation." A win by a hair over an equally
+        # plausible alternative is a tie-break, not evidence, and this
+        # system's whole claim is that it does not book on tie-breaks. Only
+        # AUTO_MATCH is suppressed -- demoting a LIKELY_MATCH or an
+        # EXCEPTION further would change nothing about what gets booked and
+        # would only muddy the exception queue's reasons.
+        leg = _leg(source_a, source_b)
+        competitors = max(
+            near_ties.get((a_id, leg), 0),
+            near_ties.get((b_id, leg), 0),
+        )
+        abstention_reason = ""
+        if label == "AUTO_MATCH" and competitors > 0:
+            label = "LIKELY_MATCH"
+            abstention_reason = (
+                f"{competitors} competing candidate(s) within "
+                f"{config.ambiguity_margin} of this score on the "
+                f"{leg[0]}<->{leg[1]} leg; held for review rather than "
+                "auto-booked on a tie-break"
+            )
+
         assignment = {
             "source_a": source_a,
             "source_a_id": a_id,
@@ -96,6 +171,8 @@ def global_assign(
             "source_b_id": b_id,
             "confidence": round(confidence, 4),
             "label": label,
+            "competing_candidates": competitors,
+            "abstention_reason": abstention_reason,
             "a_amount_paise": a.amount_paise,
             "b_amount_paise": b.amount_paise,
             "a_utr": a.utr,

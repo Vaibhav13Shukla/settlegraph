@@ -7,6 +7,7 @@ from datetime import date
 import pytest
 
 from settlegraph.config import PipelineConfig
+from settlegraph.engine.score import score_edge
 from settlegraph.engine.verify import (
     InvariantViolation,
     verify_amount_invariant,
@@ -170,3 +171,109 @@ def test_verify_settlegraph_invariants_empty_on_valid() -> None:
     violations = verify_settlegraph_invariants(rzp, bank, config)
 
     assert len(violations) == 0
+
+
+# ---------------------------------------------------------------------------
+# Boundary and high-confidence coverage.
+#
+# The tests above all exercise *obvious* violations -- a 764-paise amount gap,
+# an 8-day date gap. An invariant that only rejects the obvious case is not
+# much of a control: the dangerous input is the one sitting exactly on the
+# boundary, or the one arriving with a high match score that makes it look
+# safe. Every invariant here is therefore covered three ways: obvious
+# (above), subtle boundary (below), and a violation that would otherwise be
+# auto-booked on confidence alone (below).
+# ---------------------------------------------------------------------------
+
+
+def test_amount_invariant_accepts_exactly_at_the_tolerance_boundary() -> None:
+    """`verify_amount_invariant` rejects on `diff > 100` paise, so a diff of
+    exactly 100 paise (Rs 1.00) must PASS. Pinning the boundary explicitly:
+    a later refactor flipping this to `>=` would silently narrow tolerance
+    for every settlement in production, and no aggregate metric would
+    notice."""
+    rzp = _make_rzp(net=9764)
+    bank = _make_bank(amount=9664)  # exactly 100 paise below
+
+    assert verify_amount_invariant(rzp, bank) is True
+
+
+def test_amount_invariant_rejects_one_paise_past_the_boundary() -> None:
+    """101 paise -- one paise past tolerance. The smallest possible real
+    violation, and the one a fixed-tolerance check is most likely to get
+    wrong."""
+    rzp = _make_rzp(net=9764)
+    bank = _make_bank(amount=9663)  # 101 paise below
+
+    with pytest.raises(InvariantViolation, match="Amount mismatch"):
+        verify_amount_invariant(rzp, bank)
+
+
+def test_date_invariant_accepts_exactly_at_the_tolerance_boundary() -> None:
+    """delta == date_tolerance_days must pass (`delta > tolerance` rejects)."""
+    config = PipelineConfig(date_tolerance_days=3)
+    rzp = _make_rzp(settlement_date=date(2026, 1, 17))
+    bank = _make_bank(transaction_date=date(2026, 1, 20))  # exactly 3 days
+
+    assert verify_date_invariant(rzp, bank, config) is True
+
+
+def test_date_invariant_rejects_one_day_past_the_boundary() -> None:
+    config = PipelineConfig(date_tolerance_days=3)
+    rzp = _make_rzp(settlement_date=date(2026, 1, 17))
+    bank = _make_bank(transaction_date=date(2026, 1, 21))  # 4 days
+
+    with pytest.raises(InvariantViolation, match="Date violation"):
+        verify_date_invariant(rzp, bank, config)
+
+
+def test_date_invariant_is_symmetric_around_the_boundary() -> None:
+    """A bank credit dated *before* the settlement (clock skew, backdated
+    statement) is the same magnitude of violation as one dated after --
+    `abs()` is load-bearing here, so assert it rather than trusting it."""
+    config = PipelineConfig(date_tolerance_days=3)
+    rzp = _make_rzp(settlement_date=date(2026, 1, 17))
+    bank_before = _make_bank(transaction_date=date(2026, 1, 13))  # 4 days early
+
+    with pytest.raises(InvariantViolation, match="Date violation"):
+        verify_date_invariant(rzp, bank_before, config)
+
+
+def test_perfect_score_inputs_still_fail_the_direction_invariant() -> None:
+    """The third way, and the one that matters most.
+
+    This pair is *perfect* on every signal the scorer looks at: identical
+    UTR, identical amount, identical date. `score_edge` gives it a top-of-
+    range razorpay<->bank score, comfortably above the 0.95 auto-match
+    threshold -- scoring never inspects ledger direction at all. The only
+    thing standing between this debit line (a refund payout, say) and a
+    corrupted ledger entry is the direction invariant, so it has to hold
+    precisely here, where confidence is highest and least deserved.
+
+    See `pipeline.enforce_invariant_gate` for the demotion this triggers.
+    """
+    config = PipelineConfig(date_tolerance_days=3)
+    rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+    bank = _make_bank(amount=9764, transaction_date=date(2026, 1, 17), direction="debit")
+
+    # Confirm the premise rather than asserting it: this really would score
+    # at the top of the range and be auto-booked on confidence alone.
+    assert score_edge(rzp, bank) >= config.auto_match_threshold
+
+    violations = verify_settlegraph_invariants(rzp, bank, config)
+
+    assert any("Direction violation" in str(v) for v in violations)
+
+
+def test_perfect_utr_and_date_do_not_excuse_an_amount_violation() -> None:
+    """Same shape, amount invariant: a matching UTR is the single
+    highest-weighted signal in the scorer (0.60), so a record can carry
+    strong confidence from UTR + date alone while the money does not
+    reconcile. Evidence on one axis must not buy a pass on another."""
+    config = PipelineConfig(date_tolerance_days=3)
+    rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+    bank = _make_bank(amount=5000, transaction_date=date(2026, 1, 17))  # UTR + date perfect
+
+    violations = verify_settlegraph_invariants(rzp, bank, config)
+
+    assert any("Amount mismatch" in str(v) for v in violations)

@@ -34,7 +34,23 @@ Before marking any task complete or merging code, execute the verification gates
 1. `ruff check src tests scripts datagen` — 0 lint errors.
 2. `ruff format --check src tests scripts datagen` — 100% formatted.
 3. `pytest -v --basetemp .pytest-tmp` — 100% test pass rate.
-4. `python scripts/run_e2e.py` — 0 invariant violations across 1,000 transactions and 5 failure containment scenarios.
+4. `python scripts/run_e2e.py` — 0 invariant violations across 1,000 transactions and 7 failure containment scenarios.
+
+### Safety gates (beyond "the tests pass")
+
+A green suite is necessary, not sufficient — two of this project's worst
+defects were live while 130+ tests and a 20,000-record stress run were all
+green (see `DEVLOG.md` Days 8–9). Before claiming a change is safe:
+
+5. `python scripts/noise_sweep.py` — abstention must rise as noise rises and precision must hold.
+6. `python scripts/chaos_batch.py` — precision must never drop below 100% at any level that completes.
+7. `python scripts/eval_holdout.py` — performance must hold on a split the change was not developed against.
+8. `python -m settlegraph.cli replay` — every decision must re-derive identically.
+9. `python -m settlegraph.cli benchmark` — the baseline comparison must still be reported honestly, including where a baseline wins.
+
+`.github/workflows/evaluation.yml` runs these as build-breaking gates.
+**Never tune a threshold on the corpus used to report final performance** —
+use the `calibration` split (`scripts/threshold_study.py`).
 
 ---
 

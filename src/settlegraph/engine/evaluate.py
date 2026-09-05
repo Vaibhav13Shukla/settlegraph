@@ -82,12 +82,17 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
     truth = _load_ground_truth(ground_truth_path)
     assignments = _load_assignments(assignment_path)
 
-    # Build ground truth lookup: razorpay_record_id -> expected bank record IDs
+    # Build ground truth lookup: razorpay_record_id -> expected bank record IDs.
+    # An empty field must map to [], not [""] -- csv.DictReader gives back ""
+    # for a blank cell, and "".split("|") is [""], not []. This only matters
+    # for `relationship_type == "no_counterpart"` (Day 7): every other
+    # relationship type has always had a real, non-empty
+    # true_bank_record_ids, so this is a no-op for existing data shapes.
     gt_map: dict[str, list[str]] = {}
     for row in truth:
         rzp_id = row["razorpay_record_id"]
-        bank_ids = row["true_bank_record_ids"].split("|")
-        gt_map[rzp_id] = bank_ids
+        raw = row["true_bank_record_ids"]
+        gt_map[rzp_id] = raw.split("|") if raw else []
 
     # Build assignment lookup: razorpay entity_id -> matched bank record_id.
     # AI_RESOLVED_MATCH counts here alongside AUTO_MATCH -- both have already
@@ -118,37 +123,64 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
 
     anomaly_breakdown: dict[str, dict[str, int]] = {}
 
+    # Was an O(n) linear scan of `truth` per ground-truth record below (three
+    # separate scans, one per branch) -- O(n^2) overall, right next to
+    # `gt_map` above which already builds exactly this shape of dict in O(n).
+    # At the 20,000-record stress-test scale this is unnecessary bookkeeping
+    # cost. Found by code review. Built once, looked up per record instead;
+    # the two `.get(..., "none")` call shapes below are kept exactly as they
+    # were per branch (see tests/test_evaluate.py's
+    # test_anomaly_breakdown_is_correct_across_tp_fp_and_fn for the pre-
+    # existing "" vs "none" quirk this preserves rather than silently fixes).
+    anomaly_by_id: dict[str, str] = {
+        row["razorpay_record_id"]: row.get("anomaly_type", "none") for row in truth
+    }
+
+    # Dangerous Miss Rate / Exception Recall (Day 7): `no_counterpart` is the
+    # one relationship_type where the honest ground-truth answer is "there is
+    # no true match at all" -- a settlement that genuinely never reached the
+    # bank. Leaving it unmatched is *correct*, not a miss, so it must not
+    # inflate false_negatives or drag down recall (which is specifically
+    # about records that DO have a true match to find). The dangerous
+    # opposite -- the system confidently AUTO_MATCHing a no_counterpart
+    # record onto some unrelated bank row -- is worse than an ordinary false
+    # positive (the ledger now claims a settlement that never happened at
+    # all), so it is still counted in false_positives via the existing
+    # branch below (an empty expected_bank_ids list can never contain a
+    # matched_bank id) *and* surfaced explicitly here.
+    no_counterpart_total = 0
+    dangerous_misses = 0
+    correctly_abstained_no_counterpart = 0
+
     for rzp_id, expected_bank_ids in gt_map.items():
+        is_no_counterpart = not expected_bank_ids
         if rzp_id not in rzp_to_bank:
+            if is_no_counterpart:
+                no_counterpart_total += 1
+                correctly_abstained_no_counterpart += 1
+                continue
             false_negatives += 1
-            # Find anomaly type
-            for row in truth:
-                if row["razorpay_record_id"] == rzp_id:
-                    anomaly = row.get("anomaly_type", "none")
-                    if anomaly not in anomaly_breakdown:
-                        anomaly_breakdown[anomaly] = {"fn": 0, "fp": 0, "tp": 0}
-                    anomaly_breakdown[anomaly]["fn"] += 1
-                    break
+            anomaly = anomaly_by_id.get(rzp_id, "none")
+            if anomaly not in anomaly_breakdown:
+                anomaly_breakdown[anomaly] = {"fn": 0, "fp": 0, "tp": 0}
+            anomaly_breakdown[anomaly]["fn"] += 1
         else:
             matched_bank = rzp_to_bank[rzp_id]
             if matched_bank in expected_bank_ids:
                 true_positives += 1
-                for row in truth:
-                    if row["razorpay_record_id"] == rzp_id:
-                        anomaly = row.get("anomaly_type", "none") or "none"
-                        if anomaly not in anomaly_breakdown:
-                            anomaly_breakdown[anomaly] = {"tp": 0, "fp": 0, "fn": 0}
-                        anomaly_breakdown[anomaly]["tp"] += 1
-                        break
+                anomaly = anomaly_by_id.get(rzp_id, "none") or "none"
+                if anomaly not in anomaly_breakdown:
+                    anomaly_breakdown[anomaly] = {"tp": 0, "fp": 0, "fn": 0}
+                anomaly_breakdown[anomaly]["tp"] += 1
             else:
                 false_positives += 1
-                for row in truth:
-                    if row["razorpay_record_id"] == rzp_id:
-                        anomaly = row.get("anomaly_type", "none") or "none"
-                        if anomaly not in anomaly_breakdown:
-                            anomaly_breakdown[anomaly] = {"tp": 0, "fp": 0, "fn": 0}
-                        anomaly_breakdown[anomaly]["fp"] += 1
-                        break
+                if is_no_counterpart:
+                    no_counterpart_total += 1
+                    dangerous_misses += 1
+                anomaly = anomaly_by_id.get(rzp_id, "none") or "none"
+                if anomaly not in anomaly_breakdown:
+                    anomaly_breakdown[anomaly] = {"tp": 0, "fp": 0, "fn": 0}
+                anomaly_breakdown[anomaly]["fp"] += 1
 
     precision = (
         true_positives / (true_positives + false_positives)
@@ -166,6 +198,19 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
     auto_matches = sum(1 for a in assignments if a["label"] == "AUTO_MATCH")
     exceptions = sum(1 for a in assignments if a["label"] == "EXCEPTION")
     total = len(assignments) if assignments else 1
+
+    # Safe Auto-Resolution Rate / False Auto-Book Rate: the headline pair
+    # from the Track 04 trust framing. Deliberately reuse true_positives/
+    # false_positives above rather than re-deriving them -- those are
+    # already "correct auto-booked" and "incorrect auto-booked" restricted
+    # to matchable_labels (AUTO_MATCH + AI_RESOLVED_MATCH), just not named
+    # for it yet. The denominator is total *ground-truth* records
+    # (len(gt_map)), not total assignments -- an aggressive matcher that
+    # auto-books everything can't inflate safe_auto_resolution_rate without
+    # false_auto_book_rate rising to match, and a matcher that abstains on
+    # everything can't hide from a falling safe_auto_resolution_rate. That
+    # symmetry is the whole point of reporting the pair together.
+    total_records = len(gt_map) if gt_map else 1
 
     return {
         "precision": round(precision, 4),
@@ -190,5 +235,26 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
         "accuracy": round(precision, 4),
         "false_match_rate": round(false_positives / (true_positives + false_positives), 4)
         if (true_positives + false_positives) > 0
+        else 0.0,
+        # Tier-1 trust metrics (Track 04 framing): same tp/fp counts above,
+        # denominated over every ground-truth record rather than only the
+        # ones the system chose to act on.
+        "total_records": len(gt_map),
+        "correct_auto_matches": true_positives,
+        "false_auto_matches": false_positives,
+        "safe_auto_resolution_rate": round(true_positives / total_records, 4) if gt_map else 0.0,
+        "false_auto_book_rate": round(false_positives / total_records, 4) if gt_map else 0.0,
+        # Tier-2 safety metrics (Track 04 "calibrated abstention" framing).
+        # Both are 0.0 when there are no no_counterpart records in this
+        # batch to measure them against -- an undefined ratio reported as a
+        # perfect score would overstate; reported as 0.0 it is at least a
+        # visible "n=0" via no_counterpart_total rather than a silent lie.
+        "no_counterpart_total": no_counterpart_total,
+        "dangerous_misses": dangerous_misses,
+        "dangerous_miss_rate": round(dangerous_misses / no_counterpart_total, 4)
+        if no_counterpart_total
+        else 0.0,
+        "exception_recall": round(correctly_abstained_no_counterpart / no_counterpart_total, 4)
+        if no_counterpart_total
         else 0.0,
     }

@@ -249,8 +249,12 @@ def generate_markdown_audit_report(
                 f"| **True Positives** | **{evaluation.get('true_positives', 0)}** | — | Verified ground truth matches |",
                 f"| **False Positives** | **{evaluation.get('false_positives', 0)}** | **0** | Erroneous matches (Zero-Tolerance) |",
                 f"| **False Match Rate** | **{evaluation.get('false_match_rate', 0.0) * 100:.2f}%** | **0%** | False positives / total matches made |",
+                f"| **Safe Auto-Resolution Rate** | **{evaluation.get('safe_auto_resolution_rate', 0.0) * 100:.1f}%** | — | Correct auto-bookings / all records in the batch |",
+                f'| **False Auto-Book Rate** | **{evaluation.get("false_auto_book_rate", 0.0) * 100:.2f}%** | **0%** | Incorrect auto-bookings / all records in the batch (the pair above answers *"how do I know this won\'t quietly corrupt my books"*) |',
                 f"| **Exceptions Diagnosed** | **{len(exceptions_on_disk)}** | — | Routed to intelligent investigation queue (post-AI-resolution) |",
                 f"| **AI-Resolved (of the above)** | **{evaluation.get('ai_assisted_matches', 0)}** | — | Promoted only after passing the same invariant gate AUTO_MATCH clears |",
+                f"| **Dangerous Miss Rate** | **{evaluation.get('dangerous_miss_rate', 0.0) * 100:.1f}%** | **0%** | Of {evaluation.get('no_counterpart_total', 0)} record(s) with genuinely no bank counterpart, share auto-matched anyway |",
+                f"| **Exception Recall** | **{evaluation.get('exception_recall', 0.0) * 100:.1f}%** | **100%** | Of the same {evaluation.get('no_counterpart_total', 0)} record(s), share correctly left unmatched rather than forced |",
                 "",
             ]
         )

@@ -133,6 +133,82 @@ def test_tied_confidence_edges_resolve_identically_regardless_of_input_order() -
     assert winner_forward == winner_reversed
 
 
+def test_near_tie_competitor_blocks_auto_match() -> None:
+    """The "no competing explanation" clause, made executable.
+
+    This project's stated rule for automation has always been three-part:
+    evidence above threshold, AND no unresolved competing explanation, AND
+    invariants hold. The first and third were enforced; the middle one was
+    documented everywhere and implemented nowhere. Found by
+    `datagen/adversarial.py::near_tie_scores`: two bank credits competing
+    for one payment at 0.96 and 0.95 were resolved by a coin flip and the
+    winner stamped AUTO_MATCH, with the runner-up vanishing from the output
+    entirely.
+
+    A margin that thin is not evidence, it is a tie-break. Correct behavior
+    is to hold the record for review rather than book it.
+    """
+    config = PipelineConfig(auto_match_threshold=0.95, exception_threshold=0.70)
+    rzp = _make_rzp("rzp_1", utr="RZP001")
+    bank_a = _make_bank("bank_a", utr="RZP001")
+    bank_b = _make_bank("bank_b", utr="RZP001")
+
+    scored = [(rzp, bank_a, 0.96), (rzp, bank_b, 0.95)]
+    assignments = global_assign(scored, config)
+
+    winner = assignments[0]
+    assert winner["label"] == "LIKELY_MATCH", "a 0.01 margin must not be auto-booked"
+    assert winner["competing_candidates"] == 1
+    assert "competing" in winner["abstention_reason"].lower()
+
+
+def test_clear_winner_still_auto_matches() -> None:
+    """The complement: suppression must not fire when the runner-up is
+    genuinely far behind, or the gate would simply destroy throughput."""
+    config = PipelineConfig(auto_match_threshold=0.95, exception_threshold=0.70)
+    rzp = _make_rzp("rzp_1", utr="RZP001")
+    bank_a = _make_bank("bank_a", utr="RZP001")
+    bank_b = _make_bank("bank_b", utr="RZP001")
+
+    scored = [(rzp, bank_a, 0.99), (rzp, bank_b, 0.40)]
+    assignments = global_assign(scored, config)
+
+    winner = assignments[0]
+    assert winner["label"] == "AUTO_MATCH"
+    assert winner["competing_candidates"] == 0
+    assert winner["abstention_reason"] == ""
+
+
+def test_competition_is_scoped_to_one_leg() -> None:
+    """A payment legitimately has both a bank counterpart and a merchant
+    counterpart. Those are answers to different questions, not competing
+    explanations for the same one, so a strong merchant match must never
+    suppress a strong bank match."""
+    config = PipelineConfig(auto_match_threshold=0.95, exception_threshold=0.70)
+    rzp = _make_rzp("rzp_1", utr="RZP001", order_id="order_1")
+    bank = _make_bank("bank_1", utr="RZP001")
+    merch = NormalizedRecord(
+        record_id="merch_1",
+        source="merchant",
+        source_record_id="led_1",
+        record_type="sale",
+        order_id="order_1",
+        amount_paise=10000,
+        net_amount_paise=10000,
+        currency="INR",
+        transaction_date=date(2026, 1, 15),
+        raw_record={},
+        provenance={"source": "merchant"},
+    )
+
+    scored = [(rzp, bank, 0.98), (rzp, merch, 0.97)]
+    assignments = global_assign(scored, config)
+
+    assert len(assignments) == 2
+    assert all(a["label"] == "AUTO_MATCH" for a in assignments)
+    assert all(a["competing_candidates"] == 0 for a in assignments)
+
+
 def test_classify_unmatched_identifies_orphans() -> None:
     config = PipelineConfig()
     rzp1 = _make_rzp("rzp_1", utr="RZP001")
