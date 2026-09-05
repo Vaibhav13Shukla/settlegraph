@@ -148,9 +148,16 @@ their own datasets. A judge with five minutes will see the dashboard and the
 `run` output — which are the least adversarial surfaces. The honest numbers
 live in `EVALUATION.md`, which requires reading.
 
-**L-3 · LOW — the `run_e2e.py` gate asserts `recall >= 0.75`.**
-A floor that loose would not fail if recall regressed from 83.6% to 76%. The
-precision/false-positive gates are strict; the recall gate is decorative.
+**L-3 · CLOSED (was LOW) — the `run_e2e.py` recall gate was decorative.**
+`recall >= 0.75` against a measured 83.6% would not have failed on a 7pp
+collapse. Tightened to `0.78` — still clear of the 81.8% observed on a
+different held-out seed, so it will not flap, but it now bounds something.
+
+More usefully, three *exact* gates were added alongside it, because an
+equality gate catches the first regression while a threshold gate only
+catches one bigger than its own slack: `dangerous_miss_rate == 0`,
+`invariant_violations == 0`, and zero false positives on **each** of the
+three reconciliation legs. The e2e run now prints all six values.
 
 ### 5. Security engineer
 
