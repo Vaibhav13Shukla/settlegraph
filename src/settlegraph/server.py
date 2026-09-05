@@ -66,7 +66,6 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
         self.wfile.flush()
@@ -78,7 +77,6 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
         self.wfile.flush()
@@ -460,8 +458,45 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
             f"Recall: {rec:.1f}%. Invariant violations: 0."
         )
 
+    @property
+    def allow_remote_mutations(self) -> bool:
+        return bool(getattr(self.server, "allow_remote_mutations", False))
+
+    def _mutation_permitted(self) -> bool:
+        """Only loopback callers may trigger a pipeline run, unless the
+        operator opted in explicitly.
+
+        `POST /api/run-reconciliation` re-runs the pipeline and overwrites
+        `results/`. It has no authentication, and the Dockerfile serves on
+        `0.0.0.0`, so on any shared network that was an unauthenticated write
+        endpoint reachable by anyone who could route to the port. Rated
+        MEDIUM in `docs/RED_TEAM.md`.
+
+        This is deliberately a peer check rather than invented auth: a demo
+        tool should not ship a fake credential system, and "the request came
+        from this machine" is the actual property that makes the local
+        dashboard safe. An operator who genuinely wants remote triggering
+        passes `--allow-remote-run` and owns that decision knowingly.
+        """
+        if self.allow_remote_mutations:
+            return True
+        client_host = (self.client_address[0] if self.client_address else "") or ""
+        return client_host in {"127.0.0.1", "::1", "::ffff:127.0.0.1", "localhost"}
+
     def do_POST(self) -> None:
         parsed = urllib.parse.urlparse(self.path)
+        if not self._mutation_permitted():
+            self._send_json(
+                {
+                    "error": "Mutating endpoints are restricted to loopback callers. "
+                    "Start the server with --allow-remote-run to permit remote "
+                    "triggering, and understand that it is unauthenticated.",
+                    "client": self.client_address[0] if self.client_address else None,
+                },
+                status=403,
+            )
+            return
+
         if parsed.path == "/api/run-reconciliation":
             try:
                 config = PipelineConfig(generated_data_directory=self.data_dir)
@@ -494,8 +529,14 @@ def start_server(
     host: str = "127.0.0.1",
     data_dir: str = "data/generated",
     results_dir: str = "results",
+    allow_remote_run: bool = False,
 ) -> None:
-    """Start the SettleGraph HTTP dashboard server."""
+    """Start the SettleGraph HTTP dashboard server.
+
+    `allow_remote_run` defaults to False: `POST /api/run-reconciliation`
+    overwrites `results/` and is unauthenticated, so non-loopback callers are
+    refused unless the operator opts in. See `_mutation_permitted`.
+    """
 
     class ReusableHTTPServer(HTTPServer):
         allow_reuse_address = True
@@ -503,8 +544,13 @@ def start_server(
     server = ReusableHTTPServer((host, port), SettleGraphAPIHandler)
     server.data_dir = Path(data_dir)
     server.results_dir = Path(results_dir)
+    server.allow_remote_mutations = allow_remote_run
 
     print(f"\n[OK] SettleGraph Interactive Dashboard running at http://{host}:{port}")
+    if allow_remote_run:
+        print("     [WARN] Remote pipeline triggering ENABLED and unauthenticated.")
+    else:
+        print("     Mutating endpoints restricted to loopback callers.")
     print("     Press Ctrl+C to stop.\n")
     try:
         server.serve_forever()

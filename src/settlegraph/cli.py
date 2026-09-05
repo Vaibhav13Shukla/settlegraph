@@ -455,11 +455,23 @@ def serve(
     host: str = "127.0.0.1",
     data_dir: str = "data/generated",
     results_dir: str = "results",
+    allow_remote_run: bool = False,
 ) -> None:
-    """Start the interactive web dashboard server."""
+    """Start the interactive web dashboard server.
+
+    `--allow-remote-run` permits non-loopback callers to POST
+    /api/run-reconciliation, which re-runs the pipeline and overwrites
+    `results/`. It is unauthenticated, so it stays off by default.
+    """
     from settlegraph.server import start_server
 
-    start_server(port=port, host=host, data_dir=data_dir, results_dir=results_dir)
+    start_server(
+        port=port,
+        host=host,
+        data_dir=data_dir,
+        results_dir=results_dir,
+        allow_remote_run=allow_remote_run,
+    )
 
 
 if __name__ == "__main__":

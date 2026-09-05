@@ -40,6 +40,49 @@ def _invoke_get(path: str, data_dir: Path, results_dir: Path) -> tuple[int, byte
     return status, handler.wfile.getvalue()
 
 
+def _mutation_permitted(client_host: str, allow_remote: bool) -> bool:
+    handler = SettleGraphAPIHandler.__new__(SettleGraphAPIHandler)
+    handler.server = SimpleNamespace(allow_remote_mutations=allow_remote)
+    handler.client_address = (client_host, 54321)
+    return handler._mutation_permitted()
+
+
+def test_only_loopback_callers_may_trigger_a_pipeline_run() -> None:
+    """`POST /api/run-reconciliation` re-runs the pipeline and overwrites
+    `results/`, with no authentication. The Dockerfile serves on `0.0.0.0`,
+    so on any shared network that was an unauthenticated write endpoint
+    reachable by anyone who could route to the port. Rated MEDIUM in
+    `docs/RED_TEAM.md`.
+
+    A peer check rather than invented auth: a demo tool should not ship a
+    fake credential system, and "the request came from this machine" is the
+    actual property that makes the local dashboard safe.
+    """
+    for loopback in ("127.0.0.1", "::1", "::ffff:127.0.0.1", "localhost"):
+        assert _mutation_permitted(loopback, allow_remote=False) is True
+
+    for remote in ("10.0.0.5", "192.168.1.20", "172.17.0.1", "203.0.113.7"):
+        assert _mutation_permitted(remote, allow_remote=False) is False, (
+            f"{remote} must not be able to trigger a pipeline run by default"
+        )
+
+
+def test_allow_remote_run_is_an_explicit_opt_in() -> None:
+    """An operator who genuinely wants remote triggering passes the flag and
+    owns that decision knowingly -- the escape hatch exists, it is just not
+    the default."""
+    assert _mutation_permitted("10.0.0.5", allow_remote=True) is True
+
+
+def test_responses_do_not_carry_a_wildcard_cors_header() -> None:
+    """The dashboard is served same-origin by this very handler, so
+    `Access-Control-Allow-Origin: *` bought nothing and let any website read
+    a merchant's reconciliation JSON from the browser of anyone running the
+    dashboard."""
+    source = Path("src/settlegraph/server.py").read_text(encoding="utf-8")
+    assert "Access-Control-Allow-Origin" not in source
+
+
 def test_api_handler_summary(tmp_path: Path) -> None:
     results_dir = tmp_path / "results"
     results_dir.mkdir(parents=True, exist_ok=True)

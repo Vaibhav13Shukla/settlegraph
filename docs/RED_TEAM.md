@@ -175,12 +175,26 @@ All 41 data-derived interpolations in `web/index.html` pass through
 `escapeHtml()`. Verified by count and by `node --check` on the extracted
 script.
 
-**M-5b · MEDIUM — the server has no authentication and a permissive CORS header.**
-`server.py` sets `Access-Control-Allow-Origin: *` on every response and has no
+**M-5b · CLOSED (was MEDIUM) — unauthenticated write endpoint + wildcard CORS.**
+`server.py` set `Access-Control-Allow-Origin: *` on every response and had no
 auth on any endpoint, including `POST /api/run-reconciliation`, which triggers
-a full pipeline run and overwrites `results/`. For a localhost demo this is
-fine. It is not a control, and nothing in the docs claims otherwise — but
-anyone who deploys this as-is has an unauthenticated write endpoint.
+a full pipeline run and overwrites `results/`. The Dockerfile serves on
+`0.0.0.0`, so on a shared network that was an unauthenticated write endpoint
+reachable by anyone who could route to the port.
+
+Fixed two ways. The wildcard CORS header is **gone entirely** — the dashboard
+is served same-origin by the same handler, so it bought nothing while letting
+any website read a merchant's reconciliation JSON from the browser of anyone
+running the dashboard. And mutating endpoints now require a **loopback
+caller** unless the operator passes `--allow-remote-run` and owns that
+decision knowingly.
+
+Deliberately a peer check rather than invented auth: a demo tool shipping a
+fake credential system would be worse than one that states its boundary
+plainly. "The request came from this machine" is the actual property that
+makes the local dashboard safe. Verified live (CORS header absent, loopback
+POST still returns 200) and unit-tested for four loopback forms and four
+remote addresses.
 
 ### 6. ML evaluation researcher
 
@@ -240,8 +254,10 @@ constrain regressions.
    is now scored (precision 100%, 0 fp). It remains a weak signal by design
    (amount + date only), so it should still be read as a cross-check.
 3. If anyone quoted "0% dangerous misses" without "n=16".
-4. If the server were deployed with its current unauthenticated
-   `POST /api/run-reconciliation`.
+4. ~~If the server were deployed with its current unauthenticated
+   `POST /api/run-reconciliation`.~~ **Closed** — mutations are loopback-only
+   unless explicitly opted into. It is still not authentication, so a
+   multi-user deployment would need real auth in front of it.
 
 ## What is genuinely solid
 
