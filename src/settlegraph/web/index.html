@@ -1180,6 +1180,15 @@
       const amtDiff = Math.abs(Number(a.a_amount_paise) - Number(a.b_amount_paise));
       const conf = Number(a.confidence);
 
+      const excMatch = (window._allExceptions || []).find(e => e.record_id === a.source_a_id || e.record_id === a.source_b_id);
+      const isDateViolation = excMatch && excMatch.category === 'TIMING_DIFFERENCE';
+      const isAmountViolation = amtDiff > 100 || (excMatch && (excMatch.category === 'AMOUNT_MISMATCH' || excMatch.category === 'REFUND_OR_FEE_DEDUCTION'));
+      const isDirectionViolation = excMatch && (excMatch.category === 'DIRECTION_MISMATCH' || (excMatch.root_cause && excMatch.root_cause.toLowerCase().includes('direction')));
+
+      const amtPass = !isAmountViolation && amtDiff <= 100;
+      const datePass = !isDateViolation && !(a.label === 'EXCEPTION' && excMatch && excMatch.category === 'TIMING_DIFFERENCE');
+      const dirPass = !isDirectionViolation;
+
       const modal = document.getElementById('inspector-modal');
       const body = document.getElementById('inspector-body');
       const labelBadge = {
@@ -1232,9 +1241,9 @@
           <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
             <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Deterministic Accounting Invariant Gate</div>
             <div class="space-y-1.5 text-xs">
-              <div class="flex items-center space-x-2"><span class="${amtDiff <= 100 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${amtDiff <= 100 ? '✓' : '✗'}</span><span class="text-slate-600">Amount Invariant (≤ ₹1.00 tolerance)</span></div>
-              <div class="flex items-center space-x-2"><span class="text-emerald-600 font-bold">✓</span><span class="text-slate-600">Date Invariant (≤ ${a.label === 'EXCEPTION' ? 'FAILED' : '3'} days gap)</span></div>
-              <div class="flex items-center space-x-2"><span class="text-emerald-600 font-bold">✓</span><span class="text-slate-600">Direction Invariant (bank settlement credit, not debit)</span></div>
+              <div class="flex items-center space-x-2"><span class="${amtPass ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${amtPass ? '✓' : '✗'}</span><span class="text-slate-600">Amount Invariant (${amtPass ? '≤ ₹1.00 tolerance verified' : 'Breached: ' + (amtDiff / 100).toFixed(2) + ' INR diff'})</span></div>
+              <div class="flex items-center space-x-2"><span class="${datePass ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${datePass ? '✓' : '✗'}</span><span class="text-slate-600">Date Invariant (${datePass ? '≤ 3 days window verified' : 'Breached: settlement timing delay'})</span></div>
+              <div class="flex items-center space-x-2"><span class="${dirPass ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${dirPass ? '✓' : '✗'}</span><span class="text-slate-600">Direction Invariant (${dirPass ? 'Credit direction verified' : 'Breached: debit adjustment conflict'})</span></div>
             </div>
           </div>
 
