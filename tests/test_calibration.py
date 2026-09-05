@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from settlegraph.engine.calibration import (
@@ -112,6 +113,57 @@ def test_compute_calibration_handles_empty_input_without_crashing(tmp_path: Path
     assert sum(b["count"] for b in result["reliability_bins"]) == 0
 
 
+def test_holding_the_right_counterpart_on_unreconciled_money_is_justified(
+    tmp_path,
+) -> None:
+    """The correction that changed this metric from 0.0164 to 0.9016.
+
+    The original definition counted a hold as *unjustified* whenever the held
+    candidate turned out to be the correct counterpart. That is wrong when
+    the money does not reconcile: holding the right payment because Rs 16,260
+    is unexplained is the single most valuable thing this system does, not a
+    false alarm. Measured on a real batch, 108 of 122 holds were exactly that
+    shape -- same-day dates, exact UTR, unexplained rupee gap -- so the old
+    number described the review queue as 98% noise when it was 90%
+    legitimate.
+
+    `exceptions_path` stays optional so every existing caller keeps its
+    previous behaviour; without the diagnoses there is no way to tell the two
+    cases apart, and guessing would be worse than the narrower answer.
+    """
+    assignments = tmp_path / "assignments.csv"
+    assignments.write_text(
+        "source_a,source_a_id,source_b,source_b_id,confidence,label,a_amount_paise,b_amount_paise,a_utr,b_utr,a_order_id,b_order_id\n"
+        # Right counterpart, but the money does not add up -> justified.
+        "razorpay,rzp_norm_pay_1,bank,bank_norm_bank_1,0.75,LIKELY_MATCH,10000,3000,U1,U1,,\n"
+        # Right counterpart, money fine -> genuinely unnecessary hold.
+        "razorpay,rzp_norm_pay_2,bank,bank_norm_bank_2,0.90,LIKELY_MATCH,10000,10000,U2,U2,,\n",
+        encoding="utf-8",
+    )
+    gt = tmp_path / "ground_truth.csv"
+    gt.write_text(
+        "razorpay_record_id,true_bank_record_ids,true_merchant_record_id,relationship_type,anomaly_type,notes\n"
+        "pay_1,bank_1,led_1,exact_match,,\n"
+        "pay_2,bank_2,led_2,exact_match,,\n",
+        encoding="utf-8",
+    )
+    exceptions = tmp_path / "exceptions.json"
+    exceptions.write_text(
+        json.dumps([{"record_id": "rzp_norm_pay_1", "category": "AMOUNT_MISMATCH"}]),
+        encoding="utf-8",
+    )
+
+    with_diagnoses = compute_abstention_quality(assignments, gt, exceptions)
+    assert with_diagnoses["justified_unreconciled_amount"] == 1
+    assert with_diagnoses["unjustified_abstentions"] == 1
+    assert with_diagnoses["abstention_precision"] == 0.5
+
+    # Without the diagnoses, both look unjustified -- the older, narrower answer.
+    without = compute_abstention_quality(assignments, gt)
+    assert without["unjustified_abstentions"] == 2
+    assert without["abstention_precision"] == 0.0
+
+
 def test_abstention_quality_counts_justified_and_unjustified_separately(
     tmp_path: Path,
 ) -> None:
@@ -156,6 +208,8 @@ def test_abstention_quality_handles_empty_input_without_crashing(tmp_path: Path)
     assert result == {
         "abstentions": 0,
         "justified_abstentions": 0,
+        "justified_wrong_counterpart": 0,
+        "justified_unreconciled_amount": 0,
         "unjustified_abstentions": 0,
         "abstention_precision": 0.0,
         "abstention_rate": 0.0,

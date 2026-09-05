@@ -240,15 +240,19 @@ A reconciliation system that only advertises its strengths is asking to be
 trusted rather than checked. These are the real boundaries, measured or
 reasoned, not softened.
 
-**It over-abstains, and we can prove it.** Abstention precision is **0.0164**
-— 120 of 122 held decisions were pointing at the *correct* counterpart. The
-calibration data shows why: 101 assignments scored at 0.749 confidence were
-100% correct, so the system is materially under-confident in the 0.7–0.8
-band. That is throughput left on the table, not risk mitigation. It is **not
-fixed**, deliberately: the fix is a threshold change and tuning it on the
-batch we report performance on would be tuning on our own test set. The
-`calibration` split exists and is verified leak-free; that is where the work
-belongs.
+**About 10% of the review queue is genuinely unnecessary.** Abstention
+precision is **0.9016**: of 122 holds, 2 caught a wrong counterpart and 108
+caught money that does not reconcile (unexplained gaps of ₹5–₹16,260 on
+same-day, exact-UTR pairs). The remaining **12** are avoidable — exact
+amounts held only because a 12–20 day settlement delay zeroes the
+date-proximity score. Fixing that means changing `score_edge`'s date
+handling, not the threshold: a sweep on the calibration split shows recall is
+identical from 0.80 to 0.95, so lowering the bar buys nothing.
+
+*An earlier version of this README reported abstention precision as 0.0164
+and called the queue "98% noise". That metric counted any hold on a correct
+counterpart as unjustified, ignoring whether the money reconciled. See
+`docs/EVALUATION.md` §3 for the correction.*
 
 **A simpler baseline beats it on recall.** Baseline B (amount + date window)
 books 861 correct matches to our 823 at the same 100% precision on this

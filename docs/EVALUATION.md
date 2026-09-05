@@ -72,7 +72,71 @@ honest reason to keep it, and not the same thing as a demonstrated win.
 
 ---
 
-## 3. The most useful finding: we abstain too much
+## 3. The abstention story — and the metric that got it wrong
+
+> **Correction.** An earlier version of this section reported
+> `abstention_precision = 0.0164` and concluded the review queue was "~98%
+> noise". **That number was measuring the wrong thing.** The corrected figure
+> is **0.9016** and the conclusion is close to the opposite. The original is
+> left described below rather than deleted, because how a metric misled its
+> own authors is more useful to a reviewer than a tidy number.
+
+**What the old definition did.** It counted a hold as *unjustified* whenever
+the held candidate turned out to be the correct counterpart — reasoning that
+the system "was right but too cautious". That is wrong whenever the **money
+does not reconcile**. Holding the correct payment because ₹16,260 of it is
+unexplained is not over-caution; it is the single most valuable thing this
+system does.
+
+**What the batch actually contains** (measured directly, not inferred):
+
+| | Count |
+| --- | --- |
+| Abstentions on the razorpay↔bank leg | 122 |
+| Justified — held candidate was the **wrong** counterpart | 2 |
+| Justified — **money does not reconcile** (unexplained gap) | **108** |
+| Genuinely unnecessary — right counterpart, money fine | **12** |
+| **Abstention precision** | **0.9016** |
+
+Of 119 held razorpay↔bank pairs, **107 have a same-day date and an exact UTR
+but an unexplained rupee gap** ranging from ₹5 to ₹16,260. The queue is ~90%
+legitimate finance work, not noise.
+
+**The date-collapse story is real but small.** The remaining **12** holds are
+the ones with exact amounts and settlement delays of 12–20 days, where
+`score_edge`'s date-proximity component drops to zero (DEVLOG Day 5). That is
+10% of the queue, not the bulk — an earlier draft of this document blamed it
+for the whole thing.
+
+**Calibration is genuinely good, once read correctly:**
+
+| Confidence bin | n | Mean confidence | Actual accuracy |
+| --- | --- | --- | --- |
+| 0.6 – 0.7 | 3 | 0.617 | 0.333 |
+| 0.7 – 0.8 | 101 | 0.749 | 1.000 |
+| 0.8 – 0.9 | 6 | 0.850 | 1.000 |
+| 0.9 – 1.0 | 835 | 0.998 | 1.000 |
+
+- Expected Calibration Error: **0.0304** · Brier score: **0.0079**
+
+The 0.7–0.8 bin looks like under-confidence — 101 records scored 0.749 were
+100% "correct" — but that bin is measuring *did we name the right
+counterpart*, and those are the same records whose amounts do not reconcile.
+Naming the right payment and refusing to book it are both correct there. The
+apparent miscalibration is largely an artefact of the same conflation the
+abstention metric made.
+
+**Threshold study confirms it is not a threshold problem.**
+`scripts/threshold_study.py` sweeps `auto_match_threshold` 0.80–0.97 on the
+**calibration split only**: precision holds at 100% with zero false positives
+at every value, and recall is *identical* (80.46%) throughout. Lowering the
+threshold would gain **+0.00pp recall**. These holds are not sitting just
+under the bar — the money genuinely does not add up, and no threshold should
+release them. Recommendation: **keep 0.95**.
+
+### The original section, as published
+
+
 
 `engine/calibration.py`, run against the real batch:
 
@@ -81,7 +145,7 @@ honest reason to keep it, and not the same thing as a demonstrated win.
 | Abstentions (LIKELY_MATCH / EXCEPTION on the razorpay↔bank leg) | 122 |
 | Justified (declining protected the books) | **2** |
 | Unjustified (the held candidate was already correct) | **120** |
-| **Abstention precision** | **0.0164** |
+| **Abstention precision** | **0.0164** ← *superseded, see above* |
 | Abstention rate | 12.91% |
 
 **120 of 122 abstentions held a candidate that was already right.** An
@@ -281,11 +345,13 @@ scores all three baselines on that same split with the identical harness.
 - Baseline B again finished as the highest-recall *safe* approach, exactly as
   on the development batch. Consistent, and still reported.
 
-**The one number that did not improve:** abstention precision was **0.0000**
-held-out (0 of 23 abstentions justified) versus 0.0164 in development. Both
-are tiny samples and both say the same thing §3 already says — the abstention
-margin is currently throughput cost rather than measured risk mitigation on
-this generator. It is consistent with the known weakness, not a new one, and
+**One caveat on the held-out abstention figure:** it was computed with the
+*old* metric definition (0.0000 held-out vs 0.0164 development), before §3's
+correction. Both numbers understate the same way — they count any hold on a
+correct counterpart as unjustified regardless of whether the money
+reconciled. The held-out run has not been re-scored under the corrected
+definition; treat that one cell as superseded rather than as a result. It is
+consistent with the development figure either way, and
 it did not trip the overfitting verdict.
 
 Reproduce: `python scripts/eval_holdout.py --records 600 --seed 20260905`.
@@ -458,8 +524,12 @@ python -m pytest -q && python scripts/run_e2e.py
   no-counterpart records in this batch. Real, measured, and a small sample.
 - The noise sweep found no precision breaking point below 30% corruption,
   which is a bounded negative result, not a located cliff.
-- Abstention precision (0.0164) is a measured weakness that has **not** been
-  fixed, deliberately — see §3.
+- Abstention precision is **0.9016** once holds on unreconciled money are
+  counted as justified (§3). The residual **12** avoidable holds are a real
+  but small weakness, and the fix belongs in `score_edge`'s date handling
+  rather than in a threshold — not done.
+- The held-out abstention figure has not been re-scored under the corrected
+  definition (§5a).
 - The LLM reasoning layer is off by default; every number on this page comes
   from the deterministic path. Nothing here is a claim about model quality.
 - **Out-of-distribution coverage is real but partial.** Three things do

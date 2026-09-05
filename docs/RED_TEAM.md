@@ -78,14 +78,29 @@ Nothing measures whether 0.05 is the right cliff.
 
 ### 2. CFO / finance controller
 
-**H-2 · HIGH — the system abstains almost entirely without cause.**
-`abstention_precision = 0.0164`. **120 of 122 abstentions held a candidate
-that was already correct.** In operational terms: the review queue this
-generates is ~98% noise, and a controller who works it will learn within a
-week that "held" means "fine", which is precisely how a queue stops being
-read. The safety margin as currently tuned is throughput cost, not risk
-reduction. Disclosed in `EVALUATION.md` §3 and `README.md` §8; unfixed by
-choice (fixing it on the reporting corpus would be tuning on the test set).
+**H-2 · WITHDRAWN — the finding was an artefact of a bad metric.**
+Original finding: `abstention_precision = 0.0164`, 120 of 122 abstentions
+held a candidate that was already correct, so the review queue is "~98%
+noise" and the safety margin is throughput cost rather than risk reduction.
+
+**That was wrong, and the metric was the reason.** It counted a hold as
+unjustified whenever the held candidate was the correct counterpart —
+ignoring whether the money reconciled. Measured directly: of 119 held
+razorpay↔bank pairs, **107 have a same-day date and an exact UTR but an
+unexplained rupee gap of ₹5 to ₹16,260.** Holding the right payment because
+its amount does not add up is the most valuable thing this system does, not
+a false alarm.
+
+Corrected: **abstention precision 0.9016** — 2 wrong-counterpart catches, 108
+unreconciled-money catches, **12** genuinely unnecessary holds (the
+delayed-settlement cases where date proximity zeroes out). The queue is ~90%
+legitimate finance work.
+
+This is the most instructive finding in the report, and it is a finding
+against the audit rather than against the system: a headline weakness was
+manufactured by a metric definition nobody had questioned, and it survived
+into the README, the demo script and this document before anyone measured
+what the held records actually contained.
 
 **M-2 · MEDIUM — a simpler system would have served this batch better.**
 Baseline B (amount + date window, no UTR, no invariants, no abstention) books

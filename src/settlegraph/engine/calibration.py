@@ -35,10 +35,13 @@ row looks like."
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
-from settlegraph.engine.evaluate import _load_assignments, _load_ground_truth
+from settlegraph.engine.evaluate import _load_assignments, _load_ground_truth, _strip
+
+_strip_prefix = _strip
 
 
 def _build_gt_map(truth: list[dict[str, str]]) -> dict[str, list[str]]:
@@ -241,7 +244,19 @@ def compute_calibration(
     }
 
 
-def compute_abstention_quality(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
+# Exception categories that mean "the money itself does not reconcile".
+# A hold on one of these is justified no matter which counterpart was named:
+# an unexplained rupee gap is precisely what a human should look at.
+_MONEY_DISCREPANCY_CATEGORIES = frozenset(
+    {"AMOUNT_MISMATCH", "REFUND_OR_FEE_DEDUCTION", "INVARIANT_VIOLATION"}
+)
+
+
+def compute_abstention_quality(
+    assignment_path: Path,
+    ground_truth_path: Path,
+    exceptions_path: Path | None = None,
+) -> dict[str, Any]:
     """Abstention Precision: when the system declined to auto-book, was declining right?
 
     `LIKELY_MATCH` and `EXCEPTION` are this pipeline's two ways of saying "I
@@ -304,10 +319,23 @@ def compute_abstention_quality(assignment_path: Path, ground_truth_path: Path) -
     assignments = _load_assignments(assignment_path)
     gt_map = _build_gt_map(truth)
 
+    # Records whose money does not reconcile, per the diagnosis the pipeline
+    # already wrote. Measured on a real batch, 107 of 119 holds are exactly
+    # this: same-day dates, exact UTR, and an unexplained rupee gap from Rs 5
+    # to Rs 16,260. Counting those as "unjustified" because the counterpart
+    # was nonetheless the right payment produced a badly misleading number --
+    # see the docstring note above.
+    unreconciled: set[str] = set()
+    if exceptions_path is not None and exceptions_path.exists():
+        for entry in json.loads(exceptions_path.read_text(encoding="utf-8")) or []:
+            if entry.get("category") in _MONEY_DISCREPANCY_CATEGORIES:
+                unreconciled.add(_strip_prefix(entry.get("record_id", "")))
+
     abstain_labels = {"LIKELY_MATCH", "EXCEPTION"}
     total_rzp_bank = 0
     abstentions = 0
-    justified = 0
+    justified_wrong_counterpart = 0
+    justified_unreconciled_amount = 0
     unjustified = 0
 
     for rzp_orig, bank_orig, row in _iter_rzp_bank_rows(assignments):
@@ -321,14 +349,20 @@ def compute_abstention_quality(assignment_path: Path, ground_truth_path: Path) -
             # happen for real data, but skip rather than guess (same
             # convention as everywhere else in this module).
             continue
-        if bank_orig in expected:
-            unjustified += 1
+        if bank_orig not in expected:
+            justified_wrong_counterpart += 1
+        elif rzp_orig in unreconciled:
+            justified_unreconciled_amount += 1
         else:
-            justified += 1
+            unjustified += 1
+
+    justified = justified_wrong_counterpart + justified_unreconciled_amount
 
     return {
         "abstentions": abstentions,
         "justified_abstentions": justified,
+        "justified_wrong_counterpart": justified_wrong_counterpart,
+        "justified_unreconciled_amount": justified_unreconciled_amount,
         "unjustified_abstentions": unjustified,
         "abstention_precision": round(justified / abstentions, 4) if abstentions else 0.0,
         "abstention_rate": round(abstentions / total_rzp_bank, 4) if total_rzp_bank else 0.0,

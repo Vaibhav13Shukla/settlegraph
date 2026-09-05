@@ -221,15 +221,23 @@ python scripts/eval_holdout.py --records 600 --seed 20260905
 
 Do not let a judge find this before you say it.
 
-**Abstention precision is 0.0164** — 120 of 122 abstentions held a candidate
-that was *already correct*. The calibration data explains it: 101 assignments
-scored at 0.749 confidence were 100% correct. The system is materially
-*under*-confident in that band.
+**About 10% of the review queue is genuinely unnecessary.** Abstention
+precision is **0.9016** — of 122 holds, 108 caught money that does not
+reconcile (unexplained gaps of ₹5–₹16,260 on same-day, exact-UTR pairs) and 2
+caught a wrong counterpart. The remaining **12** are avoidable: exact amounts
+held only because a 12–20 day settlement delay zeroes the date-proximity
+score. The fix is in `score_edge`'s date handling — a calibration-split sweep
+shows recall is identical from 0.80 to 0.95, so the threshold is not the
+lever.
 
-It is **not fixed**, deliberately: the fix is a threshold change, and tuning
-it on the batch we report performance on would be tuning on our own test set.
-The `calibration` split exists and is verified leak-free; that is where that
-work belongs (`scripts/threshold_study.py`).
+**Tell this story if you have 30 more seconds, because it is the best one in
+the project.** We originally reported this metric as 0.0164 and called the
+queue "98% noise" — it counted *any* hold on a correct counterpart as
+unjustified, ignoring whether the money reconciled. Holding the right payment
+because ₹16,260 is missing is the most valuable thing this system does. A
+headline weakness was manufactured by a metric definition nobody questioned,
+and it reached the README and this script before anyone looked at what the
+held records actually contained.
 
 ---
 
