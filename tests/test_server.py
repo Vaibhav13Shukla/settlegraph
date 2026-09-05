@@ -62,6 +62,16 @@ def test_api_handler_web_ui_exists() -> None:
     assert "Executive Cockpit" in content
 
 
+def test_dashboard_reports_the_measured_replay_rate_and_scopes_evaluation_claims() -> None:
+    """The dashboard must not turn a partial replay into a 100% pass or turn a
+    bounded evaluation result into a universal guarantee."""
+    content = Path("src/settlegraph/web/index.html").read_text(encoding="utf-8")
+    assert "Verified ' +" in content
+    assert "Verified 100%" not in content
+    assert "evaluated batch" in content
+    assert "SettleGraph guarantees zero false matches" not in content
+
+
 def test_api_handler_web_ui_has_decision_drilldown_elements() -> None:
     """The dashboard's new drill-down tab and baseline comparison table must
     actually be present in the served HTML -- the element ids the JS wires

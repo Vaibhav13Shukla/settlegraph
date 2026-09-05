@@ -18,15 +18,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupadd -g 1001 settlegraph && \
     useradd -u 1001 -g settlegraph -m -s /bin/bash settlegraph
 
-# Copy dependency specifications first to leverage Docker layer caching
+# Copy package metadata and source before installation.  Setuptools discovers
+# packages under ``src/``, so installing before this copy leaves it with no
+# package to build and breaks the release image.
 COPY pyproject.toml README.md ./
+COPY src/ ./src/
 
 # Install application and production runtime dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir .
 
 # Copy application source code and assets
-COPY src/ ./src/
 COPY datagen/ ./datagen/
 COPY scripts/ ./scripts/
 

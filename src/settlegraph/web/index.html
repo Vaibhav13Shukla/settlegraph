@@ -997,7 +997,8 @@
         const data = await res.json();
         if (data.stability_rate !== undefined) {
           val.innerText = (data.stability_rate * 100).toFixed(1) + '%';
-          if (btn) btn.innerHTML = '<i class="fa-solid fa-check text-xs mr-1"></i>Verified 100%';
+          if (btn) btn.innerHTML = '<i class="fa-solid fa-check text-xs mr-1"></i>Verified ' +
+            (data.stability_rate * 100).toFixed(1) + '%';
         } else {
           if (btn) btn.innerHTML = 'Check Failed';
         }
@@ -1481,7 +1482,7 @@
         }
         if (c && c.false_auto_book_rate > 0) {
           noteText += 'Baseline C’s fuzzy heuristic corrupts ' + c.false_positives + ' ledger entries (' +
-            (c.false_auto_book_rate * 100).toFixed(1) + '% false auto-book rate) &mdash; SettleGraph guarantees zero false matches.';
+            (c.false_auto_book_rate * 100).toFixed(1) + '% false auto-book rate) &mdash; SettleGraph recorded zero false matches on this evaluated batch.';
         }
         note.innerText = noteText;
       } catch (err) {
