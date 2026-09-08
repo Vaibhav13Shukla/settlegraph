@@ -1,0 +1,95 @@
+name: Bug report
+description: Something behaves differently from what the docs or the code claim.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this.
+
+        **Please do not paste real settlement data.** Every bug this project needs to
+        reproduce can be expressed with a synthetic batch. If it only shows up on
+        production-shaped data, describe the *shape* — field lengths, encoding, null
+        patterns — rather than sending records.
+
+        If this is security-sensitive, close this form and contact
+        [@Vaibhav13Shukla](https://github.com/Vaibhav13Shukla) privately instead.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before filing
+      options:
+        - label: I pulled the latest `master` and it still happens.
+          required: true
+        - label: I searched existing issues, including closed ones.
+          required: true
+        - label: I checked `README.md` §8 and `docs/RED_TEAM.md` — this is not an already-documented limit.
+          required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: State this separately from what happened. If a doc claims it, link the line.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      description: Include the full traceback as text, not a screenshot.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: >
+        The exact commands. Runs are deterministic, so include the seed — that usually
+        makes it reproducible on our side too.
+      placeholder: |
+        make generate    # python -m settlegraph.cli generate --total-records 1000 --anomaly-rate 0.15 --seed 42
+        make run
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: results
+    attributes:
+      label: Relevant output from `results/`
+      description: >
+        `summary.json` and `evaluation.json` are usually enough. Add `quarantine.json`
+        if rows were held out, and `exceptions.json` if this is about a diagnosis.
+      render: json
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      description: Output of `python --version`. The project requires 3.11 or newer.
+      placeholder: "Python 3.12.4"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Windows 11 / Ubuntu 24.04 / macOS 15.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: suite
+    attributes:
+      label: Does `make test` pass on your checkout?
+      options:
+        - "Yes — the suite is green, this bug is outside it"
+        - "No — tests fail too (please paste the failures above)"
+        - "I have not run it"
+    validations:
+      required: true

@@ -315,3 +315,16 @@ shared before the duplicate and cumulative checks stay correct.
 
 Full method, commands to reproduce every number, and the two real defects the
 adversarial corpus found (and how they were fixed): **[`docs/EVALUATION.md`](docs/EVALUATION.md)**.
+
+---
+
+## 9. Contributing
+
+Setup, the safety gates every change must clear, the commit convention, and the
+evidence rule this project holds itself to — **[`CONTRIBUTING.md`](CONTRIBUTING.md)**.
+
+Two things worth knowing before filing anything: abstaining is a *correct* outcome here,
+so a patch that trades precision for recall will be turned down; and no number goes into
+the docs unless the command that produces it is in the repo. That file also states what
+the project is still missing — there is **no `LICENSE` yet**, so please ask about terms
+before investing in a substantial contribution.

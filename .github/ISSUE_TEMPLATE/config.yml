@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How to contribute
+    url: https://github.com/Vaibhav13Shukla/settlegraph/blob/master/CONTRIBUTING.md
+    about: Setup, the safety gates every change must clear, and the evidence rule.
+  - name: How a number was measured
+    url: https://github.com/Vaibhav13Shukla/settlegraph/blob/master/docs/EVALUATION.md
+    about: Every metric with the command that reproduces it. Check here before reporting a figure as wrong.
+  - name: Known limits
+    url: https://github.com/Vaibhav13Shukla/settlegraph/blob/master/docs/RED_TEAM.md
+    about: What this system deliberately cannot do, and what a hostile reviewer already found.

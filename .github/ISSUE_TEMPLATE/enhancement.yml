@@ -1,0 +1,68 @@
+name: Enhancement
+description: Propose a change to what the system does or how it behaves.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe **the problem before the solution**. The most useful proposals
+        here explain who is blocked and what they cannot currently do; the design
+        follows from that.
+
+        Worth a look first: `docs/PRD.md` and `docs/adr/` record several ideas that were
+        considered and rejected on purpose, with the reasoning.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before filing
+      options:
+        - label: I searched existing issues and the ADRs in `docs/adr/` — this was not already decided against.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: Who is blocked, and what can they not do today? Avoid describing the fix here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+      description: What would the batch, the CLI, or the dashboard look like afterwards?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: touches_matching
+    attributes:
+      label: Would this change matching behaviour?
+      description: >
+        Anything affecting candidate generation, scoring, assignment, or the invariant
+        gate counts as yes.
+      options:
+        - "No — docs, tooling, dashboard, or developer experience only"
+        - "Yes — it changes which records get matched or how"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: safety
+    attributes:
+      label: How would you prove it did not cost precision?
+      description: >
+        Required if the answer above is "yes". Precision is a hard floor at 1.0 and
+        `false_auto_book_rate` must stay at 0.0 — see "The non-negotiables" in
+        CONTRIBUTING.md. Name the harness or test that would demonstrate this, e.g.
+        `scripts/eval_holdout.py` on an untuned seed, or a new case in
+        `tests/test_adversarial.py`.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Including "do nothing" — say what makes it insufficient.
