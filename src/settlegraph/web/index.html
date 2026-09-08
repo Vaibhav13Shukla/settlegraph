@@ -4,769 +4,735 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SettleGraph — Autonomous Financial Settlement Controller</title>
-  
-  <!-- Razorpay Brand Fonts: Nunito Sans & JetBrains Mono -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            rzp: {
-              bg: '#F8FAFC',
-              surface: '#FFFFFF',
-              card: '#F8FAFC',
-              border: '#E2E8F0',
-              borderLight: '#EDF2F7',
-              blue: '#0C83FF',
-              blueDark: '#0066E0',
-              blueHover: '#2891FF',
-              blueFaint: 'rgba(12, 131, 255, 0.08)',
-              teal: '#00D1B2',
-              emerald: '#059669',
-              amber: '#D97706',
-              crimson: '#DC2626',
-              violet: '#7C3AED',
-              navy: '#0C2340',
-              textPrimary: '#0C2340',
-              textSecondary: '#515978',
-              textMuted: '#8D9BB0',
-            }
-          },
-          fontFamily: {
-            sans: ['"Nunito Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'SFMono-Regular', 'Consolas', 'monospace']
-          },
-          boxShadow: {
-            'rzp-sm': '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-            'rzp-md': '0 4px 16px -2px rgba(0, 0, 0, 0.06)',
-            'rzp-lg': '0 10px 25px -3px rgba(0, 0, 0, 0.08)',
-            'rzp-glow': '0 4px 14px 0 rgba(12, 131, 255, 0.25)',
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* ------------------------------------------------------------------
+       Design tokens. One saturated hue (navy) does all the chromatic work;
+       everything else lives on the neutral ramp. Status tints appear only
+       at badge scale, never as page furniture.
+       ------------------------------------------------------------------ */
+    :root {
+      --navy: #0c2764;
+      --navy-hover: #091d4b;
+      --ink: #0f172b;
+      --graphite: #314158;
+      --muted: #45556c;
+      --mist: #62748e;
+      --border: #e2e8f0;
+      --silver: #c3c6cb;
+      --white: #ffffff;
+      --cloud: #f1f5f9;
+
+      /* Status tints — low-saturation washes, badge scale only. */
+      --ok-bg: #f0fdf4;   --ok-br: #dcfce7;   --ok-fg: #166534;
+      --warn-bg: #fffbeb; --warn-br: #fef3c7; --warn-fg: #92400e;
+      --bad-bg: #fef2f2;  --bad-br: #fee2e2;  --bad-fg: #991b1b;
+
+      --radius: 12px;
+      --shadow: rgba(0, 0, 0, .1) 0 10px 15px -3px, rgba(0, 0, 0, .1) 0 4px 6px -4px;
+      --font: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --page: 1200px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
     body {
-      background-color: #F8FAFC;
-      color: #0C2340;
-      font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      background: var(--white);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.5;
+      letter-spacing: -.025em;
       -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
-    /* Active Tab Indicator - Crisp Mint Green Underline */
-    .rzp-tab-active {
-      color: #0C2340 !important;
-      border-bottom: 2px solid #00D1B2 !important;
-      font-weight: 700 !important;
+    h1, h2, h3 { margin: 0; letter-spacing: -.025em; }
+    p { margin: 0; }
+    button { font-family: inherit; letter-spacing: -.025em; cursor: pointer; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .875em;
+      background: var(--cloud);
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: var(--ink);
     }
 
-    /* Floating Assistant Button */
-    .assistant-float-btn {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 50;
-      background: #FFFFFF;
-      border: 1px solid #00D1B2;
-      box-shadow: 0 4px 16px -2px rgba(0, 209, 178, 0.25), 0 2px 6px -1px rgba(0, 0, 0, 0.06);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    .wrap { width: 100%; max-width: var(--page); margin: 0 auto; padding: 0 24px; }
+
+    /* ---------------------------------------------------------------- Type */
+    .t-page      { font-size: 40px; line-height: 1.2; font-weight: 800; color: var(--navy); }
+    .t-section   { font-size: 20px; line-height: 1.4; font-weight: 600; color: var(--ink); }
+    .t-sub       { font-size: 18px; line-height: 1.63; font-weight: 400; color: var(--graphite); }
+    .t-body      { font-size: 16px; line-height: 1.5; font-weight: 400; color: var(--muted); }
+    .t-caption   { font-size: 14px; line-height: 1.5; font-weight: 400; color: var(--mist); }
+    .t-label     { font-size: 14px; line-height: 1.5; font-weight: 500; color: var(--muted); }
+    .t-metric    { font-size: 32px; line-height: 1.25; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .t-metric-sm { font-size: 20px; line-height: 1.4; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .t-mono      { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+
+    .tone-bad  { color: var(--bad-fg); }
+    .tone-mute { color: var(--silver); }
+
+    /* --------------------------------------------------------------- Cards */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
     }
-    .assistant-float-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px -2px rgba(0, 209, 178, 0.35), 0 4px 8px -1px rgba(0, 0, 0, 0.1);
-      border-color: #00BA9F;
+    .card-sm { padding: 24px; }
+
+    .stack-8  > * + * { margin-top: 8px; }
+    .stack-16 > * + * { margin-top: 16px; }
+    .stack-24 > * + * { margin-top: 24px; }
+    .stack-48 > * + * { margin-top: 48px; }
+
+    .grid { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-main { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+
+    .flex { display: flex; align-items: center; }
+    .between { justify-content: space-between; }
+    .gap-8 { gap: 8px; }
+    .gap-16 { gap: 16px; }
+    .wrap-flex { flex-wrap: wrap; }
+
+    /* Definition rows — label left, value right, hairline separated. */
+    .row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .row:first-child { padding-top: 0; }
+    .row-key { font-size: 16px; font-weight: 400; color: var(--muted); }
+    .row-val { font-size: 16px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+    .row-sub { font-size: 14px; font-weight: 400; color: var(--mist); margin-top: 2px; }
+
+    /* ------------------------------------------------------------- Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      font-size: 16px; font-weight: 600;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink);
+      transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: .55; cursor: default; }
+    .btn-primary { background: var(--navy); color: var(--white); }
+    .btn-primary:hover:not(:disabled) { background: var(--navy-hover); }
+    .btn-outline { border-color: var(--border); background: var(--white); color: var(--ink); }
+    .btn-outline:hover:not(:disabled) { border-color: var(--mist); }
+    .btn-ghost { color: var(--ink); font-weight: 500; }
+    .btn-ghost:hover { text-decoration: underline; }
+    .btn-sm { padding: 6px 12px; font-size: 14px; font-weight: 500; }
+
+    /* --------------------------------------------------------------- Pills */
+    .pill {
+      display: inline-flex; align-items: center;
+      border-radius: var(--radius);
+      padding: 2px 8px;
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .pill-ok   { background: var(--ok-bg);   border-color: var(--ok-br);   color: var(--ok-fg); }
+    .pill-warn { background: var(--warn-bg); border-color: var(--warn-br); color: var(--warn-fg); }
+    .pill-bad  { background: var(--bad-bg);  border-color: var(--bad-br);  color: var(--bad-fg); }
+
+    /* Filter chips */
+    .chip {
+      border-radius: var(--radius);
+      padding: 6px 12px;
+      font-size: 14px; font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--muted);
+      transition: border-color .15s ease, color .15s ease;
+    }
+    .chip:hover { border-color: var(--mist); color: var(--ink); }
+    .chip.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+
+    /* --------------------------------------------------------------- Input */
+    .input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-family: inherit;
+      font-size: 16px;
+      letter-spacing: -.025em;
+      color: var(--ink);
+      background: var(--white);
+    }
+    .input::placeholder { color: var(--silver); }
+    .input:focus { outline: none; border-color: var(--navy); }
+
+    /* -------------------------------------------------------------- Tables */
+    .table-scroll { overflow-x: auto; }
+    table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.tbl th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase;
+      color: var(--mist);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      background: var(--white);
+    }
+    table.tbl td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink);
+      vertical-align: top;
+    }
+    table.tbl tbody tr:last-child td { border-bottom: 0; }
+    table.tbl tbody tr.clickable { cursor: pointer; }
+    table.tbl tbody tr.clickable:hover { background: var(--cloud); }
+    .td-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .td-empty { padding: 32px 16px; text-align: center; color: var(--mist); }
+
+    /* -------------------------------------------------------------- Header */
+    .site-head {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 40;
+    }
+    .head-bar { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--navy); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 15px;
+    }
+    .brand-name { font-size: 16px; font-weight: 600; color: var(--ink); }
+
+    /* ----------------------------------------------------------------- Nav */
+    .nav { display: flex; gap: 28px; overflow-x: auto; border-top: 1px solid var(--border); }
+    .nav-link {
+      background: none; border: 0;
+      padding: 14px 0;
+      font-size: 16px; font-weight: 500;
+      color: var(--mist);
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .nav-link:hover { color: var(--ink); }
+    .nav-link.active { color: var(--navy); font-weight: 600; border-bottom-color: var(--navy); }
+
+    /* ---------------------------------------------------------- Page parts */
+    main { flex: 1; padding: 48px 0 64px; }
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .view-head { padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .hidden { display: none !important; }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+    .dot-ok { background: var(--ok-fg); }
+    .dot-bad { background: var(--bad-fg); }
+
+    .note {
+      background: var(--cloud);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
     }
 
-    /* Crisp Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #F1F5F9;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #CBD5E1;
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94A3B8;
+    .site-foot { border-top: 1px solid var(--border); background: var(--white); padding: 24px 0; }
+    .foot-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--mist); }
+
+    /* --------------------------------------------------------------- Modal */
+    .modal { position: fixed; inset: 0; z-index: 50; background: rgba(15, 23, 43, .4); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .modal-panel { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 32px; position: relative; }
+    .modal-close { position: absolute; top: 20px; right: 20px; border: 0; background: none; color: var(--mist); font-size: 24px; line-height: 1; padding: 4px; }
+    .modal-close:hover { color: var(--ink); }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--silver); }
+
+    @media (max-width: 900px) {
+      .grid-main, .grid-4, .grid-3, .grid-2 { grid-template-columns: minmax(0, 1fr); }
+      .t-page { font-size: 32px; }
+      main { padding: 32px 0 48px; }
+      .card { padding: 24px; }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-rzp-bg text-rzp-textPrimary">
+<body>
 
-  <!-- Top Razorpay Blue Hairline Accent -->
-  <div class="h-[3px] w-full bg-gradient-to-r from-rzp-blue via-rzp-teal to-rzp-blue"></div>
-
-  <!-- Streamlined Razorpay Header Bar -->
-  <header class="border-b border-rzp-border bg-white sticky top-0 z-40 shadow-sm">
-    <div class="max-w-[1440px] mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
-      
-      <!-- Brand Lockup -->
-      <div class="flex items-center space-x-3.5">
-        <div class="flex items-center space-x-2">
-          <svg class="w-7 h-7 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/>
-          </svg>
-          <span class="text-xl font-black tracking-tight text-rzp-navy font-sans">Razorpay</span>
+  <header class="site-head">
+    <div class="wrap">
+      <div class="head-bar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span class="brand-name">SettleGraph</span>
         </div>
-
-        <div class="h-4 w-[1px] bg-slate-300"></div>
-
-        <div class="flex items-center space-x-2">
-          <span class="text-base font-extrabold tracking-tight text-rzp-navy">SettleGraph</span>
-          <span class="hidden sm:inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-rzp-blue border border-blue-200">
-            Autonomous Financial Controller
-          </span>
+        <div class="flex gap-8">
+          <button id="btn-replay-check" onclick="triggerReplayCheck()" class="btn btn-outline btn-sm">Verify replay</button>
+          <button id="btn-reconcile" onclick="triggerReconciliation()" class="btn btn-primary btn-sm">Run reconciliation</button>
         </div>
       </div>
-
-      <!-- Action Controls -->
-      <div class="flex items-center space-x-3">
-        <!-- Live Replay Verification -->
-        <button id="btn-replay-check" onclick="triggerReplayCheck()" class="border border-slate-300 hover:border-rzp-blue text-slate-700 hover:text-rzp-blue font-bold text-xs px-3 py-2 rounded-md transition flex items-center space-x-1.5 shadow-sm bg-white cursor-pointer">
-          <i class="fa-solid fa-rotate-left text-[11px]"></i>
-          <span>Verify Replay</span>
+      <nav class="nav">
+        <button onclick="switchTab('overview')" id="tab-overview" class="nav-link active">Executive Cockpit</button>
+        <button onclick="switchTab('exceptions')" id="tab-exceptions" class="nav-link">
+          <span>Exceptions</span><span id="badge-exceptions" class="pill">0</span>
         </button>
-
-        <!-- Primary Reconcile CTA -->
-        <button id="btn-reconcile" onclick="triggerReconciliation()" class="bg-rzp-blue hover:bg-rzp-blueDark active:bg-blue-800 text-white font-bold text-xs px-4 py-2 rounded-md shadow-rzp-glow transition flex items-center space-x-2 cursor-pointer">
-          <i class="fa-solid fa-play text-[10px]"></i>
-          <span>Reconcile Batch &rarr;</span>
-        </button>
-
-        <!-- Refresh Data -->
-        <button onclick="fetchData()" title="Refresh Dashboard State" class="text-slate-500 hover:text-slate-800 p-2 rounded-md hover:bg-slate-100 transition cursor-pointer">
-          <i class="fa-solid fa-arrow-rotate-right text-sm"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- Subnav Tabs Bar -->
-    <div class="border-t border-slate-200 bg-white">
-      <div class="max-w-[1440px] mx-auto px-6 lg:px-8 flex items-center space-x-8 text-sm font-semibold overflow-x-auto">
-        <button onclick="switchTab('overview')" id="tab-overview" class="rzp-tab-active py-3 text-rzp-navy border-b-2 border-rzp-teal transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
-          <i class="fa-solid fa-chart-pie text-xs text-rzp-blue"></i>
-          <span>Executive Cockpit</span>
-        </button>
-        <button onclick="switchTab('exceptions')" id="tab-exceptions" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
-          <i class="fa-solid fa-triangle-exclamation text-xs text-amber-500"></i>
-          <span>Exceptions</span>
-          <span id="badge-exceptions" class="bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-[11px] text-amber-700 font-mono font-bold">0</span>
-        </button>
-        <button onclick="switchTab('ledger')" id="tab-ledger" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
-          <i class="fa-solid fa-book text-xs text-blue-500"></i>
-          <span>Reconciled Ledger</span>
-        </button>
-        <button onclick="switchTab('decisions')" id="tab-decisions" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
-          <i class="fa-solid fa-code-branch text-xs text-indigo-500"></i>
-          <span>Decision Drill-Down</span>
-        </button>
-        <button onclick="switchTab('sandbox')" id="tab-sandbox" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
-          <i class="fa-solid fa-shield-halved text-xs text-emerald-600"></i>
-          <span>Failure Sandbox</span>
-        </button>
-        <button onclick="switchTab('audit')" id="tab-audit" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-2 whitespace-nowrap cursor-pointer">
-          <i class="fa-solid fa-file-contract text-xs text-slate-500"></i>
-          <span>Audit Report</span>
-        </button>
-        <button onclick="switchTab('qa')" id="tab-qa" class="py-3 text-rzp-textSecondary hover:text-rzp-navy border-b-2 border-transparent transition flex items-center space-x-1.5 whitespace-nowrap cursor-pointer">
-          <i class="fa-solid fa-circle-question text-xs text-rzp-teal"></i>
-          <span class="text-rzp-teal font-bold">Financial Q&amp;A</span>
-        </button>
-      </div>
+        <button onclick="switchTab('ledger')" id="tab-ledger" class="nav-link">Ledger</button>
+        <button onclick="switchTab('decisions')" id="tab-decisions" class="nav-link">Decisions</button>
+        <button onclick="switchTab('sandbox')" id="tab-sandbox" class="nav-link">Failure sandbox</button>
+        <button onclick="switchTab('audit')" id="tab-audit" class="nav-link">Audit report</button>
+        <button onclick="switchTab('qa')" id="tab-qa" class="nav-link">Ask</button>
+      </nav>
     </div>
   </header>
 
-  <!-- Main Content Container -->
-  <main class="max-w-[1440px] mx-auto px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+  <main>
+    <div class="wrap">
 
-    <!-- TAB 1: EXECUTIVE COCKPIT / OVERVIEW -->
-    <div id="view-overview" class="space-y-6">
+      <!-- ============================================ OVERVIEW ============ -->
+      <div id="view-overview" class="stack-48">
 
-      <!-- Streamlined Batch Status Bar (Replaces Bulky Marketing Mockup) -->
-      <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div class="space-y-1">
-            <div class="flex items-center space-x-2.5">
-              <h1 class="text-xl font-bold tracking-tight text-rzp-navy">
-                Autonomous Settlement Controller
-              </h1>
-              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
-                Active Batch
-              </span>
+        <section class="page-head">
+          <div class="stack-8">
+            <h1 class="t-page">Settlement reconciliation</h1>
+            <p class="t-sub">Three sources matched into one ledger, with every decision traceable to the evidence behind it.</p>
+          </div>
+          <div class="flex gap-8">
+            <span class="dot dot-ok" id="invariant-shield-dot"></span>
+            <span class="t-label" id="invariant-shield-text">--</span>
+          </div>
+        </section>
+
+        <section class="grid grid-4">
+          <div class="card card-sm stack-8">
+            <div class="t-label">Reconciliation rate</div>
+            <div class="t-metric" id="stat-rate">--%</div>
+            <div class="t-caption">Automated settlement throughput</div>
+          </div>
+          <div class="card card-sm stack-8">
+            <div class="t-label">Merchant sales</div>
+            <div class="t-metric" id="stat-gross">--</div>
+            <div class="t-caption">Gross orders ingested · <span id="stat-gross-exact">--</span></div>
+          </div>
+          <div class="card card-sm stack-8">
+            <div class="t-label">Settlement credits</div>
+            <div class="t-metric" id="stat-reconciled">--</div>
+            <div class="t-caption">Double-entry verified · <span id="stat-reconciled-exact">--</span></div>
+          </div>
+          <div class="card card-sm stack-8">
+            <div class="t-label">Unexplained exposure</div>
+            <div class="t-metric" id="stat-exposure">--</div>
+            <div class="t-caption">Flagged for review · <span id="stat-exposure-exact">--</span></div>
+          </div>
+        </section>
+
+        <section class="grid grid-main">
+
+          <div class="stack-24">
+            <div class="card stack-24">
+              <div>
+                <h2 class="t-section">Where the batch went</h2>
+                <p class="t-caption">Every ingested record lands in exactly one of these states.</p>
+              </div>
+              <div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">Auto-matched</div>
+                    <div class="row-sub" id="pdf-auto-matched-sub">--</div>
+                  </div>
+                  <div class="row-val" id="pdf-auto-matched">--</div>
+                </div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">AI-resolved</div>
+                    <div class="row-sub">Hypothesis cleared the same invariant gate</div>
+                  </div>
+                  <div class="row-val" id="pdf-ai-resolved">--</div>
+                </div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">Abstained</div>
+                    <div class="row-sub">Held for review rather than guessed</div>
+                  </div>
+                  <div class="row-val" id="pdf-abstained">--</div>
+                </div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">Exceptions</div>
+                    <div class="row-sub">Awaiting human resolution</div>
+                  </div>
+                  <div class="row-val" id="pdf-escalated">--</div>
+                </div>
+              </div>
             </div>
-            <p class="text-xs text-rzp-textSecondary">
-              Multi-source bipartite graph matching with Fellegi-Sunter scoring, cryptographic SHA-256 stream deduplication, and zero-error invariant verification.
-            </p>
-          </div>
 
-          <!-- Invariant Shield Pill & Model Indicator -->
-          <div class="flex flex-wrap gap-2.5 items-center">
-            <div class="flex items-center space-x-2 border border-emerald-200 rounded-lg px-3.5 py-1.5 bg-emerald-50 shadow-sm">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" id="invariant-shield-dot"></span>
-              <span class="text-xs text-emerald-900 font-bold">Invariant Shield: <strong class="font-mono text-emerald-700" id="invariant-shield-text">--</strong></span>
+            <div class="card stack-24">
+              <div>
+                <h2 class="t-section">Sources ingested</h2>
+                <p class="t-caption">Three-way match across gateway, bank and merchant records.</p>
+              </div>
+              <div class="grid grid-3">
+                <div class="stack-8">
+                  <div class="t-label">Razorpay feed</div>
+                  <div class="t-metric-sm" id="flow-rzp">--</div>
+                </div>
+                <div class="stack-8">
+                  <div class="t-label">Bank statements</div>
+                  <div class="t-metric-sm" id="flow-bank">--</div>
+                </div>
+                <div class="stack-8">
+                  <div class="t-label">Merchant ledger</div>
+                  <div class="t-metric-sm" id="flow-merchant">--</div>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <div class="row-key">Booked as AUTO_MATCH</div>
+                  <div class="row-sub">Confidence &ge; 0.95 and double-entry verified</div>
+                </div>
+                <div class="row-val" id="flow-auto">--</div>
+              </div>
             </div>
-            <div class="border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 text-xs font-semibold text-slate-700">
-              Model: <strong class="font-mono text-rzp-navy">Fellegi-Sunter (1969)</strong>
+
+            <div class="card stack-24">
+              <div>
+                <h2 class="t-section">Data integrity</h2>
+                <p class="t-caption">What the batch refused to trust, and what it caught on the way in.</p>
+              </div>
+              <div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">Quarantined rows</div>
+                    <div class="row-sub" id="pdf-quarantined-sub">Not reported by this batch</div>
+                  </div>
+                  <div class="row-val tone-mute" id="pdf-quarantined">--</div>
+                </div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">Score drift</div>
+                    <div class="row-sub">Within-batch score-distribution shift</div>
+                  </div>
+                  <div class="row-val" id="pdf-drift">--</div>
+                </div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">Records processed</div>
+                    <div class="row-sub" id="pdf-avg-time">--</div>
+                  </div>
+                  <div class="row-val" id="pdf-total-records">--</div>
+                </div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">Tax match rate</div>
+                    <div class="row-sub" id="pdf-tax-sub">Not run for this batch</div>
+                  </div>
+                  <div class="row-val" id="pdf-tax-rate">--</div>
+                </div>
+                <div class="row">
+                  <div>
+                    <div class="row-key">Route split verified</div>
+                    <div class="row-sub" id="pdf-route-sub">Not run for this batch</div>
+                  </div>
+                  <div class="row-val" id="pdf-route-rate">--</div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- Core Financial KPI Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <!-- Card 1: Reconciliation Rate -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Reconciliation Rate</span>
-            <span class="text-emerald-600 bg-emerald-50 p-1.5 rounded-lg"><i class="fa-solid fa-chart-line text-xs"></i></span>
+          <div class="card stack-24">
+            <div class="flex between gap-8">
+              <h2 class="t-section">Accuracy</h2>
+              <span class="pill" id="eval-zero-fp-badge">Evaluating…</span>
+            </div>
+            <p class="t-caption">Measured against held-out ground truth on the evaluated leg of this batch.</p>
+            <div>
+              <div class="row"><span class="row-key">Precision</span><span class="row-val" id="eval-precision">--%</span></div>
+              <div class="row"><span class="row-key">Recall</span><span class="row-val" id="eval-recall">--%</span></div>
+              <div class="row"><span class="row-key">F1</span><span class="row-val" id="eval-f1">--</span></div>
+              <div class="row"><span class="row-key">False positives</span><span class="row-val" id="eval-fp">--</span></div>
+              <div class="row"><span class="row-key">Match rate</span><span class="row-val" id="pdf-match-rate">--%</span></div>
+              <div class="row"><span class="row-key">Accuracy</span><span class="row-val" id="pdf-accuracy">--%</span></div>
+              <div class="row"><span class="row-key">Safe auto-resolution</span><span class="row-val" id="eval-safe-auto-rate">--%</span></div>
+              <div class="row"><span class="row-key">False auto-book rate</span><span class="row-val" id="eval-false-book-rate">--%</span></div>
+              <div class="row"><span class="row-key">Dangerous miss rate</span><span class="row-val" id="eval-dangerous-miss-rate">--%</span></div>
+              <div class="row"><span class="row-key">Exception recall</span><span class="row-val" id="eval-exception-recall">--%</span></div>
+              <div class="row"><span class="row-key">Calibration error (ECE)</span><span class="row-val" id="eval-ece">--</span></div>
+              <div class="row"><span class="row-key">Brier score</span><span class="row-val" id="eval-brier">--</span></div>
+              <div class="row"><span class="row-key">Replay stability</span><span class="row-val" id="eval-replay">--</span></div>
+            </div>
+            <div class="note">
+              Ground truth is generated alongside the batch and never read by the matching
+              engine — the evaluator loads it only after assignment. Replay stability stays
+              blank until you run <strong>Verify replay</strong>.
+            </div>
           </div>
-          <div class="text-2xl font-extrabold text-rzp-navy font-mono" id="stat-rate">--%</div>
-          <div class="text-[11px] text-slate-500">Automated settlement throughput</div>
-        </div>
+        </section>
 
-        <!-- Card 2: Gross Sales -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Merchant Sales</span>
-            <span class="text-rzp-blue bg-blue-50 p-1.5 rounded-lg"><i class="fa-solid fa-receipt text-xs"></i></span>
+        <section class="stack-24">
+          <div class="view-head">
+            <h2 class="t-section">Safety by anomaly type</h2>
+            <p class="t-caption">How each injected anomaly was handled, and whether any of them produced a false auto-book.</p>
           </div>
-          <div class="text-2xl font-extrabold text-rzp-navy font-mono" id="stat-gross">INR --</div>
-          <div class="text-[11px] text-slate-500">Gross merchant orders ingested</div>
-        </div>
-
-        <!-- Card 3: Reconciled Volume -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Settlement Credits</span>
-            <span class="text-teal-600 bg-teal-50 p-1.5 rounded-lg"><i class="fa-solid fa-building-columns text-xs"></i></span>
+          <div class="card" style="padding:0">
+            <div class="table-scroll">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Anomaly scenario</th>
+                    <th>Auto-recovered</th>
+                    <th>Abstained</th>
+                    <th>False auto-books</th>
+                    <th>System action</th>
+                    <th>Verdict</th>
+                  </tr>
+                </thead>
+                <tbody id="anomaly-breakdown-body"></tbody>
+              </table>
+            </div>
           </div>
-          <div class="text-2xl font-extrabold text-rzp-navy font-mono" id="stat-reconciled">INR --</div>
-          <div class="text-[11px] text-slate-500">Double-entry verified bank credits</div>
-        </div>
-
-        <!-- Card 4: Unexplained Exposure -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs uppercase tracking-wider text-slate-500 font-bold">Unexplained Exposure</span>
-            <span class="text-rose-600 bg-rose-50 p-1.5 rounded-lg"><i class="fa-solid fa-triangle-exclamation text-xs"></i></span>
-          </div>
-          <div class="text-2xl font-extrabold text-rose-600 font-mono" id="stat-exposure">INR --</div>
-          <div class="text-[11px] text-slate-500">At-risk discrepancy flagged for review</div>
-        </div>
+        </section>
       </div>
 
-      <!-- Batch Telemetry Overview -->
-      <div class="space-y-3">
-        <h2 class="text-xs font-bold tracking-wider text-slate-500 uppercase">Batch Telemetry</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Total Records</div>
-            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-total-records">--</div>
+      <!-- ========================================== EXCEPTIONS ============ -->
+      <div id="view-exceptions" class="hidden stack-24">
+        <div class="view-head flex between gap-16 wrap-flex">
+          <div class="stack-8">
+            <h1 class="t-page">Exceptions</h1>
+            <p class="t-sub">Records the matcher could not reconcile, each with a diagnosed root cause and a remediation step.</p>
           </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Match Rate</div>
-            <div class="text-xl font-bold tracking-tight text-emerald-600 font-mono" id="pdf-match-rate">--%</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Accuracy</div>
-            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-accuracy">--%</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Avg Processing Time</div>
-            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-avg-time">-- ms/rec</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Auto Matched</div>
-            <div class="text-xl font-bold tracking-tight text-rzp-blue font-mono" id="pdf-auto-matched">--</div>
-            <div class="text-[10px] text-slate-500 truncate" id="pdf-auto-matched-sub">-- verified correct on evaluated leg</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">AI-Resolved</div>
-            <div class="text-xl font-bold tracking-tight text-purple-600 font-mono" id="pdf-ai-resolved">--</div>
-            <div class="text-[10px] text-slate-500">Hypothesis verified</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Abstained</div>
-            <div class="text-xl font-bold tracking-tight text-amber-600 font-mono" id="pdf-abstained">--</div>
-            <div class="text-[10px] text-slate-500">Held safe, not guessed</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Escalated Exceptions</div>
-            <div class="text-xl font-bold tracking-tight text-rose-600 font-mono" id="pdf-escalated">--</div>
-            <div class="text-[10px] text-slate-500">Awaiting human review</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Score Drift</div>
-            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-drift">--</div>
-            <div class="text-[10px] text-slate-500">Score-distribution shift</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Tax Match Rate</div>
-            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-tax-rate">--</div>
-            <div class="text-[10px] text-slate-500 truncate" id="pdf-tax-sub">Not run for this batch</div>
-          </div>
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-0.5">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Route Split Verified</div>
-            <div class="text-xl font-bold tracking-tight text-rzp-navy font-mono" id="pdf-route-rate">--</div>
-            <div class="text-[10px] text-slate-500 truncate" id="pdf-route-sub">Not run for this batch</div>
-          </div>
+          <span class="t-label" id="exception-count-label">--</span>
         </div>
+        <div id="exception-cards-container" class="stack-24"></div>
       </div>
 
-      <!-- Ingestion Flow & Truth Gate Benchmark -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        
-        <!-- Multi-Source Ingestion Funnel -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2 space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-rzp-blue"></span>
-              <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Multi-Source Ingestion &amp; Assignment</h2>
-            </div>
-            <span class="text-xs uppercase tracking-wider text-slate-500 font-mono font-semibold">3-Way Bipartite Graph</span>
-          </div>
-
-          <div class="grid grid-cols-3 gap-3.5 text-center">
-            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
-              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Razorpay Feed</div>
-              <div class="text-2xl font-bold text-rzp-navy font-mono" id="flow-rzp">--</div>
-              <div class="text-[10px] text-slate-500">Gateway Settlements</div>
-            </div>
-            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
-              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Bank Statements</div>
-              <div class="text-2xl font-bold text-rzp-navy font-mono" id="flow-bank">--</div>
-              <div class="text-[10px] text-slate-500">NEFT / RTGS Items</div>
-            </div>
-            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
-              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Merchant Ledger</div>
-              <div class="text-2xl font-bold text-rzp-navy font-mono" id="flow-merchant">--</div>
-              <div class="text-[10px] text-slate-500">ERP Sales Records</div>
-            </div>
-          </div>
-
-          <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between">
-            <div class="space-y-0.5">
-              <div class="text-xs font-bold uppercase tracking-wider text-emerald-900">AUTO_MATCH Output</div>
-              <div class="text-xs text-emerald-700">Confidence \(\ge 0.95\) &amp; double-entry verified</div>
-            </div>
-            <div class="text-right">
-              <div class="text-2xl font-bold text-emerald-700 font-mono" id="flow-auto">--</div>
-              <div class="text-[10px] uppercase tracking-wider text-emerald-600 font-semibold">Assignments Booked</div>
-            </div>
-          </div>
+      <!-- ============================================== LEDGER ============ -->
+      <div id="view-ledger" class="hidden stack-24">
+        <div class="view-head stack-8">
+          <h1 class="t-page">Reconciled ledger</h1>
+          <p class="t-sub">One row per assignment. Select any row to open the evidence behind that decision.</p>
         </div>
-
-        <!-- Ground Truth Evaluator Benchmark -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
-          <div>
-            <div class="border-b border-slate-200 pb-3 mb-3 flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Evaluator Truth Gate</h2>
-              </div>
-              <span class="text-[10px] uppercase tracking-wider text-emerald-700 font-mono font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" id="eval-zero-fp-badge">Evaluating...</span>
-            </div>
-
-            <div class="space-y-2 text-xs">
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">Precision (Zero-Error)</span>
-                <span class="font-mono font-bold text-emerald-600" id="eval-precision">--%</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">Recall (Throughput)</span>
-                <span class="font-mono text-rzp-navy font-semibold" id="eval-recall">--%</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">F1 Score</span>
-                <span class="font-mono text-rzp-navy font-semibold" id="eval-f1">--</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">False Positives</span>
-                <span class="font-mono font-bold text-emerald-600" id="eval-fp">--</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">Safe Auto-Resolution Rate</span>
-                <span class="font-mono text-rzp-navy" id="eval-safe-auto-rate">--%</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">False Auto-Book Rate</span>
-                <span class="font-mono text-rzp-navy font-bold" id="eval-false-book-rate">--%</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">Dangerous Miss Rate</span>
-                <span class="font-mono text-rzp-navy" id="eval-dangerous-miss-rate">--%</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">Exception Recall</span>
-                <span class="font-mono text-rzp-navy" id="eval-exception-recall">--%</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">Calibration Error (ECE)</span>
-                <span class="font-mono text-rzp-blue font-bold" id="eval-ece">--</span>
-              </div>
-              <div class="flex justify-between items-center py-1 border-b border-slate-100">
-                <span class="text-slate-600">Brier Score</span>
-                <span class="font-mono text-rzp-blue font-bold" id="eval-brier">--</span>
-              </div>
-              <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600">Replay Stability</span>
-                <span class="font-mono font-bold text-emerald-600" id="eval-replay">100.0%</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-500 leading-relaxed">
-            <span class="text-rzp-navy font-semibold">Ground Truth Isolation:</span> Truth records remain encrypted and inaccessible to matching logic, verifying true blind accuracy.
-          </div>
-        </div>
-      </div>
-
-      <!-- Per-Anomaly Safety Breakdown Table -->
-      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3.5">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-200 pb-3">
-          <div>
-            <h2 class="text-sm font-bold uppercase tracking-wider text-rzp-navy">Per-Anomaly Safety &amp; Robustness Matrix</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Verification that zero false positives occur under each injected financial anomaly type.</p>
-          </div>
-          <span class="text-[11px] uppercase tracking-wider text-emerald-700 font-bold border border-emerald-200 px-3 py-0.5 rounded-full bg-emerald-50">
-            0 False Positives Across All Scenarios
-          </span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-rzp-navy">
-            <thead class="bg-slate-50 uppercase tracking-wider text-[11px] text-slate-500 border-b border-slate-200">
-              <tr>
-                <th class="p-3.5">Injected Anomaly Scenario</th>
-                <th class="p-3.5">Auto-Recovered (TP)</th>
-                <th class="p-3.5">Safely Abstained (FN)</th>
-                <th class="p-3.5">False Auto-Books (FP)</th>
-                <th class="p-3.5">System Action</th>
-                <th class="p-3.5">Safety Verdict</th>
-              </tr>
-            </thead>
-            <tbody id="anomaly-breakdown-body" class="divide-y divide-slate-100">
-              <!-- Injected dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 2: EXCEPTION DIAGNOSTICS -->
-    <div id="view-exceptions" class="hidden space-y-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Diagnosed Exception Root Causes</h2>
-          <p class="text-xs text-slate-500 mt-1">Autonomous 6-category failure classification with deterministic remediation instructions.</p>
-        </div>
-        <div id="exception-count-label" class="border border-slate-200 px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider text-rzp-navy bg-white font-mono font-bold shadow-sm">
-          -- Exceptions Surfaced
-        </div>
-      </div>
-
-      <div id="exception-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Injected dynamically -->
-      </div>
-    </div>
-
-    <!-- TAB 3: RECONCILED LEDGER -->
-    <div id="view-ledger" class="hidden space-y-6">
-      <div class="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Reconciled Match Groups &amp; Ledger</h2>
-          <p class="text-xs text-slate-500 mt-1">Showing 1-to-1 verified bipartite assignments across reconciliation legs.</p>
-        </div>
-        <span class="text-xs uppercase tracking-wider text-slate-400 font-mono font-bold">Balanced Sample</span>
-      </div>
-
-      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden p-4 space-y-3 shadow-sm">
-        <div class="overflow-x-auto max-h-[650px]">
-          <table class="w-full text-left text-xs text-rzp-navy">
-            <thead class="bg-slate-50 uppercase tracking-wider text-[11px] text-slate-500 sticky top-0 border-b border-slate-200">
-              <tr>
-                <th class="p-3.5">Source A</th>
-                <th class="p-3.5">Source B</th>
-                <th class="p-3.5">Confidence</th>
-                <th class="p-3.5">Classification</th>
-                <th class="p-3.5">Amount A (INR)</th>
-                <th class="p-3.5">Amount B (INR)</th>
-                <th class="p-3.5">UTR Reference</th>
-              </tr>
-            </thead>
-            <tbody id="ledger-table-body" class="divide-y divide-slate-100">
-              <!-- Injected dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 4: DECISION DRILL-DOWN -->
-    <div id="view-decisions" class="hidden space-y-6">
-      <div class="border-b border-slate-200 pb-4">
-        <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Why Was This Decision Made?</h2>
-        <p class="text-xs text-slate-500 mt-1 max-w-3xl">
-          Every row in the ledger is one of four decision states. A "NO DECISION" abstention is not a failure &mdash; it is the system correctly refusing to guess when the assembled evidence does not clear the auto-match bar. Pick a state below to inspect the exact evidence.
-        </p>
-      </div>
-
-      <!-- Decision State Filter -->
-      <div class="flex flex-wrap gap-2.5" id="decision-filter-bar">
-        <button data-decision-filter="all" onclick="filterDecisions('all')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-rzp-blue text-white bg-rzp-blue font-bold shadow-sm transition cursor-pointer">All States</button>
-        <button data-decision-filter="auto" onclick="filterDecisions('auto')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition cursor-pointer">Correct Auto-Match</button>
-        <button data-decision-filter="abstained" onclick="filterDecisions('abstained')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition cursor-pointer">Ambiguous / Abstained</button>
-        <button data-decision-filter="exception" onclick="filterDecisions('exception')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition cursor-pointer">Genuine Exception</button>
-        <button data-decision-filter="failclosed" onclick="filterDecisions('failclosed')" class="decision-filter-btn px-3.5 py-1.5 rounded-lg text-xs uppercase tracking-wider border border-slate-200 text-slate-600 hover:text-rzp-navy bg-white shadow-sm transition cursor-pointer">System Failure Safety</button>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        <!-- (1) CORRECT AUTO-MATCH -->
-        <div id="decision-auto" data-decision-state="auto" class="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <span class="text-xs uppercase tracking-wider font-bold text-emerald-600">Correct Auto-Match</span>
-            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400 font-bold">Deterministic Gate Passed</span>
-          </div>
-          <div id="decision-auto-body" class="text-xs text-slate-600">Loading assignment data&hellip;</div>
-        </div>
-
-        <!-- (2) AMBIGUOUS / ABSTAINED -->
-        <div id="decision-abstained" data-decision-state="abstained" class="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <span class="text-xs uppercase tracking-wider font-bold text-amber-600">NO DECISION &mdash; Held For Review</span>
-            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400 font-bold">Intelligent Abstention</span>
-          </div>
-          <div id="decision-abstained-body" class="text-xs text-slate-600">Loading assignment data&hellip;</div>
-        </div>
-
-        <!-- (3) GENUINE EXCEPTION -->
-        <div id="decision-exception" data-decision-state="exception" class="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <span class="text-xs uppercase tracking-wider font-bold text-rose-600">Genuine Exception</span>
-            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400 font-bold">Automation Stopped</span>
-          </div>
-          <div id="decision-exception-body" class="text-xs text-slate-600">Loading exception data&hellip;</div>
-        </div>
-
-        <!-- (4) SYSTEM FAILURE SAFETY -->
-        <div id="decision-failclosed" data-decision-state="failclosed" class="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <span class="text-xs uppercase tracking-wider font-bold text-rzp-blue">System Failure Safety</span>
-            <span class="text-[10px] uppercase tracking-wider font-mono text-slate-400 font-bold">Fail-Closed By Design</span>
-          </div>
-          <div class="text-xs text-slate-600 leading-relaxed space-y-3">
-            <p>
-              SettleGraph's optional AI reasoner (<code class="font-mono text-rzp-navy bg-slate-100 px-1.5 py-0.5 rounded">engine/ai_reasoner.py</code>) only ever <em>proposes</em> a hypothesis for an exception the deterministic matcher already could not resolve. The model never decides a match: its hypothesis is fed back through the deterministic invariant gate (<code class="font-mono text-rzp-navy bg-slate-100 px-1.5 py-0.5 rounded">verify_settlegraph_invariants</code>) and only promotes to <code class="font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">AI_RESOLVED_MATCH</code> &mdash; never <code class="font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">AUTO_MATCH</code> &mdash; if every invariant passes.
-            </p>
-            <p>
-              Every failure path leaves the record exactly where the deterministic layer put it. A timeout, rate limit, refusal, malformed JSON, or invariant breach keeps the record as <code class="font-mono text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded">EXCEPTION</code>.
-            </p>
-            <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-500">
-              Enforced in code and verified live in the Failure Sandbox.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- BASELINE COMPARISON -->
-      <div class="space-y-4 pt-2">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-200 pb-3">
-          <div>
-            <h2 class="text-base font-bold uppercase tracking-wider text-rzp-navy">4-Way Baseline Comparison Matrix</h2>
-            <p class="text-xs text-slate-500 mt-0.5 max-w-2xl">
-              Three naive matchers recomputed live against current batch files and ground truth.
-            </p>
-          </div>
-          <span id="baseline-status" class="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-bold">Loading&hellip;</span>
-        </div>
-        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-rzp-navy">
-              <thead class="bg-slate-50 uppercase tracking-wider text-[11px] text-slate-500 border-b border-slate-200">
+        <div class="card" style="padding:0">
+          <div class="table-scroll" style="max-height:640px">
+            <table class="tbl">
+              <thead>
                 <tr>
-                  <th class="p-3.5">Method</th>
-                  <th class="p-3.5">Precision</th>
-                  <th class="p-3.5">Recall</th>
-                  <th class="p-3.5">True Positives</th>
-                  <th class="p-3.5">False Positives</th>
-                  <th class="p-3.5">False Auto-Book Rate</th>
+                  <th>Source A</th>
+                  <th>Source B</th>
+                  <th>Confidence</th>
+                  <th>Classification</th>
+                  <th>Amount A</th>
+                  <th>Amount B</th>
+                  <th>UTR</th>
                 </tr>
               </thead>
-              <tbody id="baseline-table-body" class="divide-y divide-slate-100">
-                <!-- Injected dynamically -->
-              </tbody>
+              <tbody id="ledger-table-body"></tbody>
             </table>
           </div>
         </div>
-        <div id="baseline-note" class="text-xs text-slate-600 leading-relaxed font-medium"></div>
       </div>
-    </div>
 
-    <!-- TAB 5: FAILURE SANDBOX -->
-    <div id="view-sandbox" class="hidden space-y-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Live Failure Injection &amp; Containment Sandbox</h2>
-          <p class="text-xs text-slate-500 mt-1">Simulate real-world catastrophic failure modes and verify deterministic containment.</p>
+      <!-- =========================================== DECISIONS ============ -->
+      <div id="view-decisions" class="hidden stack-48">
+        <div class="view-head stack-8">
+          <h1 class="t-page">Why was this decided?</h1>
+          <p class="t-sub">
+            Every record ends in one of four states. An abstention is not a failure — it is the
+            system refusing to guess when the evidence does not clear the bar.
+          </p>
         </div>
-        <button onclick="runFailureSimulations()" class="bg-white hover:bg-slate-50 border border-slate-200 hover:border-rzp-blue text-rzp-navy rounded-lg px-4 py-2 text-xs uppercase tracking-wider font-bold shadow-sm transition flex items-center space-x-2 cursor-pointer">
-          <i class="fa-solid fa-bolt text-amber-500 text-[10px]"></i>
-          <span>Execute All 7 Scenarios</span>
-        </button>
-      </div>
 
-      <div id="sandbox-scenarios-container" class="space-y-4">
-        <!-- Injected dynamically -->
-      </div>
-    </div>
-
-    <!-- TAB 6: AUDIT REPORT -->
-    <div id="view-audit" class="hidden space-y-6">
-      <div class="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-rzp-navy">Executive Audit Ledger (`AUDIT_REPORT.md`)</h2>
-          <p class="text-xs text-slate-500 mt-1">Formal verification evidence ledger for CFO and Controller audit sign-off.</p>
-        </div>
-        <button onclick="copyAuditReport()" class="border border-slate-200 hover:border-slate-400 rounded-lg px-3.5 py-1.5 text-xs uppercase tracking-wider text-rzp-navy bg-white shadow-sm transition flex items-center space-x-1.5 font-bold cursor-pointer">
-          <i class="fa-regular fa-copy text-xs"></i>
-          <span>Copy Markdown</span>
-        </button>
-      </div>
-      <div class="bg-white p-6 rounded-xl border border-slate-200 text-rzp-navy font-mono shadow-sm">
-        <pre id="audit-report-content" class="text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto text-slate-700"></pre>
-      </div>
-    </div>
-
-    <!-- TAB 7: FINANCIAL ASSISTANT Q&A -->
-    <div id="view-qa" class="hidden space-y-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-sm">
-            <svg class="w-5 h-5 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
+        <div class="stack-24">
+          <div class="flex gap-8 wrap-flex" id="decision-filter-bar">
+            <button data-decision-filter="all" onclick="filterDecisions('all')" class="decision-filter-btn chip active">All states</button>
+            <button data-decision-filter="auto" onclick="filterDecisions('auto')" class="decision-filter-btn chip">Auto-matched</button>
+            <button data-decision-filter="abstained" onclick="filterDecisions('abstained')" class="decision-filter-btn chip">Abstained</button>
+            <button data-decision-filter="exception" onclick="filterDecisions('exception')" class="decision-filter-btn chip">Exception</button>
+            <button data-decision-filter="failclosed" onclick="filterDecisions('failclosed')" class="decision-filter-btn chip">Fail-closed</button>
           </div>
-          <div>
-            <h2 class="text-xl font-bold tracking-tight text-rzp-navy flex items-center space-x-2">
-              <span>Financial AI Controller Assistant</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold uppercase">/api/ask</span>
-            </h2>
-            <p class="text-xs text-slate-500 mt-0.5">Query settlement telemetry, MDR anomalies, fee leakage, and deterministic audit proofs.</p>
-          </div>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="text-xs uppercase tracking-wider text-emerald-700 font-bold">Evidence Engine Active</span>
-        </div>
-      </div>
 
-      <!-- Quick Preset Queries -->
-      <div class="space-y-2.5">
-        <p class="text-xs uppercase tracking-wider text-slate-500 font-bold">Quick Audit Questions</p>
-        <div class="flex flex-wrap gap-2">
-          <button onclick="askQuestionPreset('What is our reconciliation precision and false positive rate?')" class="border border-slate-200 hover:border-rzp-blue rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium cursor-pointer">
-            <svg class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
-            <span>Precision &amp; Zero-FP Proof</span>
-          </button>
-          <button onclick="askQuestionPreset('Which merchants have unexplained fee leakages?')" class="border border-slate-200 hover:border-amber-400 rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium cursor-pointer">
-            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-[10px]"></i>
-            <span>Fee Leakage &amp; Discrepancies</span>
-          </button>
-          <button onclick="askQuestionPreset('How many exceptions were flagged and what are the top categories?')" class="border border-slate-200 hover:border-rzp-blue rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium cursor-pointer">
-            <i class="fa-solid fa-filter text-rzp-blue text-[10px]"></i>
-            <span>Exception Triage Summary</span>
-          </button>
-          <button onclick="askQuestionPreset('Explain the double-entry accounting invariant and any violations.')" class="border border-slate-200 hover:border-teal-400 rounded-full px-3.5 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition flex items-center space-x-1.5 font-medium cursor-pointer">
-            <i class="fa-solid fa-scale-balanced text-teal-600 text-[10px]"></i>
-            <span>Double-Entry Conservation</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Query Form -->
-      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-        <form onsubmit="submitQuestion(event)" class="flex flex-col sm:flex-row gap-3">
-          <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <i class="fa-solid fa-magnifying-glass text-xs"></i>
+          <div class="grid grid-2">
+            <div id="decision-auto" data-decision-state="auto" class="card stack-16">
+              <div class="flex between gap-8">
+                <h2 class="t-section">Auto-matched</h2>
+                <span class="pill pill-ok">Gate passed</span>
+              </div>
+              <div id="decision-auto-body" class="t-body">Loading…</div>
             </div>
-            <input type="text" id="qa-input" placeholder="Ask about settlement discrepancies, fee drift, anomalies, or invariants..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2.5 text-sm text-rzp-navy placeholder-slate-400 focus:outline-none focus:border-rzp-blue focus:bg-white transition font-sans">
+
+            <div id="decision-abstained" data-decision-state="abstained" class="card stack-16">
+              <div class="flex between gap-8">
+                <h2 class="t-section">Abstained</h2>
+                <span class="pill pill-warn">Held for review</span>
+              </div>
+              <div id="decision-abstained-body" class="t-body">Loading…</div>
+            </div>
+
+            <div id="decision-exception" data-decision-state="exception" class="card stack-16">
+              <div class="flex between gap-8">
+                <h2 class="t-section">Exception</h2>
+                <span class="pill pill-bad">Automation stopped</span>
+              </div>
+              <div id="decision-exception-body" class="t-body">Loading…</div>
+            </div>
+
+            <div id="decision-failclosed" data-decision-state="failclosed" class="card stack-16">
+              <div class="flex between gap-8">
+                <h2 class="t-section">Fail-closed</h2>
+                <span class="pill">By design</span>
+              </div>
+              <div class="t-body stack-16">
+                <p>
+                  The optional AI reasoner (<code>engine/ai_reasoner.py</code>) only ever
+                  <em>proposes</em> a hypothesis for an exception the deterministic matcher
+                  already could not resolve. It never decides a match: the hypothesis is fed
+                  back through the same invariant gate and, if every invariant passes, promotes
+                  only to <code>AI_RESOLVED_MATCH</code> — never to <code>AUTO_MATCH</code>.
+                </p>
+                <p>
+                  Every failure path leaves the record where the deterministic layer put it. A
+                  timeout, rate limit, refusal, malformed response, or invariant breach keeps it
+                  an <code>EXCEPTION</code>.
+                </p>
+                <div class="note">Enforced in code and exercised live in the Failure sandbox.</div>
+              </div>
+            </div>
           </div>
-          <button type="submit" id="qa-submit-btn" class="bg-rzp-blue hover:bg-rzp-blueDark text-white font-bold rounded-lg px-6 py-2.5 text-xs uppercase tracking-wider shadow-rzp-glow transition flex items-center justify-center space-x-2 shrink-0 cursor-pointer">
-            <i class="fa-solid fa-arrow-right text-xs"></i>
-            <span>Ask Controller</span>
-          </button>
+        </div>
+
+        <div class="stack-24">
+          <div class="view-head flex between gap-16 wrap-flex">
+            <div class="stack-8">
+              <h2 class="t-section">Compared against three naive matchers</h2>
+              <p class="t-caption">Recomputed live against the current batch and the same ground truth.</p>
+            </div>
+            <span class="t-caption" id="baseline-status">Loading…</span>
+          </div>
+          <div class="card" style="padding:0">
+            <div class="table-scroll">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Method</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>True positives</th>
+                    <th>False positives</th>
+                    <th>False auto-book rate</th>
+                  </tr>
+                </thead>
+                <tbody id="baseline-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+          <p id="baseline-note" class="t-body"></p>
+        </div>
+      </div>
+
+      <!-- ============================================= SANDBOX ============ -->
+      <div id="view-sandbox" class="hidden stack-24">
+        <div class="view-head flex between gap-16 wrap-flex">
+          <div class="stack-8">
+            <h1 class="t-page">Failure sandbox</h1>
+            <p class="t-sub">Inject real failure modes and check that each one is contained rather than absorbed.</p>
+          </div>
+          <button onclick="runFailureSimulations()" class="btn btn-outline btn-sm">Re-run scenarios</button>
+        </div>
+        <div id="sandbox-scenarios-container" class="stack-16"></div>
+      </div>
+
+      <!-- =============================================== AUDIT ============ -->
+      <div id="view-audit" class="hidden stack-24">
+        <div class="view-head flex between gap-16 wrap-flex">
+          <div class="stack-8">
+            <h1 class="t-page">Audit report</h1>
+            <p class="t-sub">The generated evidence ledger, exactly as written to <code>AUDIT_REPORT.md</code>.</p>
+          </div>
+          <button onclick="copyAuditReport()" class="btn btn-outline btn-sm">Copy markdown</button>
+        </div>
+        <div class="card">
+          <pre id="audit-report-content" class="t-mono" style="white-space:pre-wrap;margin:0;line-height:1.6;color:var(--muted)"></pre>
+        </div>
+      </div>
+
+      <!-- ================================================== QA ============ -->
+      <div id="view-qa" class="hidden stack-24">
+        <div class="view-head stack-8">
+          <h1 class="t-page">Ask the controller</h1>
+          <p class="t-sub">Answers are assembled from this batch's results on disk, not from model recall.</p>
+        </div>
+
+        <div class="flex gap-8 wrap-flex">
+          <button onclick="askQuestionPreset('What is our reconciliation precision and false positive rate?')" class="chip">Precision and false positives</button>
+          <button onclick="askQuestionPreset('Which merchants have unexplained fee leakages?')" class="chip">Fee leakage</button>
+          <button onclick="askQuestionPreset('How many exceptions were flagged and what are the top categories?')" class="chip">Exception summary</button>
+          <button onclick="askQuestionPreset('Explain the double-entry accounting invariant and any violations.')" class="chip">Double-entry invariant</button>
+        </div>
+
+        <form onsubmit="submitQuestion(event)" class="flex gap-8 wrap-flex">
+          <div style="flex:1;min-width:260px">
+            <input type="text" id="qa-input" class="input" placeholder="Ask about discrepancies, fee drift, anomalies, or invariants…">
+          </div>
+          <button type="submit" id="qa-submit-btn" class="btn btn-primary">Ask</button>
         </form>
-      </div>
 
-      <!-- Response Area -->
-      <div id="qa-response-container" class="hidden bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-md">
-        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-          <div class="flex items-center space-x-3">
-            <span id="qa-engine-badge" class="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono tracking-wider bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
-              settlegraph_deterministic_controller
-            </span>
-            <span id="qa-timestamp" class="text-xs text-slate-400 font-mono font-medium">--</span>
+        <div id="qa-response-container" class="hidden card stack-16">
+          <div class="flex between gap-8 wrap-flex">
+            <div class="flex gap-8 wrap-flex">
+              <span class="pill" id="qa-engine-badge">settlegraph_deterministic_controller</span>
+              <span class="t-caption" id="qa-timestamp">--</span>
+            </div>
+            <button onclick="copyQAResponse()" class="btn btn-ghost btn-sm">Copy</button>
           </div>
-          <button onclick="copyQAResponse()" class="text-xs text-slate-500 hover:text-rzp-navy transition flex items-center space-x-1 font-semibold cursor-pointer">
-            <i class="fa-regular fa-copy text-[11px]"></i>
-            <span>Copy</span>
-          </button>
-        </div>
-        <div id="qa-answer-text" class="text-sm text-rzp-navy leading-relaxed whitespace-pre-wrap font-mono bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <!-- Dynamic Answer -->
+          <div id="qa-answer-text" class="t-body" style="white-space:pre-wrap;color:var(--ink)"></div>
         </div>
       </div>
-    </div>
 
+    </div>
   </main>
 
-  <!-- Floating Ask Assistant Action Button -->
-  <button onclick="switchTab('qa')" class="assistant-float-btn py-2.5 px-4 rounded-lg flex items-center space-x-2 cursor-pointer" title="Ask Financial Assistant">
-    <svg class="w-4 h-4 text-rzp-teal" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/>
-    </svg>
-    <span class="text-xs font-bold tracking-wide text-rzp-navy">Ask Assistant</span>
-  </button>
-
-  <!-- Clean Footer Bar -->
-  <footer class="border-t border-slate-200 bg-white py-5 mt-auto">
-    <div class="max-w-[1440px] mx-auto px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 tracking-wider uppercase space-y-2 md:space-y-0">
-      <div class="flex items-center space-x-2 font-medium">
-        <svg class="w-3.5 h-3.5 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
-        <span>SettleGraph &middot; Autonomous Financial Settlement Controller</span>
-      </div>
-      <div class="flex items-center space-x-6 font-semibold">
+  <footer class="site-foot">
+    <div class="wrap foot-bar">
+      <span>SettleGraph · Autonomous settlement controller · Razorpay Buildathon Track 04</span>
+      <span class="flex gap-16 wrap-flex">
         <span id="footer-precision-badge">Precision: --</span>
-        <span id="footer-fp-badge">False Positives: --</span>
-      </div>
+        <span id="footer-fp-badge">False positives: --</span>
+      </span>
     </div>
   </footer>
 
-  <!-- Transaction Inspector Modal -->
-  <div id="inspector-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" onclick="if(event.target===this) closeInspector()">
-    <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-xl relative text-rzp-navy">
-      <button onclick="closeInspector()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg p-2 cursor-pointer" aria-label="Close inspector">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+  <div id="inspector-modal" class="modal hidden" onclick="if(event.target===this) closeInspector()">
+    <div class="modal-panel">
+      <button onclick="closeInspector()" class="modal-close" aria-label="Close">&times;</button>
       <div id="inspector-body"></div>
     </div>
   </div>
 
-  <!-- Dashboard JavaScript Logic (Preserves All 81 Element Bindings) -->
   <script>
     let globalData = {};
 
@@ -780,19 +746,38 @@
         .replace(/'/g, '&#39;');
     }
 
+    function inr(paise) {
+      const n = Number(paise);
+      if (!Number.isFinite(n)) return '--';
+      return 'INR ' + (n / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Headline amounts are shown in crore/lakh so they fit the card and can be
+    // read at a glance; the exact rupee figure always sits directly beneath, so
+    // rounding here never hides the real number.
+    function compactInr(rupees) {
+      const n = Number(rupees);
+      if (!Number.isFinite(n)) return '--';
+      const abs = Math.abs(n);
+      if (abs >= 1e7) return 'INR ' + (n / 1e7).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' Cr';
+      if (abs >= 1e5) return 'INR ' + (n / 1e5).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' L';
+      return 'INR ' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    function setMoney(id, rupees) {
+      document.getElementById(id).innerText = compactInr(rupees);
+      const exact = document.getElementById(id + '-exact');
+      if (exact) {
+        exact.innerText = 'INR ' + Number(rupees).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+      }
+    }
+
     function switchTab(tabId) {
       ['overview', 'exceptions', 'ledger', 'decisions', 'sandbox', 'audit', 'qa'].forEach(t => {
         const view = document.getElementById('view-' + t);
         const tab = document.getElementById('tab-' + t);
-        if (t === tabId) {
-          view.classList.remove('hidden');
-          tab.classList.add('rzp-tab-active');
-          tab.classList.remove('text-rzp-textSecondary', 'border-transparent');
-        } else {
-          view.classList.add('hidden');
-          tab.classList.remove('rzp-tab-active');
-          tab.classList.add('text-rzp-textSecondary', 'border-transparent');
-        }
+        view.classList.toggle('hidden', t !== tabId);
+        tab.classList.toggle('active', t === tabId);
       });
       if (tabId === 'sandbox') runFailureSimulations();
       if (tabId === 'audit') fetchAuditReport();
@@ -832,16 +817,16 @@
 
       const fin = rev.financial_summary;
       document.getElementById('stat-rate').innerText = fin.reconciliation_rate_percent + '%';
-      document.getElementById('stat-gross').innerText = 'INR ' + fin.merchant_sales_inr.toLocaleString('en-IN');
-      document.getElementById('stat-reconciled').innerText = 'INR ' + fin.reconciled_settled_inr.toLocaleString('en-IN');
-      document.getElementById('stat-exposure').innerText = 'INR ' + fin.unexplained_exposure_inr.toLocaleString('en-IN');
+      setMoney('stat-gross', fin.merchant_sales_inr);
+      setMoney('stat-reconciled', fin.reconciled_settled_inr);
+      setMoney('stat-exposure', fin.unexplained_exposure_inr);
 
       const thr = summary.throughput || {};
       document.getElementById('pdf-total-records').innerText =
         thr.records_processed ? thr.records_processed.toLocaleString() : '--';
       if (thr.elapsed_seconds && thr.records_processed) {
         const msPerRecord = (thr.elapsed_seconds / thr.records_processed) * 1000;
-        document.getElementById('pdf-avg-time').innerText = msPerRecord.toFixed(2) + ' ms/rec';
+        document.getElementById('pdf-avg-time').innerText = msPerRecord.toFixed(2) + ' ms per record';
       }
       if (evaluation && evaluation.match_rate !== undefined) {
         document.getElementById('pdf-match-rate').innerText = (evaluation.match_rate * 100).toFixed(1) + '%';
@@ -858,18 +843,45 @@
       document.getElementById('pdf-escalated').innerText = summary.assignments.exception.toLocaleString();
       if (summary.drift) {
         document.getElementById('pdf-drift').innerText = summary.drift.drift_detected
-          ? 'YES (' + summary.drift.drift_events.length + ' event(s))'
+          ? 'Yes (' + summary.drift.drift_events.length + ' event(s))'
           : 'None';
       }
       if (summary.tax_reconciliation) {
         const t = summary.tax_reconciliation;
         document.getElementById('pdf-tax-rate').innerText = (t.match_rate * 100).toFixed(1) + '%';
-        document.getElementById('pdf-tax-sub').innerText = t.total_tax_lines + ' batches, INR ' + t.findings_exposure_inr.toLocaleString('en-IN') + ' exposure';
+        document.getElementById('pdf-tax-sub').innerText =
+          t.total_tax_lines + ' batches · INR ' + t.findings_exposure_inr.toLocaleString('en-IN') + ' exposure';
       }
       if (summary.route_reconciliation) {
         const r = summary.route_reconciliation;
         document.getElementById('pdf-route-rate').innerText = (r.verification_rate * 100).toFixed(1) + '%';
         document.getElementById('pdf-route-sub').innerText = r.payout_shortfalls + ' shortfall(s), ' + r.payout_overpayments + ' overpayment(s)';
+      }
+
+      // Ingest integrity. `quarantined_records` and `duplicates_intercepted`
+      // have always been written into summary.json but neither was ever
+      // rendered here, so on this surface a batch that quarantined rows looked
+      // identical to a clean one -- exactly what pipeline.py's Phase 1 comment
+      // says must never happen. An absent count (a summary.json written before
+      // these counters existed) renders '--', never '0': an unknown count is
+      // not evidence of a clean batch.
+      const quarantined = summary.quarantined_records;
+      const duplicates = summary.duplicates_intercepted;
+      const quarEl = document.getElementById('pdf-quarantined');
+      const quarSubEl = document.getElementById('pdf-quarantined-sub');
+      if (quarantined === undefined || quarantined === null) {
+        quarEl.innerText = '--';
+        quarEl.className = 'row-val tone-mute';
+        quarSubEl.innerText = 'Not reported by this batch';
+      } else {
+        quarEl.innerText = quarantined.toLocaleString();
+        quarEl.className = 'row-val' + (quarantined > 0 ? ' tone-bad' : '');
+        quarSubEl.innerText = quarantined > 0
+          ? 'Held out of batch — see quarantine.json'
+          : 'No unparseable rows';
+      }
+      if (duplicates !== undefined && duplicates !== null && duplicates > 0) {
+        quarSubEl.innerText += ' · ' + duplicates.toLocaleString() + ' duplicate(s) intercepted';
       }
 
       document.getElementById('flow-rzp').innerText = summary.records.razorpay.toLocaleString();
@@ -883,22 +895,19 @@
         document.getElementById('eval-f1').innerText = evaluation.f1.toFixed(4);
         document.getElementById('eval-fp').innerText = evaluation.false_positives;
 
-        const precPct = (evaluation.precision * 100).toFixed(1) + '% Precision';
-        document.getElementById('invariant-shield-text').innerText = precPct;
+        const precPct = (evaluation.precision * 100).toFixed(1) + '%';
+        document.getElementById('invariant-shield-text').innerText = precPct + ' precision on the evaluated batch';
         const shieldDot = document.getElementById('invariant-shield-dot');
-        if (evaluation.precision >= 1.0) {
-          shieldDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
-        } else {
-          shieldDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse';
-        }
+        shieldDot.className = 'dot ' + (evaluation.precision >= 1.0 ? 'dot-ok' : 'dot-bad');
 
-        document.getElementById('footer-precision-badge').innerText =
-          'Precision: ' + precPct + (evaluation.precision >= 1.0 ? ' Hard Invariant' : '');
+        document.getElementById('footer-precision-badge').innerText = 'Precision: ' + precPct;
         document.getElementById('footer-fp-badge').innerText =
-          evaluation.false_positives === 0 ? 'Zero False Positives' : evaluation.false_positives + ' False Positive(s)';
+          evaluation.false_positives === 0 ? 'Zero false positives' : evaluation.false_positives + ' false positive(s)';
 
-        document.getElementById('eval-zero-fp-badge').innerText =
-          evaluation.false_positives === 0 ? 'Zero False Positives' : evaluation.false_positives + ' False Positive(s)';
+        const fpBadge = document.getElementById('eval-zero-fp-badge');
+        fpBadge.innerText =
+          evaluation.false_positives === 0 ? 'Zero false positives' : evaluation.false_positives + ' false positive(s)';
+        fpBadge.className = 'pill ' + (evaluation.false_positives === 0 ? 'pill-ok' : 'pill-bad');
       }
       if (evaluation && evaluation.safe_auto_resolution_rate !== undefined) {
         document.getElementById('eval-safe-auto-rate').innerText = (evaluation.safe_auto_resolution_rate * 100).toFixed(1) + '%';
@@ -911,7 +920,7 @@
       }
 
       document.getElementById('badge-exceptions').innerText = exceptions.length;
-      document.getElementById('exception-count-label').innerText = exceptions.length + ' Exceptions Surfaced';
+      document.getElementById('exception-count-label').innerText = exceptions.length + ' surfaced';
 
       renderExceptions(exceptions);
       renderLedger(assignments);
@@ -927,46 +936,58 @@
       const tbody = document.getElementById('anomaly-breakdown-body');
       if (!tbody) return;
       if (!breakdown || Object.keys(breakdown).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">No anomaly breakdown data available.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="td-empty">No anomaly breakdown data available.</td></tr>';
         return;
       }
 
       const descriptions = {
-        'none': { label: 'Clean Baseline (Exact Matches)', action: 'Auto-Matched (Deterministic Invariants Verified)' },
-        'timing_difference': { label: 'Settlement Timing Lags (T+2 to T+5)', action: 'Auto-Matched within Safe Date Window' },
-        'malformed_description': { label: 'Malformed Bank Description / Tokens', action: 'Recovered via Golden Reference UTR' },
-        'missing_utr': { label: 'Missing UTR Reference', action: 'Safely Abstained & Routed to Review' },
-        'corrupted_utr': { label: 'Corrupted / OCR Drifted UTR', action: 'Safely Abstained (Prevented False Match)' },
-        'fee_mismatch': { label: 'Unannounced Gateway Fee Mismatch', action: 'Flagged as Amount Invariant Violation' },
-        'partial_refund': { label: 'Partial Refund Net Deduction', action: 'Escalated with Remediation Guidance' },
-        'full_refund': { label: 'Full Refund Settlement Offset', action: 'Routed to Exception Queue' },
-        'extreme_amount_mismatch': { label: 'Extreme Amount Mismatch (Scale Error)', action: 'Hard Invariant Violation Containment' },
-        'out_of_order_arrival': { label: 'Backdated / Out-of-Order Credit', action: 'Safely Abstained (Date Window Guard)' },
-        'split_settlement': { label: '1:N Split Settlement Payout', action: 'Orphaned Leg Held for Manual Aggregation' },
-        'no_counterpart': { label: 'Missing Counterpart (Downstream Void)', action: 'Zero Dangerous Misses & Preserved Balance' }
+        'none': { label: 'Clean baseline (exact matches)', action: 'Auto-matched, invariants verified' },
+        'timing_difference': { label: 'Settlement timing lag (T+2 to T+5)', action: 'Auto-matched within date window' },
+        'malformed_description': { label: 'Malformed bank description', action: 'Recovered via UTR reference' },
+        'missing_utr': { label: 'Missing UTR reference', action: 'Abstained and routed to review' },
+        'corrupted_utr': { label: 'Corrupted UTR', action: 'Abstained, false match prevented' },
+        'fee_mismatch': { label: 'Unannounced gateway fee mismatch', action: 'Flagged as amount invariant violation' },
+        'partial_refund': { label: 'Partial refund deduction', action: 'Escalated with remediation guidance' },
+        'full_refund': { label: 'Full refund offset', action: 'Routed to exception queue' },
+        'extreme_amount_mismatch': { label: 'Extreme amount mismatch', action: 'Hard invariant violation contained' },
+        'out_of_order_arrival': { label: 'Backdated / out-of-order credit', action: 'Abstained on date window guard' },
+        'split_settlement': { label: '1:N split settlement payout', action: 'Orphaned leg held for aggregation' },
+        'no_counterpart': { label: 'Missing counterpart', action: 'Balance preserved, no dangerous miss' },
+        'duplicate_utr_reuse': { label: 'Duplicate UTR reused across records' },
+        'currency_mismatch': { label: 'Currency mismatch' },
+        'missing_merchant_record': { label: 'Missing merchant ledger record' }
+      };
+
+      // For a scenario with no hand-written action, describe what the counts
+      // actually show rather than asserting a mechanism we have not checked.
+      const derivedAction = (tp, fn) => {
+        if (tp > 0 && fn > 0) return 'Partly recovered, remainder held for review';
+        if (tp > 0) return 'Recovered and auto-matched';
+        if (fn > 0) return 'Held for review, not auto-matched';
+        return 'No records of this type in this batch';
       };
 
       tbody.innerHTML = Object.entries(breakdown).map(([scenario, m]) => {
-        const desc = descriptions[scenario] || { label: scenario.replace(/_/g, ' '), action: 'Handled by Invariant Gate' };
         const fp = m.fp || 0;
         const tp = m.tp || 0;
         const fn = m.fn || 0;
+        const known = descriptions[scenario];
+        const desc = {
+          label: (known && known.label) || scenario.replace(/_/g, ' '),
+          action: (known && known.action) || derivedAction(tp, fn)
+        };
         const isClean = fp === 0;
         return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="p-3.5">
-              <div class="font-mono text-rzp-navy text-xs font-bold">${escapeHtml(scenario)}</div>
-              <div class="text-[11px] text-slate-500">${escapeHtml(desc.label)}</div>
+          <tr>
+            <td>
+              <div style="font-weight:600">${escapeHtml(desc.label)}</div>
+              <div class="t-caption">${escapeHtml(scenario)}</div>
             </td>
-            <td class="p-3.5 font-mono ${tp > 0 ? 'text-emerald-600 font-bold' : 'text-slate-400'}">${tp}</td>
-            <td class="p-3.5 font-mono ${fn > 0 ? 'text-amber-600 font-bold' : 'text-slate-400'}">${fn}</td>
-            <td class="p-3.5 font-mono ${fp > 0 ? 'text-rose-600 font-bold' : 'text-rzp-navy'}">${fp}</td>
-            <td class="p-3.5 text-[11px] text-slate-500">${escapeHtml(desc.action)}</td>
-            <td class="p-3.5">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono font-bold tracking-wider ${isClean ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-rose-200 bg-rose-50 text-rose-700'}">
-                ${isClean ? 'PASS (0 FP)' : 'FAIL'}
-              </span>
-            </td>
+            <td class="td-num">${tp}</td>
+            <td class="td-num">${fn}</td>
+            <td class="td-num" style="font-weight:600">${fp}</td>
+            <td class="t-caption" style="color:var(--muted)">${escapeHtml(desc.action)}</td>
+            <td><span class="pill ${isClean ? 'pill-ok' : 'pill-bad'}">${isClean ? 'No false books' : 'Review'}</span></td>
           </tr>
         `;
       }).join('');
@@ -991,26 +1012,27 @@
     async function triggerReplayCheck() {
       const btn = document.getElementById('btn-replay-check');
       const val = document.getElementById('eval-replay');
-      if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs mr-1"></i>Replaying...';
+      if (btn) { btn.disabled = true; btn.innerText = 'Replaying…'; }
       try {
         const res = await fetch('/api/replay');
         const data = await res.json();
         if (data.stability_rate !== undefined) {
           val.innerText = (data.stability_rate * 100).toFixed(1) + '%';
-          if (btn) btn.innerHTML = '<i class="fa-solid fa-check text-xs mr-1"></i>Verified ' +
-            (data.stability_rate * 100).toFixed(1) + '%';
+          if (btn) btn.innerText = 'Verified ' + (data.stability_rate * 100).toFixed(1) + '%';
         } else {
-          if (btn) btn.innerHTML = 'Check Failed';
+          if (btn) btn.innerText = 'Check failed';
         }
       } catch (e) {
-        if (btn) btn.innerHTML = 'Error';
+        if (btn) btn.innerText = 'Error';
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
     function renderExceptions(exceptions) {
       const container = document.getElementById('exception-cards-container');
       if (!exceptions || exceptions.length === 0) {
-        container.innerHTML = '<div class="text-xs text-slate-400 col-span-2 p-4">No exceptions found in ledger.</div>';
+        container.innerHTML = '<div class="note">No exceptions in this batch.</div>';
         return;
       }
 
@@ -1026,57 +1048,44 @@
       window._allExceptions = sorted;
       window._activeExcFilter = 'ALL';
 
-      const filterHtml = `
-        <div class="col-span-2 flex flex-wrap gap-2 mb-2">
-          <button onclick="filterExceptions('ALL')" class="exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm cursor-pointer">All (${sorted.length})</button>
+      container.innerHTML = `
+        <div class="flex gap-8 wrap-flex">
+          <button onclick="filterExceptions('ALL')" class="exc-filter-pill chip active">All (${sorted.length})</button>
           ${categories.map(c => {
             const count = sorted.filter(e => e.category === c).length;
-            return `<button onclick="filterExceptions('${c}')" class="exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition cursor-pointer">${c.replace(/_/g, ' ')} (${count})</button>`;
+            return `<button onclick="filterExceptions('${escapeHtml(c)}')" class="exc-filter-pill chip">${escapeHtml(c.replace(/_/g, ' '))} (${count})</button>`;
           }).join('')}
-        </div>`;
-
-      container.innerHTML = filterHtml + renderExceptionCards(sorted);
+        </div>
+        <div id="exception-list" class="grid grid-2">${renderExceptionCards(sorted)}</div>`;
     }
 
     function filterExceptions(category) {
       window._activeExcFilter = category;
       const filtered = category === 'ALL' ? window._allExceptions : window._allExceptions.filter(e => e.category === category);
       document.querySelectorAll('.exc-filter-pill').forEach(btn => {
-        btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition cursor-pointer';
-        if ((category === 'ALL' && btn.textContent.startsWith('All')) || btn.textContent.toUpperCase().startsWith(category.replace(/_/g, ' '))) {
-          btn.className = 'exc-filter-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm cursor-pointer';
-        }
+        const isAll = category === 'ALL' && btn.textContent.startsWith('All');
+        const isCat = category !== 'ALL' && btn.textContent.toUpperCase().startsWith(category.replace(/_/g, ' '));
+        btn.classList.toggle('active', isAll || isCat);
       });
-      const container = document.getElementById('exception-cards-container');
-      const pills = container.querySelector('div:first-child');
-      container.innerHTML = '';
-      container.appendChild(pills);
-      container.insertAdjacentHTML('beforeend', renderExceptionCards(filtered));
+      document.getElementById('exception-list').innerHTML = renderExceptionCards(filtered);
     }
 
     function renderExceptionCards(exceptions) {
-      const severityColor = {
-        HIGH: 'text-rose-700 border-rose-200 bg-rose-50',
-        MEDIUM: 'text-amber-700 border-amber-200 bg-amber-50',
-        LOW: 'text-slate-600 border-slate-200 bg-slate-50'
-      };
+      const severityPill = { HIGH: 'pill-bad', MEDIUM: 'pill-warn', LOW: '' };
       return exceptions.slice(0, 100).map(exc => `
-        <div class="bg-white p-5 rounded-xl border border-slate-200 space-y-3.5 hover:border-rzp-blue transition shadow-sm">
-          <div class="flex items-center justify-between">
-            <span class="px-2.5 py-0.5 text-[11px] font-mono uppercase tracking-wider rounded-md border border-slate-200 bg-slate-50 text-rzp-navy font-bold">${escapeHtml(exc.category)}</span>
-            <span class="text-[10px] uppercase font-mono font-extrabold tracking-wider px-2 py-0.5 rounded-full border ${severityColor[exc.severity] || 'text-slate-600 border-slate-200 bg-slate-50'}">${escapeHtml(exc.severity)} SEVERITY</span>
+        <div class="card stack-16">
+          <div class="flex between gap-8 wrap-flex">
+            <span class="pill">${escapeHtml(exc.category)}</span>
+            <span class="pill ${severityPill[exc.severity] || ''}">${escapeHtml(exc.severity)}</span>
           </div>
-          <div class="space-y-1">
-            <div class="text-sm font-bold text-rzp-navy font-mono">${escapeHtml(exc.record_id)} <span class="text-slate-400 font-sans text-xs">(${escapeHtml(exc.source)})</span></div>
-            <div class="text-xs text-slate-600 leading-relaxed">${escapeHtml(exc.root_cause)}</div>
+          <div class="stack-8">
+            <div style="font-weight:600">${escapeHtml(exc.record_id)} <span class="t-caption">(${escapeHtml(exc.source)})</span></div>
+            <div class="t-body">${escapeHtml(exc.root_cause)}</div>
           </div>
-          <div class="p-3 rounded-lg bg-blue-50/60 border border-blue-100 text-xs text-slate-800 flex items-start space-x-2.5">
-            <i class="fa-solid fa-screwdriver-wrench text-rzp-blue text-xs mt-0.5"></i>
-            <div><strong class="font-bold uppercase tracking-wider text-rzp-blue">Remediation:</strong> ${escapeHtml(exc.suggested_action)}</div>
-          </div>
-          <div class="flex justify-between items-center text-xs text-slate-500 pt-1">
-            <span>Exposure: <strong class="font-mono text-rose-600 font-bold">INR ${(exc.unexplained_amount_paise / 100).toFixed(2)}</strong></span>
-            <span class="text-[10px] uppercase tracking-wider text-slate-400 font-mono">Deterministic Diagnostic Log</span>
+          <div class="note"><strong style="color:var(--ink)">Remediation:</strong> ${escapeHtml(exc.suggested_action)}</div>
+          <div class="row">
+            <span class="row-key">Unexplained exposure</span>
+            <span class="row-val">${inr(exc.unexplained_amount_paise)}</span>
           </div>
         </div>
       `).join('');
@@ -1085,33 +1094,31 @@
     function renderLedger(assignments) {
       const tbody = document.getElementById('ledger-table-body');
       if (!assignments || assignments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">No assignments found. Run reconciliation pipeline.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="td-empty">No assignments found. Run the reconciliation pipeline.</td></tr>';
         return;
       }
 
       window._allLedgerRows = assignments;
       window._activeLedgerFilter = 'ALL';
 
-      const tableParent = tbody.closest('.overflow-x-auto') || tbody.parentElement;
+      const card = tbody.closest('.card');
       let controlsEl = document.getElementById('ledger-controls');
       if (!controlsEl) {
         controlsEl = document.createElement('div');
         controlsEl.id = 'ledger-controls';
-        controlsEl.className = 'mb-4 space-y-3';
-        tableParent.parentElement.insertBefore(controlsEl, tableParent);
+        controlsEl.className = 'stack-16';
+        controlsEl.style.marginBottom = '24px';
+        card.parentElement.insertBefore(controlsEl, card);
       }
       controlsEl.innerHTML = `
-        <div class="flex flex-wrap gap-2.5 items-center">
-          <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
-            <input type="text" id="ledger-search" placeholder="Search UTR, Order ID, or Record ID..."
-              class="bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-rzp-navy w-72 focus:border-rzp-blue outline-none shadow-sm" oninput="applyLedgerFilters()">
-          </div>
-          <button onclick="setLedgerFilter('ALL')" class="ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm cursor-pointer">All (${assignments.length})</button>
+        <input type="text" id="ledger-search" class="input" style="max-width:420px"
+          placeholder="Search UTR, order ID, or record ID…" oninput="applyLedgerFilters()">
+        <div class="flex gap-8 wrap-flex">
+          <button onclick="setLedgerFilter('ALL')" class="ledger-pill chip active">All (${assignments.length})</button>
           ${['AUTO_MATCH', 'LIKELY_MATCH', 'EXCEPTION', 'AI_RESOLVED_MATCH'].map(label => {
             const count = assignments.filter(a => a.label === label).length;
             if (count === 0) return '';
-            return `<button onclick="setLedgerFilter('${label}')" class="ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition cursor-pointer">${label.replace(/_/g, ' ')} (${count})</button>`;
+            return `<button onclick="setLedgerFilter('${label}')" class="ledger-pill chip">${label.replace(/_/g, ' ')} (${count})</button>`;
           }).join('')}
         </div>`;
 
@@ -1121,10 +1128,9 @@
     function setLedgerFilter(label) {
       window._activeLedgerFilter = label;
       document.querySelectorAll('.ledger-pill').forEach(btn => {
-        btn.className = 'ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-slate-200 bg-white text-slate-600 hover:border-rzp-blue hover:text-rzp-navy shadow-sm transition cursor-pointer';
-        if ((label === 'ALL' && btn.textContent.startsWith('All')) || btn.textContent.toUpperCase().startsWith(label.replace(/_/g, ' '))) {
-          btn.className = 'ledger-pill px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border border-rzp-blue bg-rzp-blue text-white shadow-sm cursor-pointer';
-        }
+        const isAll = label === 'ALL' && btn.textContent.startsWith('All');
+        const isLabel = label !== 'ALL' && btn.textContent.toUpperCase().startsWith(label.replace(/_/g, ' '));
+        btn.classList.toggle('active', isAll || isLabel);
       });
       applyLedgerFilters();
     }
@@ -1147,27 +1153,32 @@
       renderLedgerRows(rows);
     }
 
+    function labelPill(label) {
+      if (label === 'AUTO_MATCH') return 'pill-ok';
+      if (label === 'LIKELY_MATCH') return 'pill-warn';
+      if (label === 'EXCEPTION') return 'pill-bad';
+      return '';
+    }
+
     function renderLedgerRows(rows) {
       const tbody = document.getElementById('ledger-table-body');
-      const labelBadge = {
-        AUTO_MATCH: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-        LIKELY_MATCH: 'bg-amber-50 border-amber-200 text-amber-700',
-        EXCEPTION: 'bg-rose-50 border-rose-200 text-rose-700',
-        AI_RESOLVED_MATCH: 'bg-purple-50 border-purple-200 text-purple-700'
-      };
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="td-empty">No rows match this filter.</td></tr>';
+        return;
+      }
       tbody.innerHTML = rows.slice(0, 300).map((a, idx) => `
-        <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="openInspector(${idx}, '${a.source_a_id}')">
-          <td class="p-3.5 font-mono text-rzp-navy font-bold">${escapeHtml(a.source_a_id)} <span class="text-slate-400 text-[10px] font-sans">(${escapeHtml(a.source_a)})</span></td>
-          <td class="p-3.5 font-mono text-rzp-navy font-bold">${escapeHtml(a.source_b_id)} <span class="text-slate-400 text-[10px] font-sans">(${escapeHtml(a.source_b)})</span></td>
-          <td class="p-3.5 font-mono ${(a.confidence >= 0.95) ? 'text-emerald-600 font-bold' : 'text-slate-500'}">${(a.confidence * 100).toFixed(1)}%</td>
-          <td class="p-3.5"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${labelBadge[a.label] || 'border-slate-200 text-slate-600'}">${escapeHtml(a.label)}</span></td>
-          <td class="p-3.5 font-mono">INR ${(a.a_amount_paise / 100).toFixed(2)}</td>
-          <td class="p-3.5 font-mono">INR ${(a.b_amount_paise / 100).toFixed(2)}</td>
-          <td class="p-3.5 font-mono text-[11px] text-slate-500">${(a.a_utr && a.a_utr === a.b_utr) ? '<span class="text-rzp-navy font-bold">' + escapeHtml(a.a_utr) + '</span>' : escapeHtml(a.a_utr || '--')}</td>
+        <tr class="clickable" onclick="openInspector(${idx}, '${escapeHtml(a.source_a_id)}')">
+          <td><div style="font-weight:600">${escapeHtml(a.source_a_id)}</div><div class="t-caption">${escapeHtml(a.source_a)}</div></td>
+          <td><div style="font-weight:600">${escapeHtml(a.source_b_id)}</div><div class="t-caption">${escapeHtml(a.source_b)}</div></td>
+          <td class="td-num">${(a.confidence * 100).toFixed(1)}%</td>
+          <td><span class="pill ${labelPill(a.label)}">${escapeHtml(a.label)}</span></td>
+          <td class="td-num">${inr(a.a_amount_paise)}</td>
+          <td class="td-num">${inr(a.b_amount_paise)}</td>
+          <td class="t-caption">${(a.a_utr && a.a_utr === a.b_utr) ? '<span style="color:var(--ink);font-weight:600">' + escapeHtml(a.a_utr) + '</span>' : escapeHtml(a.a_utr || '--')}</td>
         </tr>
       `).join('');
       if (rows.length > 300) {
-        tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="7" class="p-4 text-center text-slate-400 text-xs">${rows.length - 300} more rows not shown</td></tr>`);
+        tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="7" class="td-empty">${rows.length - 300} more rows not shown</td></tr>`);
       }
     }
 
@@ -1189,78 +1200,86 @@
       const datePass = !isDateViolation && !(a.label === 'EXCEPTION' && excMatch && excMatch.category === 'TIMING_DIFFERENCE');
       const dirPass = !isDirectionViolation;
 
-      const modal = document.getElementById('inspector-modal');
-      const body = document.getElementById('inspector-body');
-      const labelBadge = {
-        AUTO_MATCH: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-        LIKELY_MATCH: 'bg-amber-50 border-amber-200 text-amber-700',
-        EXCEPTION: 'bg-rose-50 border-rose-200 text-rose-700',
-        AI_RESOLVED_MATCH: 'bg-purple-50 border-purple-200 text-purple-700'
-      };
+      const mark = ok => ok
+        ? '<span class="pill pill-ok">Pass</span>'
+        : '<span class="pill pill-bad">Breached</span>';
 
-      body.innerHTML = `
-        <div class="space-y-5 font-sans">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <h3 class="text-base font-bold text-rzp-navy uppercase tracking-wider flex items-center space-x-2">
-              <svg class="w-4 h-4 text-rzp-blue" viewBox="0 0 24 24" fill="currentColor"><path d="M14.2 2L4.5 13.8h6.8L9.2 22 20.5 9.8h-6.8L14.2 2z"/></svg>
-              <span>Transaction Evidence Inspector</span>
-            </h3>
-            <span class="px-3 py-0.5 rounded-full text-xs font-mono uppercase tracking-wider font-bold border ${labelBadge[a.label] || 'border-slate-200 text-slate-600'}">${escapeHtml(a.label)}</span>
+      document.getElementById('inspector-body').innerHTML = `
+        <div class="stack-24">
+          <div class="flex between gap-16 wrap-flex" style="padding-right:32px">
+            <h2 class="t-section">Evidence for this decision</h2>
+            <span class="pill ${labelPill(a.label)}">${escapeHtml(a.label)}</span>
           </div>
 
-          <!-- Side-by-side source records -->
-          <div class="grid grid-cols-2 gap-3.5">
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
-              <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">${escapeHtml(a.source_a)} Record</div>
-              <div class="text-xs text-rzp-navy font-mono font-bold">${escapeHtml(a.source_a_id)}</div>
-              <div class="text-xs text-slate-600">Amount: <span class="text-rzp-navy font-mono font-bold">INR ${(a.a_amount_paise / 100).toFixed(2)}</span></div>
-              <div class="text-xs text-slate-600">UTR: <span class="text-rzp-navy font-mono font-bold">${escapeHtml(a.a_utr || '--')}</span></div>
-              <div class="text-xs text-slate-600">Order: <span class="text-rzp-navy font-mono">${escapeHtml(a.a_order_id || '--')}</span></div>
+          <div class="grid grid-2">
+            <div class="card card-sm stack-8">
+              <div class="t-label">${escapeHtml(a.source_a)}</div>
+              <div style="font-weight:600">${escapeHtml(a.source_a_id)}</div>
+              <div class="row"><span class="row-key">Amount</span><span class="row-val">${inr(a.a_amount_paise)}</span></div>
+              <div class="row"><span class="row-key">UTR</span><span class="row-val">${escapeHtml(a.a_utr || '--')}</span></div>
+              <div class="row"><span class="row-key">Order</span><span class="row-val">${escapeHtml(a.a_order_id || '--')}</span></div>
             </div>
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
-              <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">${escapeHtml(a.source_b)} Record</div>
-              <div class="text-xs text-rzp-navy font-mono font-bold">${escapeHtml(a.source_b_id)}</div>
-              <div class="text-xs text-slate-600">Amount: <span class="text-rzp-navy font-mono font-bold">INR ${(a.b_amount_paise / 100).toFixed(2)}</span></div>
-              <div class="text-xs text-slate-600">UTR: <span class="text-rzp-navy font-mono font-bold">${escapeHtml(a.b_utr || '--')}</span></div>
-              <div class="text-xs text-slate-600">Order: <span class="text-rzp-navy font-mono">${escapeHtml(a.b_order_id || '--')}</span></div>
+            <div class="card card-sm stack-8">
+              <div class="t-label">${escapeHtml(a.source_b)}</div>
+              <div style="font-weight:600">${escapeHtml(a.source_b_id)}</div>
+              <div class="row"><span class="row-key">Amount</span><span class="row-val">${inr(a.b_amount_paise)}</span></div>
+              <div class="row"><span class="row-key">UTR</span><span class="row-val">${escapeHtml(a.b_utr || '--')}</span></div>
+              <div class="row"><span class="row-key">Order</span><span class="row-val">${escapeHtml(a.b_order_id || '--')}</span></div>
             </div>
           </div>
 
-          <!-- Confidence & Evidence -->
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Fellegi-Sunter Evidence Score: <span class="text-rzp-navy font-mono font-black">${(conf * 100).toFixed(1)}%</span></div>
-            <div class="space-y-1.5 text-xs">
-              <div class="flex justify-between"><span class="text-slate-600">UTR Match (weight 0.60)</span><span class="${utrMatch ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${utrMatch ? '✓ Exact' : '✗ Missing/Mismatch'}</span></div>
-              <div class="flex justify-between"><span class="text-slate-600">Amount Match (weight 0.25)</span><span class="${amtDiff === 0 ? 'text-emerald-600 font-bold' : amtDiff <= 100 ? 'text-amber-600 font-bold' : 'text-rose-600 font-bold'}">${amtDiff === 0 ? '✓ Exact' : '∆ ' + (amtDiff / 100).toFixed(2) + ' INR'}</span></div>
-              <div class="flex justify-between"><span class="text-slate-600">Date Proximity (weight 0.10)</span><span class="text-slate-500">T+0 to T+3 Window</span></div>
-              <div class="flex justify-between"><span class="text-slate-600">Description Tokens (weight 0.05)</span><span class="text-slate-500">Fuzzy Lexical Overlap</span></div>
+          <div class="stack-16">
+            <h3 class="t-label">Match evidence · score ${(conf * 100).toFixed(1)}%</h3>
+            <div>
+              <div class="row">
+                <span class="row-key">UTR reference</span>
+                <span class="row-val">${utrMatch ? 'Exact match' : 'Missing or mismatched'}</span>
+              </div>
+              <div class="row">
+                <span class="row-key">Amount</span>
+                <span class="row-val">${amtDiff === 0 ? 'Exact match' : 'Differs by ' + inr(amtDiff)}</span>
+              </div>
             </div>
+            <p class="t-caption">
+              Date proximity and description-token overlap also feed the score, but their
+              per-field contributions are not exported per row — so they are omitted here
+              rather than guessed at.
+            </p>
           </div>
 
-          <!-- Invariant Verification -->
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-            <div class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Deterministic Accounting Invariant Gate</div>
-            <div class="space-y-1.5 text-xs">
-              <div class="flex items-center space-x-2"><span class="${amtPass ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${amtPass ? '✓' : '✗'}</span><span class="text-slate-600">Amount Invariant (${amtPass ? '≤ ₹1.00 tolerance verified' : 'Breached: ' + (amtDiff / 100).toFixed(2) + ' INR diff'})</span></div>
-              <div class="flex items-center space-x-2"><span class="${datePass ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${datePass ? '✓' : '✗'}</span><span class="text-slate-600">Date Invariant (${datePass ? '≤ 3 days window verified' : 'Breached: settlement timing delay'})</span></div>
-              <div class="flex items-center space-x-2"><span class="${dirPass ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">${dirPass ? '✓' : '✗'}</span><span class="text-slate-600">Direction Invariant (${dirPass ? 'Credit direction verified' : 'Breached: debit adjustment conflict'})</span></div>
+          <div class="stack-16">
+            <h3 class="t-label">Accounting invariant gate</h3>
+            <div>
+              <div class="row">
+                <span class="row-key">Amount invariant${amtPass ? '' : ' · differs by ' + inr(amtDiff)}</span>
+                <span>${mark(amtPass)}</span>
+              </div>
+              <div class="row">
+                <span class="row-key">Date invariant</span>
+                <span>${mark(datePass)}</span>
+              </div>
+              <div class="row">
+                <span class="row-key">Direction invariant</span>
+                <span>${mark(dirPass)}</span>
+              </div>
             </div>
+            <p class="t-caption">
+              Re-derived in the browser from this row and its exception record, not read back
+              from the engine's own verdict.
+            </p>
           </div>
 
           ${a.competing_candidates > 0 ? `
-          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-amber-800 font-bold">Competing Candidates: ${a.competing_candidates}</div>
-            <div class="text-xs text-amber-700">${escapeHtml(a.abstention_reason || 'Near-tie detected — held for human review')}</div>
+          <div class="note">
+            <strong style="color:var(--ink)">${a.competing_candidates} competing candidate(s).</strong>
+            ${escapeHtml(a.abstention_reason || 'Near-tie detected — held for human review.')}
           </div>` : ''}
 
           ${a.label === 'LIKELY_MATCH' && a.abstention_reason ? `
-          <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-amber-800 font-bold">Abstention Reason</div>
-            <div class="text-xs text-amber-700">${escapeHtml(a.abstention_reason)}</div>
-          </div>` : ''}
+          <div class="note"><strong style="color:var(--ink)">Abstention reason:</strong> ${escapeHtml(a.abstention_reason)}</div>` : ''}
         </div>`;
 
-      modal.classList.remove('hidden');
+      document.getElementById('inspector-modal').classList.remove('hidden');
     }
 
     function closeInspector() {
@@ -1279,7 +1298,7 @@
         if (amtA === amtB) {
           parts.push('exact amount match');
         } else {
-          parts.push('amounts differ (INR ' + (amtA / 100).toFixed(2) + ' vs INR ' + (amtB / 100).toFixed(2) + ') consistent with a fee adjustment');
+          parts.push('amounts differ (' + inr(amtA) + ' vs ' + inr(amtB) + ') consistent with a fee adjustment');
         }
       }
 
@@ -1288,137 +1307,87 @@
       if (oidA && oidB && oidA === oidB) parts.push('order ID match');
 
       if (parts.length === 0) {
-        parts.push('composite Fellegi-Sunter probabilistic score cleared the auto-match bar');
+        parts.push('composite probabilistic score cleared the auto-match bar');
       }
       const confPct = (Number(a.confidence) * 100).toFixed(1);
-      return parts.join(' + ') + ' &mdash; confidence ' + confPct + '% (≥ 95% threshold)';
+      return parts.join(' + ') + ' — confidence ' + confPct + '% (bar: 95%)';
     }
 
     function renderDecisionAuto(a) {
       const el = document.getElementById('decision-auto-body');
       if (!a) {
-        el.innerHTML = '<div class="text-slate-400">No AUTO_MATCH assignment in this batch.</div>';
+        el.innerHTML = '<p class="t-caption">No AUTO_MATCH assignment in this batch.</p>';
         return;
       }
       el.innerHTML = `
-        <div class="grid grid-cols-2 gap-3.5">
-          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Source A</div>
-            <div class="font-mono text-rzp-navy font-bold">${escapeHtml(a.source_a_id)} <span class="text-slate-400 font-sans">(${escapeHtml(a.source_a)})</span></div>
-            <div class="text-slate-600 text-[11px]">INR ${(Number(a.a_amount_paise) / 100).toFixed(2)} &middot; UTR ${escapeHtml(a.a_utr || '--')}</div>
+        <div class="stack-16">
+          <div>
+            <div class="row">
+              <div><div class="row-key">${escapeHtml(a.source_a)}</div><div class="row-sub">${escapeHtml(a.source_a_id)}</div></div>
+              <div class="row-val">${inr(a.a_amount_paise)}</div>
+            </div>
+            <div class="row">
+              <div><div class="row-key">${escapeHtml(a.source_b)}</div><div class="row-sub">${escapeHtml(a.source_b_id)}</div></div>
+              <div class="row-val">${inr(a.b_amount_paise)}</div>
+            </div>
+            <div class="row"><span class="row-key">Confidence</span><span class="row-val">${(Number(a.confidence) * 100).toFixed(1)}%</span></div>
           </div>
-          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Source B</div>
-            <div class="font-mono text-rzp-navy font-bold">${escapeHtml(a.source_b_id)} <span class="text-slate-400 font-sans">(${escapeHtml(a.source_b)})</span></div>
-            <div class="text-slate-600 text-[11px]">INR ${(Number(a.b_amount_paise) / 100).toFixed(2)} &middot; UTR ${escapeHtml(a.b_utr || '--')}</div>
-          </div>
-        </div>
-        <div class="flex justify-between items-center pt-1 text-xs">
-          <span class="text-slate-600 font-medium">Classification</span>
-          <span class="px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 font-mono font-bold">${escapeHtml(a.label)}</span>
-        </div>
-        <div class="flex justify-between items-center text-xs">
-          <span class="text-slate-600 font-medium">Confidence Scored</span>
-          <span class="font-mono text-emerald-600 font-bold">${(Number(a.confidence) * 100).toFixed(1)}%</span>
-        </div>
-        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Why This Matched</div>
-          <div class="text-slate-700 text-xs">${buildAutoMatchWhy(a)}</div>
-        </div>
-        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
-          <span class="text-rzp-navy font-bold">Audit trace:</span> matched 1:1 on the ${escapeHtml(a.source_a)}&harr;${escapeHtml(a.source_b)} leg, verified against deterministic accounting invariants before booking.
-        </div>
-      `;
+          <div class="note"><strong style="color:var(--ink)">Why it matched:</strong> ${buildAutoMatchWhy(a)}</div>
+        </div>`;
     }
 
     function renderDecisionAbstained(a) {
       const el = document.getElementById('decision-abstained-body');
       if (!a) {
-        el.innerHTML = '<div class="text-slate-400">No LIKELY_MATCH (abstained) assignment in this batch.</div>';
+        el.innerHTML = '<p class="t-caption">No abstained assignment in this batch.</p>';
         return;
       }
       const competing = Number(a.competing_candidates) || 0;
       const reason = (a.abstention_reason || '').trim();
       const confPct = (Number(a.confidence) * 100).toFixed(1);
       el.innerHTML = `
-        <div class="grid grid-cols-2 gap-3.5">
-          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Source A</div>
-            <div class="font-mono text-rzp-navy font-bold">${escapeHtml(a.source_a_id)} <span class="text-slate-400 font-sans">(${escapeHtml(a.source_a)})</span></div>
+        <div class="stack-16">
+          <div>
+            <div class="row">
+              <div><div class="row-key">${escapeHtml(a.source_a)}</div><div class="row-sub">${escapeHtml(a.source_a_id)}</div></div>
+              <div class="row-val">${escapeHtml(a.source_b_id)}</div>
+            </div>
+            <div class="row"><span class="row-key">Confidence scored</span><span class="row-val">${confPct}%</span></div>
+            <div class="row"><span class="row-key">Auto-match bar</span><span class="row-val">95.0%</span></div>
+            <div class="row"><span class="row-key">Competing candidates</span><span class="row-val">${competing}</span></div>
           </div>
-          <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Source B</div>
-            <div class="font-mono text-rzp-navy font-bold">${escapeHtml(a.source_b_id)} <span class="text-slate-400 font-sans">(${escapeHtml(a.source_b)})</span></div>
+          <div class="note">
+            <strong style="color:var(--ink)">Why it was held:</strong>
+            ${reason ? escapeHtml(reason) : 'Confidence (' + confPct + '%) scored below the 95% bar — held for human verification.'}
           </div>
-        </div>
-        <div class="flex justify-between items-center pt-1 text-xs">
-          <span class="text-slate-600 font-medium">Confidence Scored</span>
-          <span class="font-mono text-amber-600 font-bold">${confPct}%</span>
-        </div>
-        <div class="flex justify-between items-center text-xs">
-          <span class="text-slate-600 font-medium">Auto-Match Bar</span>
-          <span class="font-mono text-rzp-navy font-bold">95.0%</span>
-        </div>
-        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Competing Candidates</div>
-          <div class="text-2xl font-bold text-rzp-navy font-mono">${competing}</div>
-        </div>
-        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Abstention Reason</div>
-          <div class="text-slate-700 text-xs">${
-            reason
-              ? escapeHtml(reason)
-              : 'Confidence (' + confPct + '%) scored below the 95% auto-match bar &mdash; held for human verification.'
-          }</div>
-        </div>
-        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
-          <span class="text-rzp-navy font-bold">Required action:</span> route to manual review &mdash; human confirms counterpart before ledger booking.
-        </div>
-      `;
+        </div>`;
     }
 
     function renderDecisionException(exc) {
       const el = document.getElementById('decision-exception-body');
       if (!exc) {
-        el.innerHTML = '<div class="text-slate-400">No exceptions in this batch.</div>';
+        el.innerHTML = '<p class="t-caption">No exceptions in this batch.</p>';
         return;
       }
       el.innerHTML = `
-        <div class="flex items-center justify-between pt-1 text-xs">
-          <span class="text-slate-600 font-medium">Record</span>
-          <span class="font-mono text-rzp-navy font-bold">${escapeHtml(exc.record_id)} <span class="text-slate-400 font-sans">(${escapeHtml(exc.source)})</span></span>
-        </div>
-        <div class="flex items-center justify-between text-xs">
-          <span class="text-slate-600 font-medium">Category</span>
-          <span class="px-2.5 py-0.5 rounded-full border border-rose-200 bg-rose-50 text-rose-700 font-mono font-bold">${escapeHtml(exc.category)}</span>
-        </div>
-        <div class="flex items-center justify-between text-xs">
-          <span class="text-slate-600 font-medium">Severity</span>
-          <span class="font-mono text-rzp-navy font-bold">${escapeHtml(exc.severity)}</span>
-        </div>
-        <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Root Cause / Source Conflict</div>
-          <div class="text-slate-700 text-xs">${escapeHtml(exc.root_cause)}</div>
-        </div>
-        <div class="flex items-center justify-between text-xs">
-          <span class="text-slate-600 font-medium">Unexplained Exposure</span>
-          <span class="font-mono text-rose-600 font-black">INR ${(Number(exc.unexplained_amount_paise) / 100).toFixed(2)}</span>
-        </div>
-        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
-          <span class="text-rzp-navy font-bold">Why automation stopped:</span> deterministic matcher could not reconcile record within invariants. <span class="text-rzp-navy font-bold">Action:</span> ${escapeHtml(exc.suggested_action)}
-        </div>
-      `;
+        <div class="stack-16">
+          <div>
+            <div class="row">
+              <div><div class="row-key">Record</div><div class="row-sub">${escapeHtml(exc.source)}</div></div>
+              <div class="row-val">${escapeHtml(exc.record_id)}</div>
+            </div>
+            <div class="row"><span class="row-key">Category</span><span class="row-val">${escapeHtml(exc.category)}</span></div>
+            <div class="row"><span class="row-key">Severity</span><span class="row-val">${escapeHtml(exc.severity)}</span></div>
+            <div class="row"><span class="row-key">Unexplained exposure</span><span class="row-val">${inr(exc.unexplained_amount_paise)}</span></div>
+          </div>
+          <div class="note"><strong style="color:var(--ink)">Root cause:</strong> ${escapeHtml(exc.root_cause)}</div>
+          <div class="note"><strong style="color:var(--ink)">Action:</strong> ${escapeHtml(exc.suggested_action)}</div>
+        </div>`;
     }
 
     function filterDecisions(state) {
       document.querySelectorAll('.decision-filter-btn').forEach(btn => {
-        const active = btn.dataset.decisionFilter === state;
-        btn.classList.toggle('border-rzp-blue', active);
-        btn.classList.toggle('bg-rzp-blue', active);
-        btn.classList.toggle('text-white', active);
-        btn.classList.toggle('border-slate-200', !active);
-        btn.classList.toggle('text-slate-600', !active);
-        btn.classList.toggle('bg-white', !active);
+        btn.classList.toggle('active', btn.dataset.decisionFilter === state);
       });
       document.querySelectorAll('[data-decision-state]').forEach(card => {
         card.classList.toggle('hidden', state !== 'all' && card.dataset.decisionState !== state);
@@ -1450,17 +1419,17 @@
       const tbody = document.getElementById('baseline-table-body');
       const note = document.getElementById('baseline-note');
       status.innerText = 'Computing…';
-      tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Running Baselines A/B/C against ground truth&hellip;</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="td-empty">Running baselines against ground truth…</td></tr>';
       try {
         const res = await fetch('/api/baselines');
         const data = await res.json();
         if (!res.ok || data.error) {
           status.innerText = 'Unavailable';
-          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">${escapeHtml(data.error || 'Baseline comparison unavailable.')}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="td-empty">${escapeHtml(data.error || 'Baseline comparison unavailable.')}</td></tr>`;
           note.innerText = '';
           return;
         }
-        status.innerText = 'Live &middot; computed on demand';
+        status.innerText = 'Computed on demand';
         const rows = data.baselines;
         const order = ['baseline_a_exact_id', 'baseline_b_amount_date', 'baseline_c_fuzzy', 'settlegraph'];
         tbody.innerHTML = order.filter(k => rows[k]).map(k => {
@@ -1468,15 +1437,14 @@
           const m = r.metrics || {};
           const isSg = k === 'settlegraph';
           const fabr = m.false_auto_book_rate !== undefined ? (m.false_auto_book_rate * 100).toFixed(2) + '%' : '--';
-          const fabrClass = (m.false_auto_book_rate || 0) > 0 ? 'text-rose-600 font-bold' : 'text-rzp-navy';
           return `
-            <tr class="hover:bg-slate-50 transition ${isSg ? 'bg-blue-50/50 border-l-4 border-l-rzp-blue' : ''}">
-              <td class="p-3.5 ${isSg ? 'text-rzp-navy font-bold' : 'text-slate-600'}">${escapeHtml(r.label)}</td>
-              <td class="p-3.5 font-mono text-rzp-navy font-semibold">${m.precision !== undefined ? (m.precision * 100).toFixed(1) + '%' : '--'}</td>
-              <td class="p-3.5 font-mono text-rzp-navy font-semibold">${m.recall !== undefined ? (m.recall * 100).toFixed(1) + '%' : '--'}</td>
-              <td class="p-3.5 font-mono text-rzp-navy">${m.true_positives !== undefined ? m.true_positives : '--'}</td>
-              <td class="p-3.5 font-mono text-rzp-navy font-bold">${m.false_positives !== undefined ? m.false_positives : '--'}</td>
-              <td class="p-3.5 font-mono ${fabrClass}">${fabr}</td>
+            <tr>
+              <td style="font-weight:${isSg ? '600' : '400'};color:${isSg ? 'var(--navy)' : 'var(--muted)'}">${escapeHtml(r.label)}</td>
+              <td class="td-num">${m.precision !== undefined ? (m.precision * 100).toFixed(1) + '%' : '--'}</td>
+              <td class="td-num">${m.recall !== undefined ? (m.recall * 100).toFixed(1) + '%' : '--'}</td>
+              <td class="td-num">${m.true_positives !== undefined ? m.true_positives : '--'}</td>
+              <td class="td-num">${m.false_positives !== undefined ? m.false_positives : '--'}</td>
+              <td class="td-num">${fabr}</td>
             </tr>
           `;
         }).join('');
@@ -1491,51 +1459,46 @@
         }
         if (c && c.false_auto_book_rate > 0) {
           noteText += 'Baseline C’s fuzzy heuristic corrupts ' + c.false_positives + ' ledger entries (' +
-            (c.false_auto_book_rate * 100).toFixed(1) + '% false auto-book rate) &mdash; SettleGraph recorded zero false matches on this evaluated batch.';
+            (c.false_auto_book_rate * 100).toFixed(1) + '% false auto-book rate) — SettleGraph recorded zero false matches on this evaluated batch.';
         }
         note.innerText = noteText;
       } catch (err) {
         status.innerText = 'Error';
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Error computing baselines.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="td-empty">Error computing baselines.</td></tr>';
         console.error(err);
       }
     }
 
     async function runFailureSimulations() {
       const container = document.getElementById('sandbox-scenarios-container');
-      container.innerHTML = '<div class="text-xs text-slate-500 p-6"><i class="fa-solid fa-spinner fa-spin mr-2 text-rzp-blue"></i>Executing failure containment probes across 7 deterministic scenarios...</div>';
+      container.innerHTML = '<div class="note">Running failure containment probes…</div>';
       try {
         const res = await fetch('/api/simulate-failures');
         const scenarios = await res.json();
         container.innerHTML = scenarios.map(s => `
-          <div class="bg-white p-5 rounded-xl border border-slate-200 space-y-3.5 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
-              <div class="flex items-center space-x-3">
-                <span class="px-2.5 py-0.5 text-xs font-mono rounded-md bg-slate-100 border border-slate-200 text-rzp-navy font-bold">${escapeHtml(s.scenario_id)}</span>
-                <span class="text-sm font-bold text-rzp-navy">${escapeHtml(s.name)}</span>
+          <div class="card stack-16">
+            <div class="flex between gap-16 wrap-flex">
+              <div class="stack-8">
+                <h2 class="t-section">${escapeHtml(s.name)}</h2>
+                <div class="t-caption">${escapeHtml(s.scenario_id)}</div>
               </div>
-              <span class="text-xs font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold border ${s.passed ? 'text-emerald-700 border-emerald-200 bg-emerald-50' : 'text-rose-700 border-rose-200 bg-rose-50'}">
-                ${s.passed ? '[PASS] CONTAINED' : '[FAIL] NOT CONTAINED'}
-              </span>
+              <span class="pill ${s.passed ? 'pill-ok' : 'pill-bad'}">${s.passed ? 'Contained' : 'Not contained'}</span>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
-              <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-                <div class="text-slate-500 uppercase tracking-wider text-[10px] font-bold">Injected Failure Mode</div>
-                <div class="text-rzp-navy font-mono pt-0.5 font-bold">${escapeHtml(s.injected_failure)}</div>
+            <div>
+              <div class="row">
+                <span class="row-key">Injected failure</span>
+                <span class="row-val">${escapeHtml(s.injected_failure)}</span>
               </div>
-              <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-                <div class="text-slate-500 uppercase tracking-wider text-[10px] font-bold">Shield Containment Response</div>
-                <div class="text-rzp-navy font-mono pt-0.5 font-bold">${escapeHtml(s.system_response)}</div>
+              <div class="row">
+                <span class="row-key">System response</span>
+                <span class="row-val">${escapeHtml(s.system_response)}</span>
               </div>
             </div>
-            <div class="text-xs text-slate-600 flex items-center space-x-2 pt-1">
-              <span class="text-rzp-navy font-bold">Proof:</span>
-              <span>${escapeHtml(s.safe_containment_proof)}</span>
-            </div>
+            <div class="note"><strong style="color:var(--ink)">Proof:</strong> ${escapeHtml(s.safe_containment_proof)}</div>
           </div>
         `).join('');
       } catch (err) {
-        container.innerHTML = '<div class="text-xs text-slate-400 p-4">Error running simulations.</div>';
+        container.innerHTML = '<div class="note">Error running simulations.</div>';
       }
     }
 
@@ -1550,15 +1513,13 @@
     }
 
     function copyAuditReport() {
-      const text = document.getElementById('audit-report-content').innerText;
-      navigator.clipboard.writeText(text);
-      alert('Audit report copied to clipboard.');
+      navigator.clipboard.writeText(document.getElementById('audit-report-content').innerText);
     }
 
     async function triggerReconciliation() {
       const btn = document.getElementById('btn-reconcile');
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs mr-1"></i><span>Running...</span>';
+      btn.innerText = 'Running…';
       try {
         await fetch('/api/run-reconciliation', { method: 'POST' });
         await fetchData();
@@ -1566,7 +1527,7 @@
         alert('Error triggering pipeline: ' + err);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-play text-[10px]"></i><span>Reconcile Batch &rarr;</span>';
+        btn.innerText = 'Run reconciliation';
       }
     }
 
@@ -1583,11 +1544,8 @@
       const btn = document.getElementById('qa-submit-btn');
 
       container.classList.remove('hidden');
-      answerEl.innerText = 'Analyzing reconciliation state and querying evidence ledger...';
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i><span>Querying...</span>';
-      }
+      answerEl.innerText = 'Reading this batch’s results…';
+      if (btn) { btn.disabled = true; btn.innerText = 'Asking…'; }
 
       try {
         const res = await fetch('/api/ask', {
@@ -1606,10 +1564,7 @@
       } catch (err) {
         answerEl.innerText = 'Network error querying /api/ask: ' + err;
       } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-arrow-right text-xs"></i><span>Ask Controller</span>';
-        }
+        if (btn) { btn.disabled = false; btn.innerText = 'Ask'; }
       }
     }
 
@@ -1622,12 +1577,13 @@
     }
 
     function copyQAResponse() {
-      const text = document.getElementById('qa-answer-text').innerText;
-      navigator.clipboard.writeText(text);
-      alert('Answer copied to clipboard.');
+      navigator.clipboard.writeText(document.getElementById('qa-answer-text').innerText);
     }
 
-    // Auto-fetch on load
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeInspector();
+    });
+
     fetchData();
   </script>
 </body>

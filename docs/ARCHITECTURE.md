@@ -35,8 +35,8 @@ size. §6 documents where the seams are when that stops being true.
 ```
                     ┌──────────────────────────────────┐
                     │  Browser dashboard               │
-                    │  web/index.html (Tailwind, no    │
-                    │  build step, no framework)       │
+                    │  web/index.html (hand-written    │
+                    │  CSS, no build step, no CDN)     │
                     └────────────────┬─────────────────┘
                                      │ fetch() over HTTP/JSON
                                      ▼

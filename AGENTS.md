@@ -58,4 +58,4 @@ use the `calibration` split (`scripts/threshold_study.py`).
 - **`src/settlegraph/models/`**: Strongly-typed Pydantic v2 schemas (integer paise, non-negative bounds).
 - **`src/settlegraph/engine/`**: Pure functional modules (score, assign, verify, exceptions, report, drift, idempotency, simulator).
 - **`src/settlegraph/server.py`**: Lightweight REST API and health probe handler.
-- **`src/settlegraph/web/`**: Accessible, responsive, zero-slop Tailwind CSS web console.
+- **`src/settlegraph/web/`**: Accessible, responsive web console — a single self-contained `index.html` with hand-written CSS. No bundler, no framework, no CDN scripts; add design tokens to the `:root` block rather than one-off colours.
