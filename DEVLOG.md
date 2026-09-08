@@ -977,6 +977,31 @@ line. Row-level ingest quarantine is named as not built.
 Verdict recorded honestly as **SAFE but not RESILIENT**: never wrong,
 but it refuses rather than degrades.
 
+> **Follow-up, 2026-09-08 — the paragraph above is the finding as it stood,
+> and it has since been closed.** Row-level quarantine was built:
+> `_load_with_quarantine` validates each row independently and diverts the
+> failures into `QuarantinedRow`s, written to `results/quarantine.json` and
+> counted as `quarantined_records` in `summary.json`. Re-running the same
+> harness on the current code (`--records 400`, seed 42, anomaly rate 0.30)
+> reproduces the documented table exactly and **completes at every level 0→50%
+> with no crash**: precision 100.00% throughout, 0 invariant violations,
+> abstention climbing 9.19% → 34.15%, recall falling 77.81% → 13.32%, and
+> 0/0/3/4/8/10 rows quarantined as damage escalates. The verdict moves from
+> *SAFE but not RESILIENT* to **SAFE and RESILIENT** — earned by measurement,
+> not by assertion. Two things changed to make that measurement legible rather
+> than merely true: `chaos_batch.py` now records `quarantined_records` in its
+> row and prints a `Quar` column, so the sweep carries its own evidence that
+> bad rows were isolated instead of leaving the count in console scrollback;
+> and the dashboard's Data integrity panel now renders the count, because it
+> was the one surface where a quarantined batch still looked identical to a
+> clean one — the exact failure `pipeline.py`'s Phase 1 comment says must never
+> happen. **What is still not fixed, and is now stated in README §8:**
+> quarantine catches `ValidationError` per row, not failures raised while
+> *reading* the file — a non-UTF8 export (`UnicodeDecodeError`) or a NUL
+> byte/over-long field (`csv.Error`) still aborts a whole source file. No
+> `chaos_batch` damage axis can produce either, so there is no evidence about
+> how often it bites; it is named rather than fixed.
+
 **3. The baselines are now in the product, not just in a test.**
 `settlegraph benchmark` runs all three (exact ID / amount+date / fuzzy) and
 prints False Auto-Book Rate and Dangerous Miss Rate alongside precision and

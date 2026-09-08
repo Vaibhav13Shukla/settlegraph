@@ -28,18 +28,25 @@ script asks the two questions the project brief poses explicitly:
        AGENTS.md's "Precision = 100.0%" invariant.)
     2. Does the system degrade gracefully or crash?
 
-The schema (`settlegraph.models`) is Pydantic-validated on ingest, and
-`engine/ingest.py` loads every CSV via an all-or-nothing list comprehension:
-a single unparseable row anywhere in a source file aborts the ENTIRE ingest
-for that source, not just that row. That is a real, load-bearing fact about
-this system's current fault tolerance, not a bug in this script -- a hard
-crash at a given chaos level is reported as its own first-class outcome
-(`status: "CRASHED"`), not a hidden failure of the sweep. This script's own
-position, matching stress_test.py and noise_sweep.py: a system that fails
-closed (refuses a batch it cannot make sense of) is behaving correctly. A
-system that keeps confidently auto-booking anyway, or that lets precision
-slip below 100%, is not -- and that is the only thing this script's exit
-code actually gates on.
+The schema (`settlegraph.models`) is Pydantic-validated on ingest. This
+harness is the reason that validation is now row-level: on its first run
+`engine/ingest.py` loaded every CSV via an all-or-nothing list comprehension,
+so a single unparseable row anywhere in a source file aborted the ENTIRE
+ingest for that source, and the sweep hard-crashed from 20% damage onward.
+That is fixed -- `_load_with_quarantine` validates each row independently and
+diverts the failures into `results/quarantine.json` -- and the `Quar` column
+below reports how many rows each level quarantined, so the sweep carries its
+own evidence that bad rows were isolated rather than silently dropped.
+
+A crash is still a first-class outcome (`status: "CRASHED"`) rather than a
+hidden failure of the sweep, and still reachable: quarantine only catches
+`ValidationError`, so a wholly missing source file, a non-UTF8 export, or a
+`csv.Error` will still fail the batch closed. This script's own position,
+matching stress_test.py and noise_sweep.py: a system that fails closed
+(refuses a batch it cannot make sense of) is behaving correctly. A system
+that keeps confidently auto-booking anyway, or that lets precision slip
+below 100%, is not -- and that is the only thing this script's exit code
+actually gates on.
 
 Usage:
     python scripts/chaos_batch.py [--records 500] [--seed 42]
@@ -92,12 +99,15 @@ DEFAULT_ANOMALY_RATE = 0.30
 # `analyze_breaking_point`.
 ABSTENTION_RISE_MIN_DELTA = 0.01
 
-# Ingest has zero row-level fault tolerance (see module docstring): a single
-# unparseable timestamp anywhere in a CSV aborts that whole source's ingest.
-# Scaling this axis down relative to the other, survivable axes lets the
-# sweep actually show *when* that all-or-nothing failure mode first starts
-# firing as chaos climbs, instead of it swamping every nonzero chaos level
-# with a guaranteed crash and leaving nothing else to observe.
+# Unparseable timestamps are the axis most likely to reject a row outright,
+# so they stay scaled well below the other, survivable axes. The original
+# reason was that ingest had zero row-level fault tolerance and one bad
+# timestamp aborted the whole source (see module docstring); that is fixed,
+# and the scale is kept for a second reason that outlived the first: a row
+# this axis damages is quarantined rather than reconciled, so running it at
+# full strength would quietly turn the sweep into a measure of how much data
+# we discard, drowning out the matching behavior at every nonzero chaos level
+# that the other axes exist to probe.
 TIMESTAMP_AXIS_SCALE = 0.01
 
 # ~1 crore rupees in a single line item -- schema-legal (no upper bound on
@@ -167,6 +177,7 @@ TABLE_COLUMNS: tuple[tuple[str, int], ...] = (
     ("Excep", 7),
     ("Abstain%", 9),
     ("InvViol", 8),
+    ("Quar", 6),
     ("DupInt", 7),
     ("Rec/s", 9),
 )
@@ -440,6 +451,7 @@ def run_one_level(
             "exception": assignments.get("exception", 0),
             "abstention_rate": abstention_rate,
             "invariant_violations": summary.get("invariant_violations", 0),
+            "quarantined_records": summary.get("quarantined_records", 0),
             "duplicates_intercepted": summary.get("duplicates_intercepted", 0),
             "throughput_rps": throughput.get("records_per_second"),
         }
@@ -476,6 +488,7 @@ def format_table(rows: list[dict]) -> str:
                 str(row["exception"]),
                 f"{row['abstention_rate'] * 100:.2f}",
                 str(row["invariant_violations"]),
+                str(row.get("quarantined_records", 0)),
                 str(row["duplicates_intercepted"]),
                 f"{throughput:.1f}" if throughput is not None else "?",
             ]

@@ -248,14 +248,19 @@ rows, and malformed timestamps — escalating across chaos levels.
 
 **Result — 400 records, anomaly rate 0.30:**
 
-| Chaos | Status | Precision | Recall | Auto | Abstained | Exceptions | Abstain % | Invariant viol. | Duplicates caught |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0% | OK | **100.00%** | 77.81% | 798 | 81 | 2 | 9.19% | 0 | 0 |
-| 10% | OK | **100.00%** | 57.96% | 635 | 117 | 46 | 14.66% | 0 | 119 |
-| 20% | OK | **100.00%** | 41.25% | 486 | 153 | 102 | 20.65% | 0 | 238 |
-| 30% | OK | **100.00%** | 29.50% | 372 | 164 | 139 | 24.30% | 0 | 357 |
-| 40% | OK | **100.00%** | 20.63% | 269 | 197 | 164 | 31.27% | 0 | 475 |
-| 50% | OK | **100.00%** | 13.32% | 211 | 209 | 192 | 34.15% | 0 | 592 |
+| Chaos | Status | Precision | Recall | Auto | Abstained | Exceptions | Abstain % | Invariant viol. | Quarantined | Duplicates caught |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0% | OK | **100.00%** | 77.81% | 798 | 81 | 2 | 9.19% | 0 | 0 | 0 |
+| 10% | OK | **100.00%** | 57.96% | 635 | 117 | 46 | 14.66% | 0 | 0 | 119 |
+| 20% | OK | **100.00%** | 41.25% | 486 | 153 | 102 | 20.65% | 0 | 3 | 238 |
+| 30% | OK | **100.00%** | 29.50% | 372 | 164 | 139 | 24.30% | 0 | 4 | 357 |
+| 40% | OK | **100.00%** | 20.63% | 269 | 197 | 164 | 31.27% | 0 | 8 | 475 |
+| 50% | OK | **100.00%** | 13.32% | 211 | 209 | 192 | 34.15% | 0 | 10 | 592 |
+
+The `Quarantined` column is direct evidence that the fix described below
+actually fires: from 20% damage onward — the exact level that used to crash this
+sweep — rows are isolated and the batch still completes. Re-measured 2026-09-08
+on the current code; every figure above reproduced exactly.
 
 **VERDICT: SAFE, and — after a fix this harness forced — RESILIENT.**
 
@@ -283,7 +288,10 @@ content and exact validation error, and `summary.json` carries a
 would be far worse than crashing: the batch would report clean while money
 vanished from the reconciliation entirely. A quarantined batch can never look
 identical to a clean one — the count appears in the console, in
-`summary.json`, and in its own file.
+`summary.json`, in its own file, and in the dashboard's **Data integrity**
+panel, where a non-zero count renders in red and an *absent* count renders `--`
+rather than `0`, so "we don't know" is never displayed as "nothing was
+quarantined".
 
 **The honest limit that remains:** at 50% structural damage recall is 13.32%.
 The system is still never *wrong*, but it is close to useless — nearly

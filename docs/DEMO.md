@@ -209,8 +209,8 @@ python scripts/eval_holdout.py --records 600 --seed 20260905
   climbing 9.19% → 34.15% and 592 duplicates intercepted at the worst level.
   Worth telling: on its *first* run this harness hard-crashed from 20% damage
   onward — ingest was all-or-nothing, so one bad timestamp killed the file.
-  Bad rows are now quarantined to `quarantine.json` and counted in
-  `summary.json`. The harness found the defect; the fix followed.
+  Bad rows are now quarantined to `quarantine.json`, counted in
+  `summary.json`, and shown in the dashboard's Data integrity panel. The harness found the defect; the fix followed.
   Honest limit: at 50% damage recall is 13.32% — never wrong, nearly useless.
 - **Held-out — no overfitting.** On a seed the system was never tuned
   against, precision held at **exactly 100.00%**, recall moved −1.82pp.

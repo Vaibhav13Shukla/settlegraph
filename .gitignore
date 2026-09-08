@@ -24,6 +24,7 @@ results/
 .eval-holdout-tmp/
 .threshold-study-tmp/
 noise-sweep.json
+chaos-batch.json
 *.pdf
 refundguard/
 demo_recordings/

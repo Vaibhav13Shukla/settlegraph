@@ -296,6 +296,19 @@ everything simply lands in review. A wholly missing source file still raises
 `FileNotFoundError`, deliberately: "nothing to reconcile" is a different
 failure from "one bad row".
 
+**Row-level quarantine covers validation failures, not unreadable files.**
+`_load_with_quarantine` catches `ValidationError` per row, so a bad timestamp or
+a failed cross-field invariant costs you that row and nothing else. It does not
+catch failures raised while *reading* the file: `_read_csv` opens with
+`encoding="utf-8"`, so a cp1252/latin-1 export (an Excel round-trip is the
+realistic way this happens) raises `UnicodeDecodeError`, and a NUL byte or an
+over-long field raises `csv.Error` — either one still aborts that entire source
+file, the same all-or-nothing failure quarantine was built to remove. This is
+unmeasured territory rather than a demonstrated weakness: none of
+`chaos_batch.py`'s six damage axes can produce it, so we have no evidence about
+how often it bites, and we chose to name it here rather than build a fix no
+harness exercises.
+
 **Storage and concurrency are single-process.** Flat files, one writer. A
 multi-process deployment would need the run-history and idempotency state
 shared before the duplicate and cumulative checks stay correct.

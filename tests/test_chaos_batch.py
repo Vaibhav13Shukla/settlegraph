@@ -59,6 +59,7 @@ def _row(
         "exception": 5,
         "abstention_rate": abstention_rate,
         "invariant_violations": invariant_violations,
+        "quarantined_records": 0,
         "duplicates_intercepted": 0,
         "throughput_rps": 500.0,
     }
