@@ -7,34 +7,38 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
-    /* ------------------------------------------------------------------
-       Design tokens. One saturated hue (navy) does all the chromatic work;
-       everything else lives on the neutral ramp. Status tints appear only
-       at badge scale, never as page furniture.
+     /* ------------------------------------------------------------------
+       Editorial finance-observatory tokens. Graphite and paper surfaces carry
+       the interface; ember and brass only punctuate evidence and status.
        ------------------------------------------------------------------ */
     :root {
-      --navy: #0c2764;
-      --navy-hover: #091d4b;
-      --ink: #0f172b;
-      --graphite: #314158;
-      --muted: #45556c;
-      --mist: #62748e;
-      --border: #e2e8f0;
-      --silver: #c3c6cb;
+      --navy: #202020;
+      --navy-hover: #4d4d4d;
+      --ink: #202020;
+      --graphite: #202020;
+      --muted: #4d4d4d;
+      --mist: #828282;
+      --border: #e8e8e8;
+      --silver: #a0a0a0;
       --white: #ffffff;
-      --cloud: #f1f5f9;
+      --cloud: #f5f5f5;
+      --ash: #efefef;
+      --ivory: #ebe6dd;
+      --ember: #ff682c;
+      --brass: #816729;
 
       /* Status tints — low-saturation washes, badge scale only. */
-      --ok-bg: #f0fdf4;   --ok-br: #dcfce7;   --ok-fg: #166534;
-      --warn-bg: #fffbeb; --warn-br: #fef3c7; --warn-fg: #92400e;
-      --bad-bg: #fef2f2;  --bad-br: #fee2e2;  --bad-fg: #991b1b;
+      --ok-bg: #f5f5f5;   --ok-br: #d2d2d2;   --ok-fg: #202020;
+      --warn-bg: #ebe6dd; --warn-br: #d5c9b2; --warn-fg: #816729;
+      --bad-bg: #fff1ec;  --bad-br: #ffcbb9;  --bad-fg: #c94c1e;
 
-      --radius: 12px;
-      --shadow: rgba(0, 0, 0, .1) 0 10px 15px -3px, rgba(0, 0, 0, .1) 0 4px 6px -4px;
-      --font: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --radius: 0;
+      --shadow: none;
+      --font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
       --page: 1200px;
     }
 
@@ -47,16 +51,16 @@
       font-family: var(--font);
       font-size: 16px;
       line-height: 1.5;
-      letter-spacing: -.025em;
+      letter-spacing: 0;
       -webkit-font-smoothing: antialiased;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
 
-    h1, h2, h3 { margin: 0; letter-spacing: -.025em; }
+    h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 400; letter-spacing: -.02em; text-wrap: balance; }
     p { margin: 0; }
-    button { font-family: inherit; letter-spacing: -.025em; cursor: pointer; }
+    button { font-family: inherit; letter-spacing: 0; cursor: pointer; }
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: .875em;
@@ -69,14 +73,14 @@
     .wrap { width: 100%; max-width: var(--page); margin: 0 auto; padding: 0 24px; }
 
     /* ---------------------------------------------------------------- Type */
-    .t-page      { font-size: 40px; line-height: 1.2; font-weight: 800; color: var(--navy); }
-    .t-section   { font-size: 20px; line-height: 1.4; font-weight: 600; color: var(--ink); }
-    .t-sub       { font-size: 18px; line-height: 1.63; font-weight: 400; color: var(--graphite); }
+    .t-page      { font-size: 40px; line-height: 1.2; font-weight: 400; color: var(--ink); }
+    .t-section   { font-size: 20px; line-height: 1.25; font-weight: 400; color: var(--ink); }
+    .t-sub       { font-size: 18px; line-height: 1.4; font-weight: 400; color: var(--muted); max-width: 68ch; }
     .t-body      { font-size: 16px; line-height: 1.5; font-weight: 400; color: var(--muted); }
     .t-caption   { font-size: 14px; line-height: 1.5; font-weight: 400; color: var(--mist); }
     .t-label     { font-size: 14px; line-height: 1.5; font-weight: 500; color: var(--muted); }
-    .t-metric    { font-size: 32px; line-height: 1.25; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-    .t-metric-sm { font-size: 20px; line-height: 1.4; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .t-metric    { font-size: 32px; line-height: 1.2; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .t-metric-sm { font-size: 20px; line-height: 1.25; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
     .t-mono      { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
 
     .tone-bad  { color: var(--bad-fg); }
@@ -84,12 +88,13 @@
 
     /* --------------------------------------------------------------- Cards */
     .card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      background: var(--ash);
+      border: 0;
+      border-radius: 6px 0 0 0;
       padding: 32px;
     }
     .card-sm { padding: 24px; }
+    .grid-4 > .card { background: var(--white); border: 1px solid var(--border); border-radius: 20px; }
 
     .stack-8  > * + * { margin-top: 8px; }
     .stack-16 > * + * { margin-top: 16px; }
@@ -126,9 +131,10 @@
     /* ------------------------------------------------------------- Buttons */
     .btn {
       display: inline-flex; align-items: center; gap: 8px;
-      border-radius: var(--radius);
-      padding: 10px 16px;
-      font-size: 16px; font-weight: 600;
+      border-radius: 0;
+      padding: 10px 20px;
+      font-family: var(--font-display);
+      font-size: 16px; font-weight: 400;
       border: 1px solid transparent;
       background: transparent;
       color: var(--ink);
@@ -136,9 +142,9 @@
       white-space: nowrap;
     }
     .btn:disabled { opacity: .55; cursor: default; }
-    .btn-primary { background: var(--navy); color: var(--white); }
+    .btn-primary { background: var(--ink); color: var(--white); }
     .btn-primary:hover:not(:disabled) { background: var(--navy-hover); }
-    .btn-outline { border-color: var(--border); background: var(--white); color: var(--ink); }
+    .btn-outline { border-color: var(--ink); background: transparent; color: var(--ink); }
     .btn-outline:hover:not(:disabled) { border-color: var(--mist); }
     .btn-ghost { color: var(--ink); font-weight: 500; }
     .btn-ghost:hover { text-decoration: underline; }
@@ -147,9 +153,9 @@
     /* --------------------------------------------------------------- Pills */
     .pill {
       display: inline-flex; align-items: center;
-      border-radius: var(--radius);
+      border-radius: 20px;
       padding: 2px 8px;
-      font-size: 12px; font-weight: 600;
+      font-size: 12px; font-weight: 500;
       text-transform: uppercase;
       border: 1px solid var(--border);
       background: var(--white);
@@ -162,7 +168,7 @@
 
     /* Filter chips */
     .chip {
-      border-radius: var(--radius);
+      border-radius: 0;
       padding: 6px 12px;
       font-size: 14px; font-weight: 500;
       border: 1px solid var(--border);
@@ -171,22 +177,22 @@
       transition: border-color .15s ease, color .15s ease;
     }
     .chip:hover { border-color: var(--mist); color: var(--ink); }
-    .chip.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+    .chip.active { background: var(--ink); border-color: var(--ink); color: var(--white); }
 
     /* --------------------------------------------------------------- Input */
     .input {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 0;
       padding: 10px 14px;
       font-family: inherit;
       font-size: 16px;
-      letter-spacing: -.025em;
+      letter-spacing: 0;
       color: var(--ink);
       background: var(--white);
     }
     .input::placeholder { color: var(--silver); }
-    .input:focus { outline: none; border-color: var(--navy); }
+    .input:focus { outline: 2px solid var(--ember); outline-offset: 2px; border-color: var(--ink); }
 
     /* -------------------------------------------------------------- Tables */
     .table-scroll { overflow-x: auto; }
@@ -216,32 +222,33 @@
     /* -------------------------------------------------------------- Header */
     .site-head {
       background: var(--white);
-      border-bottom: 1px solid var(--border);
+      border-bottom: 0;
       position: sticky; top: 0; z-index: 40;
     }
     .head-bar { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .brand { display: flex; align-items: center; gap: 10px; }
     .brand-mark {
-      width: 28px; height: 28px; border-radius: 8px;
-      background: var(--navy); color: var(--white);
+      width: 28px; height: 28px; border-radius: 0;
+      background: var(--ink); color: var(--white);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 15px;
+      font-family: var(--font-display); font-weight: 400; font-size: 15px;
     }
-    .brand-name { font-size: 16px; font-weight: 600; color: var(--ink); }
+    .brand-name { font-family: var(--font-display); font-size: 16px; font-weight: 400; color: var(--ink); }
 
     /* ----------------------------------------------------------------- Nav */
-    .nav { display: flex; gap: 28px; overflow-x: auto; border-top: 1px solid var(--border); }
+    .nav { display: flex; gap: 20px; overflow-x: auto; padding: 8px 18px; border: 0; border-radius: 200px; background: var(--ash); }
     .nav-link {
       background: none; border: 0;
-      padding: 14px 0;
-      font-size: 16px; font-weight: 500;
-      color: var(--mist);
-      border-bottom: 2px solid transparent;
+      padding: 8px 0;
+      font-family: var(--font-display);
+      font-size: 16px; font-weight: 400;
+      color: var(--muted);
+      border-bottom: 1px solid transparent;
       white-space: nowrap;
       display: inline-flex; align-items: center; gap: 8px;
     }
     .nav-link:hover { color: var(--ink); }
-    .nav-link.active { color: var(--navy); font-weight: 600; border-bottom-color: var(--navy); }
+    .nav-link.active { color: var(--ink); border-bottom-color: var(--ember); }
 
     /* ---------------------------------------------------------- Page parts */
     main { flex: 1; padding: 48px 0 64px; }
@@ -254,8 +261,8 @@
     .dot-bad { background: var(--bad-fg); }
 
     .note {
-      background: var(--cloud);
-      border-radius: var(--radius);
+      background: var(--ivory);
+      border-radius: 6px 0 0 0;
       padding: 16px;
       font-size: 14px;
       color: var(--muted);
@@ -267,7 +274,7 @@
 
     /* --------------------------------------------------------------- Modal */
     .modal { position: fixed; inset: 0; z-index: 50; background: rgba(15, 23, 43, .4); display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .modal-panel { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 32px; position: relative; }
+    .modal-panel { background: var(--white); border: 1px solid var(--border); border-radius: 20px; box-shadow: none; max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 32px; position: relative; }
     .modal-close { position: absolute; top: 20px; right: 20px; border: 0; background: none; color: var(--mist); font-size: 24px; line-height: 1; padding: 4px; }
     .modal-close:hover { color: var(--ink); }
 
@@ -281,6 +288,14 @@
       .t-page { font-size: 32px; }
       main { padding: 32px 0 48px; }
       .card { padding: 24px; }
+    }
+
+    @media (max-width: 600px) {
+      .head-bar { height: auto; padding: 16px 0; align-items: flex-start; flex-wrap: wrap; }
+      .head-bar > .flex { width: 100%; }
+      .head-bar > .flex .btn { flex: 1; justify-content: center; }
+      .nav { margin-bottom: 4px; }
+      .page-head { gap: 16px; }
     }
   </style>
 </head>
