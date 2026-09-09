@@ -228,7 +228,7 @@ confidence were 100% correct** (severe under-confidence), and the 0.6–0.7 bin
 is 33% accurate on n=3. Reporting ECE alone would be misleading; the
 reliability bins are published for exactly this reason.
 
-**L-4 · LOW — "197/258/288 tests passing" is not evidence of correctness.**
+**L-4 · LOW — a test count is not evidence of correctness.**
 Stated plainly because this project proves it: two confident-wrong-match
 defects were live while 130+ tests, 100% precision and a 20,000-record stress
 run were all green. Test count is a measure of effort, not of safety. The
@@ -257,7 +257,7 @@ constrain regressions.
 | Dangerous Miss Rate 0% | n = 16 | The denominator |
 | Exception Recall 100% | Same n = 16 | The denominator |
 | ECE 0.0304 | 88% of mass at conf ≈1.0 | The reliability bins |
-| 288 tests passing | Was green while two real defects were live | The adversarial corpus |
+| Test count | A green suite can coexist with undiscovered defects | The adversarial corpus |
 | Recall 83.6% | Two baselines beat it | The false-auto-book column |
 
 ## What would make me not trust this

@@ -213,6 +213,11 @@ serverless filesystem writes are not durable or authenticated financial state.
 Do not use the Vercel adapter as the reconciliation worker without adding
 durable artifact storage, authentication, and a job service.
 
+The hosted demo at [settlegraph.vercel.app](https://settlegraph.vercel.app/)
+uses a committed, measured snapshot of the seeded batch when no runtime result
+artifacts are available. It is labeled in the dashboard as read-only demo data;
+the Docker/local deployment is the path for generating a fresh reconciliation.
+
 ---
 
 ## 7. What Broke & How We Found It
