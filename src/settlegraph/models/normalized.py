@@ -8,6 +8,9 @@ class NormalizedRecord(BaseModel):
     record_id: str
     source: Literal["razorpay", "bank", "merchant"]
     source_record_id: str
+    # Carried through from the source record. The candidate graph refuses to
+    # link two records with different known merchant_ids (ADR 0010).
+    merchant_id: str = "merch_unknown"
     record_type: Literal["payment", "refund", "settlement_credit", "sale", "adjustment", "unknown"]
     payment_id: str | None = None
     order_id: str | None = None

@@ -452,10 +452,15 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
         if any(w in q_lower for w in ["baseline", "naive", "fuzzy", "compare"]):
             prec = evaluation.get("precision", 1.0) * 100
             fp = evaluation.get("false_positives", 0)
+            fab = evaluation.get("false_auto_book_rate", 0.0) * 100
             return (
-                f"SettleGraph achieved {prec:.1f}% precision with {fp} false positives. "
-                f"In comparison, naive fuzzy matching (Baseline C) produces up to 27.7% false auto-books "
-                f"by forcing uncertain candidate links without invariant verification."
+                f"SettleGraph achieved {prec:.1f}% precision with {fp} false auto-books "
+                f"({fab:.2f}% false-auto-book rate) on this batch. Its safety does not come from "
+                "out-scoring naive matchers -- on realistic, independent identifiers a naive matcher "
+                "can reach the same precision -- but from abstaining under ambiguity, refusing "
+                "cross-merchant links, and passing every auto-booked match through deterministic "
+                "invariant verification. See /api/baselines for the side-by-side and "
+                "datagen/adversarial.py for where naive matching does fail."
             )
 
         prec = evaluation.get("precision", 1.0) * 100

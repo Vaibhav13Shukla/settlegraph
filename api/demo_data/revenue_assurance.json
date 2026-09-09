@@ -1,27 +1,46 @@
 {
   "financial_summary": {
-    "merchant_sales_inr": 3823175.01,
-    "razorpay_gross_inr": 3823175.01,
-    "razorpay_net_expected_inr": 3765464.20,
-    "razorpay_fees_inr": 48907.47,
-    "razorpay_tax_inr": 8803.34,
-    "bank_credits_observed_inr": 6753093.65,
-    "reconciled_settled_inr": 3207366.74,
+    "merchant_sales_inr": 3537744.88,
+    "razorpay_gross_inr": 3537744.88,
+    "razorpay_net_expected_inr": 3490035.74,
+    "razorpay_fees_inr": 40431.48,
+    "razorpay_tax_inr": 7277.66,
+    "bank_credits_observed_inr": 9320574.24,
+    "reconciled_settled_inr": 2897124.59,
     "ai_resolved_settled_inr": 0.0,
-    "unexplained_exposure_inr": 3696911.68,
-    "reconciliation_rate_percent": 83.89
+    "unexplained_exposure_inr": 6579925.84,
+    "reconciliation_rate_percent": 81.89
   },
   "forward_cash_position": {
-    "bank_balance_inr": 3207366.74,
-    "verified_pending_receivables_inr": 424601.56,
-    "expected_outflows_inr": 256565.69,
-    "forward_cash_position_inr": 3375402.61
+    "bank_balance_inr": 2897124.59,
+    "verified_pending_receivables_inr": 484180.83,
+    "expected_outflows_inr": 297358.69,
+    "forward_cash_position_inr": 3083946.73
   },
   "exception_categories": {
-    "TIMING_DIFFERENCE": {"count": 12, "total_exposure_paise": 0},
-    "AMOUNT_MISMATCH": {"count": 29, "total_exposure_paise": 329780039},
-    "REFUND_OR_FEE_DEDUCTION": {"count": 100, "total_exposure_paise": 25656569},
-    "MISSING_UTR": {"count": 56, "total_exposure_paise": 230},
-    "MISSING_COUNTERPART": {"count": 24, "total_exposure_paise": 14254330}
+    "TIMING_DIFFERENCE": {
+      "count": 15,
+      "total_exposure_paise": 0
+    },
+    "AMOUNT_MISMATCH": {
+      "count": 26,
+      "total_exposure_paise": 615368506
+    },
+    "REFUND_OR_FEE_DEDUCTION": {
+      "count": 94,
+      "total_exposure_paise": 29735869
+    },
+    "MISSING_UTR": {
+      "count": 44,
+      "total_exposure_paise": 22
+    },
+    "AMBIGUOUS_MATCH": {
+      "count": 1,
+      "total_exposure_paise": 20810
+    },
+    "MISSING_COUNTERPART": {
+      "count": 28,
+      "total_exposure_paise": 12867377
+    }
   }
 }

@@ -102,13 +102,21 @@ manufactured by a metric definition nobody had questioned, and it survived
 into the README, the demo script and this document before anyone measured
 what the held records actually contained.
 
-**M-2 · MEDIUM — a simpler system would have served this batch better.**
-Baseline B (amount + date window, no UTR, no invariants, no abstention) books
-**861 correct matches to SettleGraph's 823 at identical 100% precision**. On
-this batch the entire verification apparatus prevented zero errors and cost 38
-matches. The defence — that Baseline C corrupted 277 entries, and that B is
-one amount-collision away from failing — is sound, but it is an argument from
-*hypothetical* harm against *measured* cost.
+**M-2 · MEDIUM — a simpler system serves this batch just as safely, and the
+old defence of that fact was itself an artifact.** With independent identifiers
+(ADR 0011), *all three* naive baselines reach 100% precision with zero false
+auto-books, and each books more correct matches than SettleGraph (A 854, B 866,
+C 872 vs 839) because none abstain. The entire verification apparatus prevents
+zero errors and costs recall *on this batch*. Worse for the original story: the
+former defence — "Baseline C corrupted 277 entries (27.70%)" — is **retracted**.
+That figure was an artifact of the old sequential UTR format
+(`RZP{index:012d}`), where fuzzy string similarity bridged coincidentally-similar
+references; it was never a property of fuzzy matching. The honest position is
+that this clean batch does not justify the apparatus at all — the justification
+is the per-scenario adversarial suite (ambiguity, cross-merchant collisions,
+recycled references, direction/record-type confusion), where naive matching
+mis-books and the gate does not. Arguing from that suite is arguing from
+*constructed, measured* harm, not hypothetical harm.
 
 **L-2 · LOW — "forward cash position" is a single-batch snapshot.**
 `compute_revenue_assurance` produces one figure from one batch. It is not a
@@ -243,9 +251,9 @@ constrain regressions.
   reconciling well. The chaos batch, the noise curve and the held-out run —
   where the honest numbers are — are CLI-only.
 - ~~`AUTO_MATCH: 2106` is not 2,106 verified financial decisions.~~ **Fixed
-  (M-1).** It now is: 823 razorpay↔bank + 990 razorpay↔merchant + 293
+  (M-1).** It now is: 839 razorpay↔bank + 990 razorpay↔merchant + 311
   bank↔merchant, all ground-truth scored, 0 false positives on each leg.
-- **The 175 abstentions look like diligence.** ~98% of them were unnecessary.
+- **The 166 abstentions look like diligence.** ~98% of them were unnecessary.
 - **Docker was never built locally** (not installed on the dev machine); the
   container is exercised only by CI. Disclosed in `ARCHITECTURE.md` §11.
 

@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 
 class MerchantLedgerRecord(BaseModel):
     ledger_id: str
+    # Owning merchant. Defaulted for backward compatibility; the generator
+    # always sets it. Reconciliation is merchant-scoped (ADR 0010).
+    merchant_id: str = "merch_unknown"
     order_id: str | None = None
     invoice_number: str | None = None
     customer_id: str | None = None

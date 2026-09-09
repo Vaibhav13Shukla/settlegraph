@@ -8,6 +8,29 @@ from datetime import timedelta
 from settlegraph.config import PipelineConfig
 from settlegraph.models import NormalizedRecord
 
+_UNKNOWN_MERCHANT = {"", "merch_unknown"}
+
+
+def _same_merchant(a: NormalizedRecord, b: NormalizedRecord) -> bool:
+    """Two records may only be linked if they belong to the same merchant.
+
+    This is a hard isolation boundary, not a scoring signal: a Razorpay
+    settlement for merchant A and a bank credit for merchant B that happen to
+    share an amount, a date, or even (through a recycled bank reference
+    number) a UTR must never become a candidate, because booking one
+    merchant's settlement against another's bank account is a
+    cross-tenant data-integrity failure no downstream invariant would catch.
+
+    An unknown/defaulted merchant on either side is treated permissively so
+    legacy single-tenant batches -- where `merchant_id` was never populated
+    and defaults to ``merch_unknown`` -- reconcile exactly as they did before
+    merchant identity existed. Once real merchant_ids are present (every
+    generated batch), the boundary is enforced. See ADR 0010.
+    """
+    if a.merchant_id in _UNKNOWN_MERCHANT or b.merchant_id in _UNKNOWN_MERCHANT:
+        return True
+    return a.merchant_id == b.merchant_id
+
 
 def _same_utr(a: NormalizedRecord, b: NormalizedRecord) -> bool:
     return bool(a.utr and b.utr and a.utr == b.utr)
@@ -145,4 +168,8 @@ def build_candidate_graph(
             if _amount_match(b, m, config):
                 candidates.append((b, m))
 
-    return candidates
+    # Cross-merchant isolation (ADR 0010). Applied once over the fully-built
+    # candidate set rather than at every append site above, so no future
+    # candidate-generation branch can accidentally bypass it: a pair linking
+    # two different known merchants is dropped before scoring ever sees it.
+    return [(a, b) for a, b in candidates if _same_merchant(a, b)]

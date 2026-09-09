@@ -5,8 +5,9 @@ repository, not estimated. The commands that produce each one are listed in
 §7 so a reviewer can re-run them. Where a result is unflattering, it is
 reported at the same size as the flattering ones.
 
-**Batch under test:** 1,000 payments / 999 bank rows / 1,000 merchant rows
-(2,999 source records → 2,284 assignments), seed 42, anomaly rate 0.15.
+**Batch under test:** 1,000 payments / 1,003 bank rows / 1,000 merchant rows
+(3,003 source records → 2,308 assignments) across six merchants, seed 42,
+anomaly rate 0.15, independent opaque identifiers (ADR 0011).
 Regenerate with `settlegraph generate --total-records 1000 --seed 42`.
 
 ---
@@ -16,18 +17,18 @@ Regenerate with `settlegraph generate --total-records 1000 --seed 42`.
 | Metric | Value |
 | --- | --- |
 | Precision (auto-match correctness) | **100.00%** |
-| Recall | 83.64% |
-| F1 | 0.9109 |
+| Recall | 84.49% |
+| F1 | 0.9159 |
 | False positives | **0** |
 | **False Auto-Book Rate** | **0.00%** |
-| Safe Auto-Resolution Rate | 82.30% |
-| **Dangerous Miss Rate** | **0.00%** (n=16 no-counterpart records) |
-| Exception Recall | 100.00% (same n=16) |
+| Safe Auto-Resolution Rate | 83.90% |
+| **Dangerous Miss Rate** | **0.00%** (n=7 no-counterpart records) |
+| Exception Recall | 100.00% (same n=7) |
 | Invariant violations | 0 |
-| Replay consistency | **100%** |
-| Throughput | ~1,200–1,600 records/sec |
+| Replay consistency | **100%** (2,308/2,308) |
+| Throughput | ~1,000–1,600 records/sec |
 
-The two that matter most are the pair: **Safe Auto-Resolution Rate 82.30%
+The two that matter most are the pair: **Safe Auto-Resolution Rate 83.90%
 alongside False Auto-Book Rate 0.00%.** Reported together they are
 Goodhart-resistant — matching aggressively raises the second, abstaining on
 everything starves the first.
@@ -41,34 +42,51 @@ identical hidden ground truth.
 
 | Approach | Precision | Recall | True positives | **False positives** | False Auto-Book Rate |
 | --- | --- | --- | --- | --- | --- |
-| A — exact ID match | 100.00% | 84.86% | 835 | 0 | 0.00% |
-| B — amount + date window | 100.00% | **87.50%** | **861** | 0 | 0.00% |
-| C — fuzzy heuristic | 69.15% | 86.49% | 621 | **277** | **27.70%** |
-| **SettleGraph** | 100.00% | 83.64% | 823 | **0** | **0.00%** |
+| A — exact ID match | 100.00% | 86.00% | 854 | 0 | 0.00% |
+| B — amount + date window | 100.00% | 87.21% | 866 | 0 | 0.00% |
+| C — fuzzy heuristic | 100.00% | **87.81%** | **872** | 0 | 0.00% |
+| **SettleGraph** | 100.00% | 84.49% | 839 | **0** | **0.00%** |
 
-**Read that honestly: on this batch, SettleGraph has the lowest recall of the
-three safe approaches.** Baseline B books 861 correct matches to
-SettleGraph's 823 — 38 correct matches that SettleGraph holds for review
-instead of booking. It did not prevent a single error that B made, because B
-made none here.
+**Read that honestly: on this batch, SettleGraph has the *lowest* recall of
+the four approaches, and every naive baseline is exactly as safe as it is —
+100% precision, zero false auto-books.** Each baseline books more correct
+matches than SettleGraph (854 / 866 / 872 vs 839) because none of them abstain.
+On this batch the safety margin bought nothing measurable and cost throughput.
 
-Two things are true at once, and both belong in the record:
+### Correction: a retracted claim
 
-1. **The safety margin cost real throughput on this batch and bought nothing
-   measurable on it.** 38 correct matches held, 0 errors prevented versus B.
-2. **Baseline C is what the margin exists for.** Fuzzy matching without a
-   verification gate corrupted **277 ledger entries** — a 27.70% false
-   auto-book rate and a 68.8% dangerous-miss rate. That is the failure mode
-   a reconciliation system is actually judged on, and it is why "just match
-   more" is not a free win.
+An earlier version of this page reported Baseline C (fuzzy) at **69.15%
+precision and a 27.70% false-auto-book rate (277 corrupted ledger entries)**,
+and used it as the headline justification for the verification gate. **That
+number is retracted.** It was an artifact of the old identifier scheme, not a
+property of fuzzy matching. The previous UTRs were sequential
+(`RZP{index:012d}`), so unrelated references shared almost all their characters
+and `difflib.SequenceMatcher` scored them as ~0.94 similar — the fuzzy matcher
+was bridging *coincidentally-similar strings*. With independent 16-character
+random UTRs (ADR 0011), different UTRs no longer resemble each other, and the
+fuzzy baseline's false-auto-book rate on this batch is **0.00%**.
 
-Baseline B's 100% precision is a property of *this* batch, not of the
-approach: it has no UTR check, no invariant gate, and no abstention, so it
-holds only as long as no two payments collide on amount and date. The
-adversarial suite constructs exactly that collision, and B fails it
-(`tests/test_baseline.py` asserts the false match explicitly). SettleGraph's
-margin is insurance against conditions this batch does not contain — an
-honest reason to keep it, and not the same thing as a demonstrated win.
+The honest consequence: **an easy, clean-ish batch no longer differentiates a
+naive matcher from SettleGraph.** That is expected — when identifiers are
+unique and mostly present, exact/amount/fuzzy matching all succeed. The value
+of the architecture is not visible on this batch; it is visible where the
+failure modes actually live:
+
+1. **Ambiguity.** When two candidates are within the tie-break margin,
+   SettleGraph abstains (LIKELY_MATCH) rather than booking a coin-flip; the
+   baselines book first-come-first-served. See §3.
+2. **Cross-merchant collisions.** SettleGraph refuses to link records across
+   merchants even on an identical UTR (ADR 0010,
+   `tests/test_match.py::test_candidate_graph_never_links_across_merchants`);
+   the baselines have no concept of a merchant.
+3. **Semantic / direction / record-type confusion and recycled references.**
+   The invariant gate and the per-scenario adversarial suite
+   (`datagen/adversarial.py`) exercise these; a naive matcher mis-books and the
+   gate does not.
+
+SettleGraph's margin is insurance against conditions this batch does not
+contain — an honest reason to keep it, and explicitly *not* a demonstrated win
+on the standard batch.
 
 ---
 
@@ -250,27 +268,28 @@ rows, and malformed timestamps — escalating across chaos levels.
 
 | Chaos | Status | Precision | Recall | Auto | Abstained | Exceptions | Abstain % | Invariant viol. | Quarantined | Duplicates caught |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0% | OK | **100.00%** | 77.81% | 798 | 81 | 2 | 9.19% | 0 | 0 | 0 |
-| 10% | OK | **100.00%** | 57.96% | 635 | 117 | 46 | 14.66% | 0 | 0 | 119 |
-| 20% | OK | **100.00%** | 41.25% | 486 | 153 | 102 | 20.65% | 0 | 3 | 238 |
-| 30% | OK | **100.00%** | 29.50% | 372 | 164 | 139 | 24.30% | 0 | 4 | 357 |
-| 40% | OK | **100.00%** | 20.63% | 269 | 197 | 164 | 31.27% | 0 | 8 | 475 |
-| 50% | OK | **100.00%** | 13.32% | 211 | 209 | 192 | 34.15% | 0 | 10 | 592 |
+| 0% | OK | **100.00%** | 75.00% | 818 | 81 | 5 | 8.96% | 0 | 0 | 0 |
+| 10% | OK | **100.00%** | 52.78% | 630 | 123 | 45 | 15.41% | 0 | 0 | 121 |
+| 20% | OK | **100.00%** | 39.39% | 493 | 127 | 77 | 18.22% | 0 | 4 | 241 |
+| 30% | OK | **100.00%** | 27.02% | 382 | 149 | 100 | 23.61% | 0 | 4 | 363 |
+| 40% | OK | **100.00%** | 20.20% | 292 | 150 | 141 | 25.73% | 0 | 11 | 480 |
+| 50% | OK | **100.00%** | 10.61% | 200 | 168 | 170 | 31.23% | 0 | 8 | 604 |
 
 The `Quarantined` column is direct evidence that the fix described below
 actually fires: from 20% damage onward — the exact level that used to crash this
-sweep — rows are isolated and the batch still completes. Re-measured 2026-09-08
-on the current code; every figure above reproduced exactly.
+sweep — rows are isolated and the batch still completes. Re-measured 2026-09-10
+on the current code (independent-identifier, multi-merchant data); every figure
+above reproduced exactly.
 
 **VERDICT: SAFE, and — after a fix this harness forced — RESILIENT.**
 
 1. **Precision never broke.** 100.00% at every level, 0 invariant violations
    throughout. No false-auto-book cliff exists to report and none was
    manufactured.
-2. **Abstention rises monotonically** (9.19% → 34.15%) while recall absorbs
-   the damage (77.81% → 13.32%). The system degrades into review, never into
+2. **Abstention rises monotonically** (8.96% → 31.23%) while recall absorbs
+   the damage (75.00% → 10.61%). The system degrades into review, never into
    wrong answers.
-3. **Duplicates are caught at scale under adversarial input** — 592 at the
+3. **Duplicates are caught at scale under adversarial input** — 604 at the
    worst level, none inflating the match counts.
 
 **What this harness found, and what it forced.** On its first run the pipeline
@@ -293,7 +312,7 @@ panel, where a non-zero count renders in red and an *absent* count renders `--`
 rather than `0`, so "we don't know" is never displayed as "nothing was
 quarantined".
 
-**The honest limit that remains:** at 50% structural damage recall is 13.32%.
+**The honest limit that remains:** at 50% structural damage recall is 10.61%.
 The system is still never *wrong*, but it is close to useless — nearly
 everything lands in review. Fail-closed is preserved at the whole-file level
 too: a wholly missing source file still raises `FileNotFoundError`, because
@@ -330,28 +349,35 @@ which is the corpus development happened against. So
 the real unmodified pipeline against only the held-out `test` split, and
 scores all three baselines on that same split with the identical harness.
 
-**Result — 180 held-out records, seed 20260905:**
+**Result — 600 held-out records (the test split of a fresh 2,000-record
+generation), seed 20260905:**
 
 | Approach | Precision | Recall | TP | FP | False Auto-Book | Dangerous Miss |
 | --- | --- | --- | --- | --- | --- | --- |
-| **SettleGraph** | **100.00%** | 81.82% | 144 | **0** | **0.00%** | **0.00%** |
-| A — exact ID | 100.00% | 82.95% | 146 | 0 | 0.00% | 0.00% |
-| B — amount + date | 100.00% | **86.36%** | 152 | 0 | 0.00% | 0.00% |
-| C — fuzzy heuristic | 87.01% | 84.81% | 134 | **20** | **11.11%** | 50.00% |
+| **SettleGraph** | **100.00%** | 82.60% | 489 | **0** | **0.00%** | **0.00%** |
+| A — exact ID | 100.00% | 83.61% | 495 | 0 | 0.00% | 0.00% |
+| B — amount + date | 100.00% | **87.16%** | 516 | 0 | 0.00% | 0.00% |
+| C — fuzzy heuristic | 100.00% | 86.15% | 510 | 0 | 0.00% | 0.00% |
 
 **VERDICT: HEALTHY — no overfitting detected.**
 
 - Precision held at **exactly 100.00%** on data the system was never
   developed against, with **0 false positives and 0 invariant violations**.
-- Recall moved only **−1.82pp** (83.64% dev → 81.82% held-out), well inside
+- Recall moved only **−1.89pp** (84.49% dev → 82.60% held-out), well inside
   the 5pp band the script treats as material.
-- ECE 0.0308 / Brier 0.0073 held-out, essentially identical to the
-  development figures (0.0304 / 0.0079).
-- Baseline C reproduced its danger profile on unseen data too — 20 false
-  positives, 11.11% false-auto-book rate, 50% dangerous-miss rate. The
-  argument for a verification gate is not an artefact of one batch.
-- Baseline B again finished as the highest-recall *safe* approach, exactly as
-  on the development batch. Consistent, and still reported.
+- ECE 0.0315 / Brier 0.0075 held-out, essentially identical to the
+  development figures.
+- **Same pattern as the development batch, and it is the honest one:** every
+  naive baseline is exactly as safe as SettleGraph (100% precision, 0 false
+  auto-books) and each posts marginally higher recall by never abstaining.
+  Baseline C's danger does **not** reproduce here either — with independent
+  identifiers fuzzy matching is not the hazard it appeared to be under the old
+  sequential UTRs (see §2 correction). The verification gate's value is
+  demonstrated on the per-scenario adversarial suite, not on this split.
+- The held-out split was sized at 600 records (a 2,000-record generation)
+  rather than 180: at n≈180 a single split's recall carries ~±5pp of binomial
+  noise, enough to swamp the signal the check exists to detect. A larger
+  held-out split makes the "did recall really move?" question answerable.
 
 **One caveat on the held-out abstention figure:** it was computed with the
 *old* metric definition (0.0000 held-out vs 0.0164 development), before §3's
@@ -464,8 +490,8 @@ demoted decision carries `competing_candidates` and a plain-language
 `abstention_reason` into `assignments.csv`.
 
 **Cost on real data: zero.** Re-running the 1,000-record batch after the fix
-gives byte-identical metrics — 823 true positives, 0 false positives,
-precision 100%, recall 83.64% — and **0 suppressions fired**, because this
+gives byte-identical metrics — 839 true positives, 0 false positives,
+precision 100%, recall 84.49% — and **0 suppressions fired**, because this
 batch contains no genuine near-ties at that margin. The gate is targeted
 rather than blunt: it changes nothing on clean data and closes the hole on
 adversarial data.
@@ -528,7 +554,7 @@ python -m pytest -q && python scripts/run_e2e.py
   `datagen/generator.py`. Split discipline reduces but cannot eliminate the
   risk that good scores mean "generalises to what this generator produces"
   rather than to a real merchant's feed.
-- `dangerous_miss_rate = 0.00%` and `exception_recall = 100%` rest on n=16
+- `dangerous_miss_rate = 0.00%` and `exception_recall = 100%` rest on n=7
   no-counterpart records in this batch. Real, measured, and a small sample.
 - The noise sweep found no precision breaking point below 30% corruption,
   which is a bounded negative result, not a located cliff.
