@@ -344,6 +344,11 @@
           </div>
         </section>
 
+        <div id="snapshot-notice" class="note hidden" role="status">
+          Hosted read-only demo snapshot. These measured values come from the seeded batch;
+          run the local or Docker deployment to reconcile a fresh batch.
+        </div>
+
         <section class="grid grid-4">
           <div class="card card-sm stack-8">
             <div class="t-label">Reconciliation rate</div>
@@ -829,6 +834,10 @@
     function renderDashboard() {
       const { summary, rev, evaluation, exceptions, assignments } = globalData;
       if (!rev || !rev.financial_summary) return;
+
+      document.getElementById('snapshot-notice')?.classList.toggle(
+        'hidden', summary.deployment_mode !== 'demo_snapshot'
+      );
 
       const fin = rev.financial_summary;
       document.getElementById('stat-rate').innerText = fin.reconciliation_rate_percent + '%';

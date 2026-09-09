@@ -1,0 +1,6 @@
+source_a,source_a_id,source_b,source_b_id,confidence,label,competing_candidates,abstention_reason,a_amount_paise,b_amount_paise,a_utr,b_utr,a_order_id,b_order_id
+bank,bank_norm_bank_000003,merchant,merch_norm_led_000003,1.0,AUTO_MATCH,0,,356193,356193,RZP000000000003,RZP000000000003,,order_000003
+razorpay,rzp_norm_pay_000001,bank,bank_norm_bank_000001,0.99,AUTO_MATCH,0,,976400,976400,RZP000000000001,RZP000000000001,order_000001,
+razorpay,rzp_norm_pay_000002,bank,bank_norm_bank_000002,0.98,AUTO_MATCH,0,,547051,547051,RZP000000000002,RZP000000000002,order_000002,
+razorpay,rzp_norm_pay_000088,bank,bank_norm_bank_000088,0.82,LIKELY_MATCH,1,Timing difference held for review,250000,250000,RZP000000000088,RZP000000000088,order_000088,
+razorpay,rzp_norm_pay_000231,bank,bank_norm_bank_000231,0.74,EXCEPTION,0,Amount mismatch requires investigation,1250000,0,RZP000000000231,RZP000000000231,order_000231,

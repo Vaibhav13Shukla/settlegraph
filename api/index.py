@@ -14,7 +14,10 @@ _MAX_QUESTION_LENGTH = 2_000
 
 
 def _results_dir() -> Path:
-    return Path(os.environ.get("SETTLEGRAPH_RESULTS_DIR", "results"))
+    configured = Path(os.environ.get("SETTLEGRAPH_RESULTS_DIR", "results"))
+    if configured.exists() or not os.environ.get("VERCEL"):
+        return configured
+    return Path(__file__).resolve().parent / "demo_data"
 
 
 def _data_dir() -> Path:
@@ -96,12 +99,19 @@ def assignments(label: str | None = Query(default=None)) -> list[dict[str, str]]
 def audit_report() -> HTMLResponse:
     path = _results_dir() / "AUDIT_REPORT.md"
     if not path.exists():
-        return HTMLResponse("# Audit report not generated yet.", media_type="text/markdown")
+        return HTMLResponse(
+            "# SettleGraph demo snapshot\n\n"
+            "This Vercel deployment is a read-only snapshot of the seeded batch. "
+            "Run the stateful Docker or CLI deployment for a fresh reconciliation.",
+            media_type="text/markdown",
+        )
     return HTMLResponse(path.read_text(encoding="utf-8"), media_type="text/markdown")
 
 
 @app.get("/api/calibration")
 def calibration() -> object:
+    if os.environ.get("VERCEL") and not _data_dir().exists():
+        return _read_json("calibration.json")
     assignments_path = _results_dir() / "assignments.csv"
     ground_truth_path = _data_dir() / "ground_truth.csv"
     if not assignments_path.exists() or not ground_truth_path.exists():

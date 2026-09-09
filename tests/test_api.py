@@ -50,3 +50,14 @@ def test_q_and_a_rejects_oversized_input() -> None:
 
     assert response.status_code == 413
     assert "character limit" in response.json()["detail"]
+
+
+def test_vercel_uses_committed_demo_snapshot_without_runtime_artifacts(monkeypatch) -> None:
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("SETTLEGRAPH_RESULTS_DIR", "missing-results")
+
+    response = TestClient(app).get("/api/summary")
+
+    assert response.status_code == 200
+    assert response.json()["deployment_mode"] == "demo_snapshot"
+    assert response.json()["assignments"]["auto_match"] == 2106
