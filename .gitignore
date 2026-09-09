@@ -1,4 +1,7 @@
 .venv/
+.agent/
+AGENTS.md
+PRODUCT.md
 __pycache__/
 *.py[cod]
 .pytest_cache/

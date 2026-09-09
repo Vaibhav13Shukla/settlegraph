@@ -118,7 +118,6 @@ Other useful targets: `make benchmark` (compare against three naive matchers),
 | `datagen/` | Synthetic batch generator, including the anomaly injection |
 | `docs/` | Architecture, evaluation methodology, data contracts, red team, ADRs |
 | `DEVLOG.md` | The running record of what was tried, measured, and withdrawn |
-| `AGENTS.md` | Engineering standards this repo holds itself to |
 
 The harnesses in `scripts/` are standalone and meant to be run by hand and read by a
 human — they are not part of `make test`:

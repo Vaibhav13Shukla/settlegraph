@@ -44,7 +44,7 @@ jobs:
       - name: Run reconciliation pipeline
         run: python -m settlegraph.cli run
 
-      # The non-negotiables from AGENTS.md and docs/EVALUATION.md, asserted
+      # The non-negotiables from docs/EVALUATION.md, asserted
       # against the real evaluation.json this run just produced. Each failure
       # message names the metric so a red build is self-explaining.
       - name: Assert zero-error and safety invariants
