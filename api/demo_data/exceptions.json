@@ -2,6 +2,7 @@
   {
     "record_id": "rzp_norm_pay_067dcbm159hmma",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 14 days between gateway and bank statement.",
@@ -15,6 +16,7 @@
   {
     "record_id": "rzp_norm_pay_6ejhuo3gzdvsi1",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 17 days between gateway and bank statement.",
@@ -28,6 +30,7 @@
   {
     "record_id": "rzp_norm_pay_7q2dyik9p1qwba",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 15 days between gateway and bank statement.",
@@ -41,6 +44,7 @@
   {
     "record_id": "rzp_norm_pay_e19cqg7rfrwck4",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 19 days between gateway and bank statement.",
@@ -54,6 +58,7 @@
   {
     "record_id": "rzp_norm_pay_eb9pm9sxamiof1",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 10 days between gateway and bank statement.",
@@ -67,6 +72,7 @@
   {
     "record_id": "rzp_norm_pay_exqnt56w8p43r8",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 16 days between gateway and bank statement.",
@@ -80,6 +86,7 @@
   {
     "record_id": "rzp_norm_pay_h10ss4q361ze7s",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 15 days between gateway and bank statement.",
@@ -93,6 +100,7 @@
   {
     "record_id": "rzp_norm_pay_jgulm1w9ez9xyz",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 13 days between gateway and bank statement.",
@@ -106,6 +114,7 @@
   {
     "record_id": "rzp_norm_pay_juyeooug9xr0is",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 14 days between gateway and bank statement.",
@@ -119,6 +128,7 @@
   {
     "record_id": "rzp_norm_pay_kzpqd8yuxuaxvc",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 14 days between gateway and bank statement.",
@@ -132,6 +142,7 @@
   {
     "record_id": "rzp_norm_pay_l9ests8rpkqcct",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 18 days between gateway and bank statement.",
@@ -145,6 +156,7 @@
   {
     "record_id": "rzp_norm_pay_lutsmjvz6b5h8y",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 10 days between gateway and bank statement.",
@@ -158,6 +170,7 @@
   {
     "record_id": "rzp_norm_pay_r0abnalkc5cg5s",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 14 days between gateway and bank statement.",
@@ -171,6 +184,7 @@
   {
     "record_id": "rzp_norm_pay_rcmn4sa2wgqixm",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 14 days between gateway and bank statement.",
@@ -184,6 +198,7 @@
   {
     "record_id": "rzp_norm_pay_yrbkzp9pfkr12o",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "TIMING_DIFFERENCE",
     "severity": "LOW",
     "root_cause": "Settlement timing delay of 16 days between gateway and bank statement.",
@@ -197,6 +212,7 @@
   {
     "record_id": "rzp_norm_pay_0vsf6ad6kll2ks",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b910.00 between source and counterpart records.",
@@ -210,6 +226,7 @@
   {
     "record_id": "rzp_norm_pay_1q97t8ol4sdaw7",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b910.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -224,6 +241,7 @@
   {
     "record_id": "rzp_norm_pay_7fm1kcks9ax80r",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -238,6 +256,7 @@
   {
     "record_id": "rzp_norm_pay_hk8ysxp8wf0bzi",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b910.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -252,6 +271,7 @@
   {
     "record_id": "rzp_norm_pay_pdtcl6q27stw8v",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -266,6 +286,7 @@
   {
     "record_id": "rzp_norm_pay_v5kteeelewdv2b",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -280,6 +301,7 @@
   {
     "record_id": "rzp_norm_pay_wl99htpun78lzc",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -294,6 +316,7 @@
   {
     "record_id": "bank_norm_banktxn_1earsme4z2mvpf52",
     "source": "bank",
+    "merchant_id": "merch_bluedart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'XS0EF6EPI5BPJ40O'.",
@@ -306,6 +329,7 @@
   {
     "record_id": "bank_norm_banktxn_1x3nmy88q9c5qtn1",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'BNMXSBCS1RANWTDO'.",
@@ -318,6 +342,7 @@
   {
     "record_id": "bank_norm_banktxn_3gdobbm5rg8f078u",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'OVZJXUWQC5RE3MAV'.",
@@ -330,6 +355,7 @@
   {
     "record_id": "bank_norm_banktxn_3k37ykvljudyw0yi",
     "source": "bank",
+    "merchant_id": "merch_apollo",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '3GU08VX1ATRGN7C0'.",
@@ -342,6 +368,7 @@
   {
     "record_id": "bank_norm_banktxn_3r7nauezvh3a3s5r",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'MZKYNOJ8D1G4919U'.",
@@ -354,6 +381,7 @@
   {
     "record_id": "bank_norm_banktxn_4ouxjdj2vd3s6tto",
     "source": "bank",
+    "merchant_id": "merch_bluedart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'DXL3TRNWKSWEVLQZ'.",
@@ -366,6 +394,7 @@
   {
     "record_id": "bank_norm_banktxn_5bf17p3jxr0fv96w",
     "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '1PPG1M662B5ANJCH'.",
@@ -378,6 +407,7 @@
   {
     "record_id": "bank_norm_banktxn_5mpb6031gv4i2rlr",
     "source": "bank",
+    "merchant_id": "merch_apollo",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'Z7XR8FDTXH3WT4NU'.",
@@ -390,6 +420,7 @@
   {
     "record_id": "bank_norm_banktxn_68b272s8lxsfcd2i",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '97DA7TQT837577OP'.",
@@ -402,6 +433,7 @@
   {
     "record_id": "bank_norm_banktxn_7z8x0foluvgi7q0d",
     "source": "bank",
+    "merchant_id": "merch_bluedart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'O6TWQZX00BD116LQ'.",
@@ -414,6 +446,7 @@
   {
     "record_id": "bank_norm_banktxn_8do9hbiiu208m72p",
     "source": "bank",
+    "merchant_id": "merch_bluedart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '8LMNQW1ZHR006LZ7'.",
@@ -426,6 +459,7 @@
   {
     "record_id": "bank_norm_banktxn_8mga2g4ae52mst80",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '0G6E007MCWQ1BY8P'.",
@@ -438,6 +472,7 @@
   {
     "record_id": "bank_norm_banktxn_9nf4uk3g0du157xk",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'JVFFHENUFRU26RWN'.",
@@ -450,6 +485,7 @@
   {
     "record_id": "bank_norm_banktxn_av8i02291yp35jo1",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '1D5V8QRN9X9JPYLG'.",
@@ -462,6 +498,7 @@
   {
     "record_id": "bank_norm_banktxn_b7eoszzoimln8q7k",
     "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'AWR4TZ0NZ4FX2LSE'.",
@@ -474,6 +511,7 @@
   {
     "record_id": "bank_norm_banktxn_c2pqk3pwxwntr2bt",
     "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'O4S705IUYBGTM67V'.",
@@ -486,6 +524,7 @@
   {
     "record_id": "bank_norm_banktxn_d2ettxdd5n1fa6wn",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "AMBIGUOUS_MATCH",
     "severity": "MEDIUM",
     "root_cause": "Confidence score 0.80 did not clear the strict auto-match threshold (0.95).",
@@ -499,6 +538,7 @@
   {
     "record_id": "bank_norm_banktxn_dsi4qv8jfg9ro4su",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'KIVFKOHPN7CYBZ1T'.",
@@ -511,6 +551,7 @@
   {
     "record_id": "bank_norm_banktxn_ehmnuflrbc8sv23g",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'F90WUSZEHS50QBYE'.",
@@ -523,6 +564,7 @@
   {
     "record_id": "bank_norm_banktxn_fg8unnsotb47li1i",
     "source": "bank",
+    "merchant_id": "merch_bluedart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '5I939NFPJN29ZBF6'.",
@@ -535,6 +577,7 @@
   {
     "record_id": "bank_norm_banktxn_h4o5n2bzsz9qb8kl",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'R1S0HOR12LLF4HCH'.",
@@ -547,6 +590,7 @@
   {
     "record_id": "bank_norm_banktxn_i9g4qw7i90soy5s0",
     "source": "bank",
+    "merchant_id": "merch_apollo",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '3M24L7ESWQBQWGS2'.",
@@ -559,6 +603,7 @@
   {
     "record_id": "bank_norm_banktxn_j6twpw2gaxyvwakx",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '8S9Q0OLURWARU9XB'.",
@@ -571,6 +616,7 @@
   {
     "record_id": "bank_norm_banktxn_jrwxoz2yspcgbvaj",
     "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'E18TFZKJHBH39GY0'.",
@@ -583,6 +629,7 @@
   {
     "record_id": "bank_norm_banktxn_jx2u5bo6kizbu038",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'UFQNAUAKYPSTU3LN'.",
@@ -595,6 +642,7 @@
   {
     "record_id": "bank_norm_banktxn_kglk48i6n8wrfjzg",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'LSV3O7WFIG9L75W2'.",
@@ -607,6 +655,7 @@
   {
     "record_id": "bank_norm_banktxn_kwe93psw5erip98l",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '3LMRQ7E0O3JX2KY9'.",
@@ -619,6 +668,7 @@
   {
     "record_id": "bank_norm_banktxn_m6i1vaehq6n2h74v",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'CNGTROE3SSVK401P'.",
@@ -631,6 +681,7 @@
   {
     "record_id": "bank_norm_banktxn_m83vw6yvi6jomqqf",
     "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'FIBNF278X5I00658'.",
@@ -643,6 +694,7 @@
   {
     "record_id": "bank_norm_banktxn_p68posye1nnvdt6c",
     "source": "bank",
+    "merchant_id": "merch_apollo",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'BTRV5FSS7WWQ9RFM'.",
@@ -655,6 +707,7 @@
   {
     "record_id": "bank_norm_banktxn_q9jobyufej9t3zqq",
     "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'EQJH3ZBRZV3MOXKQ'.",
@@ -667,6 +720,7 @@
   {
     "record_id": "bank_norm_banktxn_ssvvhnbni78dws9i",
     "source": "bank",
+    "merchant_id": "merch_apollo",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'MMDNLWW43W89SSLJ'.",
@@ -679,6 +733,7 @@
   {
     "record_id": "bank_norm_banktxn_teiwkrcnu88c5k8p",
     "source": "bank",
+    "merchant_id": "merch_bluedart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'ERGOJJ897PQXAWRV'.",
@@ -691,6 +746,7 @@
   {
     "record_id": "bank_norm_banktxn_tj6bq11arshlwo4x",
     "source": "bank",
+    "merchant_id": "merch_apollo",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'Y7FC3IFX37Z3YVMC'.",
@@ -703,6 +759,7 @@
   {
     "record_id": "bank_norm_banktxn_tnjh9a0r4zn2qayt",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'KB4VN3IYXVX8ZWV9'.",
@@ -715,6 +772,7 @@
   {
     "record_id": "bank_norm_banktxn_umkf3bhnd35bezgv",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '1ECGQTS47RTN0SR9'.",
@@ -727,6 +785,7 @@
   {
     "record_id": "bank_norm_banktxn_w9ev71nq0acew1hs",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'WJG6YM4QWDAUQ9Y3'.",
@@ -739,6 +798,7 @@
   {
     "record_id": "bank_norm_banktxn_wfwmp27rrwlzqtsx",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'WHVNJWV23RGQ7HOH'.",
@@ -751,6 +811,7 @@
   {
     "record_id": "bank_norm_banktxn_wgpibyvfjnsocnwt",
     "source": "bank",
+    "merchant_id": "merch_apollo",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'OSD0T97VZB48U13P'.",
@@ -763,6 +824,7 @@
   {
     "record_id": "bank_norm_banktxn_wyqczi5o8yj6ggsi",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains '0XC36NCL8SZ12KQ2'.",
@@ -775,6 +837,7 @@
   {
     "record_id": "bank_norm_banktxn_x9gfsy0hs0i2ucom",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'FSYKDTU34AHD7RHM'.",
@@ -787,6 +850,7 @@
   {
     "record_id": "bank_norm_banktxn_xmtlnrij9bvvl15d",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'PWIXPNKXJ9AMBTSO'.",
@@ -799,6 +863,7 @@
   {
     "record_id": "bank_norm_banktxn_zgwxpxqlo9anybax",
     "source": "bank",
+    "merchant_id": "merch_bluedart",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'S8ZFM5QUD3LE8PV0'.",
@@ -811,6 +876,7 @@
   {
     "record_id": "bank_norm_banktxn_zyvf3mxwry73ald6",
     "source": "bank",
+    "merchant_id": "merch_apollo",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'VU2KGPSCF4PG0LHR'.",
@@ -823,6 +889,7 @@
   {
     "record_id": "rzp_norm_pay_09z2fes5g97dui",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9854.38 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -837,6 +904,7 @@
   {
     "record_id": "rzp_norm_pay_0bqzvpy54y1s7m",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b92173.90 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -851,6 +919,7 @@
   {
     "record_id": "rzp_norm_pay_0dv5t3nzqn3hx2",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9694.86 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -865,6 +934,7 @@
   {
     "record_id": "rzp_norm_pay_0odte4hn24dqjv",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91490.07 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -879,6 +949,7 @@
   {
     "record_id": "rzp_norm_pay_14bimt6y5nz3o5",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9641.88 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -893,6 +964,7 @@
   {
     "record_id": "rzp_norm_pay_14st1d5pcs2l02",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b94701.54 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -907,6 +979,7 @@
   {
     "record_id": "rzp_norm_pay_15xdoqtlanjk53",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91216.67 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -921,6 +994,7 @@
   {
     "record_id": "rzp_norm_pay_29x1mtln113gjh",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b97468.01 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -935,6 +1009,7 @@
   {
     "record_id": "rzp_norm_pay_2m4q5zu8h262vw",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b92602.54 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -949,6 +1024,7 @@
   {
     "record_id": "rzp_norm_pay_32qfhtj5w0g829",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91992.28 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -963,6 +1039,7 @@
   {
     "record_id": "rzp_norm_pay_32sdxwkgpsejvi",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9332.07 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -977,6 +1054,7 @@
   {
     "record_id": "rzp_norm_pay_3q9riplwyzvbhh",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b92641.12 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -991,6 +1069,7 @@
   {
     "record_id": "rzp_norm_pay_3rjtq4jj9swvfk",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91127.26 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1005,6 +1084,7 @@
   {
     "record_id": "rzp_norm_pay_3x4qnclyn4nc93",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b92113.60 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1019,6 +1099,7 @@
   {
     "record_id": "rzp_norm_pay_4bw1q52ugppqvh",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9561.64 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1033,6 +1114,7 @@
   {
     "record_id": "rzp_norm_pay_5g414cs85l72t3",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9376559.37 between source and counterpart records.",
@@ -1046,6 +1128,7 @@
   {
     "record_id": "rzp_norm_pay_5wm36re4lpk1hs",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9552905.10 between source and counterpart records.",
@@ -1059,6 +1142,7 @@
   {
     "record_id": "rzp_norm_pay_62dcqyaodmdc0n",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9492.34 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1073,6 +1157,7 @@
   {
     "record_id": "rzp_norm_pay_64u7vg01cgmpxw",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9282228.21 between source and counterpart records.",
@@ -1086,6 +1171,7 @@
   {
     "record_id": "rzp_norm_pay_6km1xy0rclxilh",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b949.90 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1100,6 +1186,7 @@
   {
     "record_id": "rzp_norm_pay_6pxkois7vszg25",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91619.59 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1114,6 +1201,7 @@
   {
     "record_id": "rzp_norm_pay_6q9fj5ogeczlf8",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9192.96 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1128,6 +1216,7 @@
   {
     "record_id": "rzp_norm_pay_7rnqpktpj0pdfo",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9104675.67 between source and counterpart records.",
@@ -1141,6 +1230,7 @@
   {
     "record_id": "rzp_norm_pay_7xcxqhxyco8qq5",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b92164.05 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1155,6 +1245,7 @@
   {
     "record_id": "rzp_norm_pay_8024z5vjtf475i",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91470.05 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1169,6 +1260,7 @@
   {
     "record_id": "rzp_norm_pay_8158rmtxzbo0j5",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9296.96 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1183,6 +1275,7 @@
   {
     "record_id": "rzp_norm_pay_8it9zqfde3879o",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95608.12 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1197,6 +1290,7 @@
   {
     "record_id": "rzp_norm_pay_92tqyep8mdpqqt",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b98410.57 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1211,6 +1305,7 @@
   {
     "record_id": "rzp_norm_pay_97prbooxbuegax",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9164.46 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1225,6 +1320,7 @@
   {
     "record_id": "rzp_norm_pay_9pn0rb9bd61pu9",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b92544.56 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1239,6 +1335,7 @@
   {
     "record_id": "rzp_norm_pay_9qp18cm4nwn14n",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9276.32 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1253,6 +1350,7 @@
   {
     "record_id": "rzp_norm_pay_9uafpaqpcfm4eh",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b92085.69 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1267,6 +1365,7 @@
   {
     "record_id": "rzp_norm_pay_b3unfo2m74u5r3",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9300.65 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1281,6 +1380,7 @@
   {
     "record_id": "rzp_norm_pay_baizbtn25jkno4",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b914741.67 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1295,6 +1395,7 @@
   {
     "record_id": "rzp_norm_pay_bi4r65mh2obvw1",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9536.60 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1309,6 +1410,7 @@
   {
     "record_id": "rzp_norm_pay_bph6ckugxmph8n",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b911195.60 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1323,6 +1425,7 @@
   {
     "record_id": "rzp_norm_pay_bqli36plme30ra",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9562114.08 between source and counterpart records.",
@@ -1336,6 +1439,7 @@
   {
     "record_id": "rzp_norm_pay_cxim8pqihf7qgv",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b96200.88 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1350,6 +1454,7 @@
   {
     "record_id": "rzp_norm_pay_cy14ds2b1z5j04",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b966143.88 between source and counterpart records.",
@@ -1363,6 +1468,7 @@
   {
     "record_id": "rzp_norm_pay_dzowa8ptbflq64",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b94107.79 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1377,6 +1483,7 @@
   {
     "record_id": "rzp_norm_pay_ed31bvof8tbadv",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91339.81 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1391,6 +1498,7 @@
   {
     "record_id": "rzp_norm_pay_fajz0zq5e7t79v",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b97338.77 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1405,6 +1513,7 @@
   {
     "record_id": "rzp_norm_pay_feo1p9rcy9e78i",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9620.23 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1419,6 +1528,7 @@
   {
     "record_id": "rzp_norm_pay_fvtxya4g7y723t",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91085.34 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1433,6 +1543,7 @@
   {
     "record_id": "rzp_norm_pay_g3ifxodo9e4vlm",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b910.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1447,6 +1558,7 @@
   {
     "record_id": "rzp_norm_pay_gbmtc3po9iw4eb",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91659.14 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1461,6 +1573,7 @@
   {
     "record_id": "rzp_norm_pay_gucfhzjejidvku",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9109920.69 between source and counterpart records.",
@@ -1474,6 +1587,7 @@
   {
     "record_id": "rzp_norm_pay_gxkoforpsc6dpb",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9165637.89 between source and counterpart records.",
@@ -1487,6 +1601,7 @@
   {
     "record_id": "rzp_norm_pay_hy85l5ul1vqf5e",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9247738.59 between source and counterpart records.",
@@ -1500,6 +1615,7 @@
   {
     "record_id": "rzp_norm_pay_i7s6oluzc48mpm",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9637.38 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1514,6 +1630,7 @@
   {
     "record_id": "rzp_norm_pay_icrjdrmc5jkhnq",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9955.74 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1528,6 +1645,7 @@
   {
     "record_id": "rzp_norm_pay_iog3xvy6ufr7wx",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91748.83 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1542,6 +1660,7 @@
   {
     "record_id": "rzp_norm_pay_iud1xszysl8oea",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b94999.09 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1556,6 +1675,7 @@
   {
     "record_id": "rzp_norm_pay_j3fuaminxlwelq",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9663.66 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1570,6 +1690,7 @@
   {
     "record_id": "rzp_norm_pay_ktvt45zfs8uhaa",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91157.35 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1584,6 +1705,7 @@
   {
     "record_id": "rzp_norm_pay_lgu33q3fx43sm6",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9843.09 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1598,6 +1720,7 @@
   {
     "record_id": "rzp_norm_pay_lnl0rav7z73oc4",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91235.25 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1612,6 +1735,7 @@
   {
     "record_id": "rzp_norm_pay_m8gzf0wu7d06p5",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9421766.73 between source and counterpart records.",
@@ -1625,6 +1749,7 @@
   {
     "record_id": "rzp_norm_pay_mk8k11c3ytcuq3",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9964.87 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1639,6 +1764,7 @@
   {
     "record_id": "rzp_norm_pay_mo32i7c6qpvtm9",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b93073.38 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1653,6 +1779,7 @@
   {
     "record_id": "rzp_norm_pay_mxt30m78kew3qc",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b916105.95 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1667,6 +1794,7 @@
   {
     "record_id": "rzp_norm_pay_n0d5nxwtzk2oq0",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91352.47 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1681,6 +1809,7 @@
   {
     "record_id": "rzp_norm_pay_n1ifksz7i59uv1",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9260.73 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1695,6 +1824,7 @@
   {
     "record_id": "rzp_norm_pay_nf4b6txj0os8rs",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91358.06 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1709,6 +1839,7 @@
   {
     "record_id": "rzp_norm_pay_nxp0bpj8dpbjlw",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b967.88 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1723,6 +1854,7 @@
   {
     "record_id": "rzp_norm_pay_oautkq0r1j7wro",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b93955.18 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1737,6 +1869,7 @@
   {
     "record_id": "rzp_norm_pay_ohpagejemgxplb",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91785.69 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1751,6 +1884,7 @@
   {
     "record_id": "rzp_norm_pay_oq5ijronxh3xmu",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9383.07 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1765,6 +1899,7 @@
   {
     "record_id": "rzp_norm_pay_ovd9dq2t0ogxv9",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b98084.40 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1779,6 +1914,7 @@
   {
     "record_id": "rzp_norm_pay_qjx53044ade17q",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9906.36 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1793,6 +1929,7 @@
   {
     "record_id": "rzp_norm_pay_rkwswaj8nqnz8d",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b926227.57 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1807,6 +1944,7 @@
   {
     "record_id": "rzp_norm_pay_s87n42z531gie0",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b95.00 between source and counterpart records.",
@@ -1820,6 +1958,7 @@
   {
     "record_id": "rzp_norm_pay_sbqllw4d8r6clg",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1834,6 +1973,7 @@
   {
     "record_id": "rzp_norm_pay_sst7oc7kcx3p9t",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9550.12 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1848,6 +1988,7 @@
   {
     "record_id": "rzp_norm_pay_tmrdzconb0csnx",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9984.74 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1862,6 +2003,7 @@
   {
     "record_id": "rzp_norm_pay_torryb7aviqa6d",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91588.01 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1876,6 +2018,7 @@
   {
     "record_id": "rzp_norm_pay_twd0sl06pc9v1c",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b911534.82 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1890,6 +2033,7 @@
   {
     "record_id": "rzp_norm_pay_tx751y39fyzfpu",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b918777.81 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1904,6 +2048,7 @@
   {
     "record_id": "rzp_norm_pay_uc3xt5hc1c0913",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95989.59 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1918,6 +2063,7 @@
   {
     "record_id": "rzp_norm_pay_ueuq8iapo88ng9",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9872.31 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1932,6 +2078,7 @@
   {
     "record_id": "rzp_norm_pay_v603h026dx0oxh",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9648.54 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1946,6 +2093,7 @@
   {
     "record_id": "rzp_norm_pay_vdkewic0u4wjqr",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9240.70 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1960,6 +2108,7 @@
   {
     "record_id": "rzp_norm_pay_vjxkvwf3glkoks",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b911869.63 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1974,6 +2123,7 @@
   {
     "record_id": "rzp_norm_pay_vkrhd2ua6wwtt4",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b99785.08 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -1988,6 +2138,7 @@
   {
     "record_id": "rzp_norm_pay_vrw2tqzv3bhiqg",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9927.60 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2002,6 +2153,7 @@
   {
     "record_id": "rzp_norm_pay_vxsa46oc07rl5q",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b96095.18 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2016,6 +2168,7 @@
   {
     "record_id": "rzp_norm_pay_wv5o9yefmrz3kz",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9476943.39 between source and counterpart records.",
@@ -2029,6 +2182,7 @@
   {
     "record_id": "rzp_norm_pay_x492vl031p5mnx",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9189.09 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2043,6 +2197,7 @@
   {
     "record_id": "rzp_norm_pay_x6gjjfghqappbq",
     "source": "razorpay",
+    "merchant_id": "merch_apollo",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b94667.72 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2057,6 +2212,7 @@
   {
     "record_id": "rzp_norm_pay_xjgl6hdrvaxpx6",
     "source": "razorpay",
+    "merchant_id": "merch_zomato",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b91138.77 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2071,6 +2227,7 @@
   {
     "record_id": "rzp_norm_pay_xt0g5c7zte8eck",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b94736.68 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2085,6 +2242,7 @@
   {
     "record_id": "rzp_norm_pay_ybsp1rt2p9n05u",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b92616911.55 between source and counterpart records.",
@@ -2098,6 +2256,7 @@
   {
     "record_id": "rzp_norm_pay_yikue94rm3bh9d",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9581.86 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2112,6 +2271,7 @@
   {
     "record_id": "rzp_norm_pay_z7is9ctdmqi1tx",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9286.91 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2126,6 +2286,7 @@
   {
     "record_id": "rzp_norm_pay_zcfe4ao970le1u",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
     "root_cause": "Discrepancy of \u20b9140210.73 between source and counterpart records.",
@@ -2139,6 +2300,7 @@
   {
     "record_id": "rzp_norm_pay_zdudlj0dc7ufdp",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9401.91 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2153,6 +2315,7 @@
   {
     "record_id": "rzp_norm_pay_zosg80o7duryac",
     "source": "razorpay",
+    "merchant_id": "merch_urbanco",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b919565.18 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2167,6 +2330,7 @@
   {
     "record_id": "rzp_norm_pay_zoxhwgx4t0fp61",
     "source": "razorpay",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95.00 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2181,6 +2345,7 @@
   {
     "record_id": "rzp_norm_pay_3l5kmc9dj4nksu",
     "source": "razorpay",
+    "merchant_id": "merch_bluedart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b93154.59 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2195,6 +2360,7 @@
   {
     "record_id": "rzp_norm_pay_bc0qcmqudmvtnp",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b95241.93 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2209,6 +2375,7 @@
   {
     "record_id": "rzp_norm_pay_x3gv2uwfsxvvla",
     "source": "razorpay",
+    "merchant_id": "merch_lenskart",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b94686.02 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2223,6 +2390,7 @@
   {
     "record_id": "bank_norm_banktxn_m6m3altyirh3xlwm",
     "source": "bank",
+    "merchant_id": "merch_urbanco",
     "category": "MISSING_UTR",
     "severity": "MEDIUM",
     "root_cause": "One record is missing UTR reference while counterpart contains 'B0JYUV2RVOCDFAZR'.",
@@ -2233,8 +2401,219 @@
     }
   },
   {
+    "record_id": "bank_norm_banktxn_ri65651q6vy6sw2i_split2",
+    "source": "bank",
+    "merchant_id": "merch_lenskart",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b9492.33 between source and counterpart records.",
+    "unexplained_amount_paise": 49233,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 49233,
+      "score": 0.75
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_k9j64xvtcivvwgyl",
+    "source": "bank",
+    "merchant_id": "merch_apollo",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 528129,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 528129,
+      "date": "2026-04-14"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_v81sksc6jjgh7ohk_split2",
+    "source": "bank",
+    "merchant_id": "merch_apollo",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b916105.94 between source and counterpart records.",
+    "unexplained_amount_paise": 1610594,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 1610594,
+      "score": 0.75
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_g67pc5zvc8x2uu67",
+    "source": "bank",
+    "merchant_id": "merch_urbanco",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b94271.71 between source and counterpart records.",
+    "unexplained_amount_paise": 427171,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 427171,
+      "score": 0.6
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_yzdpc6lpmwoqx6h3_split2",
+    "source": "bank",
+    "merchant_id": "merch_zomato",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b9927.59 between source and counterpart records.",
+    "unexplained_amount_paise": 92759,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 92759,
+      "score": 0.75
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_st38n15nnigi2ykt",
+    "source": "bank",
+    "merchant_id": "merch_apollo",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 150470,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 150470,
+      "date": "2026-05-20"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_ql12f41yktzzakxh",
+    "source": "bank",
+    "merchant_id": "merch_lenskart",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 116989,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 116989,
+      "date": "2026-06-11"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_e4cukp603vvvca4v",
+    "source": "bank",
+    "merchant_id": "merch_lenskart",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 620454,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 620454,
+      "date": "2026-06-17"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_jnqv4a5ajzsrj4km",
+    "source": "bank",
+    "merchant_id": "merch_bluedart",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 171368,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 171368,
+      "date": "2026-04-09"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_grq36v0mfqt26lna",
+    "source": "bank",
+    "merchant_id": "merch_apollo",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 355214,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 355214,
+      "date": "2026-05-16"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_zik6bqlbvqqsf6ln",
+    "source": "bank",
+    "merchant_id": "merch_nykaa",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 229336,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 229336,
+      "date": "2026-01-16"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_ioohzrrvq3krga0j_split2",
+    "source": "bank",
+    "merchant_id": "merch_bluedart",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b9300.65 between source and counterpart records.",
+    "unexplained_amount_paise": 30065,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 30065,
+      "score": 0.75
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_n1hzwy6yvnte8b8u",
+    "source": "bank",
+    "merchant_id": "merch_urbanco",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 0,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 0,
+      "date": "2026-06-07"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_51ja1wi5wbyqkh2t_split2",
+    "source": "bank",
+    "merchant_id": "merch_lenskart",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b91470.05 between source and counterpart records.",
+    "unexplained_amount_paise": 147005,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 147005,
+      "score": 0.75
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_7g8wq6xp7ukpyrdg_split2",
+    "source": "bank",
+    "merchant_id": "merch_nykaa",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b93955.18 between source and counterpart records.",
+    "unexplained_amount_paise": 395518,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 395518,
+      "score": 0.75
+    }
+  },
+  {
     "record_id": "bank_norm_banktxn_1xqg6izqf82wk1l3",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "REFUND_OR_FEE_DEDUCTION",
     "severity": "MEDIUM",
     "root_cause": "Net settlement credit is \u20b9904.03 lower than expected gross amount (potential refund/chargeback deduction).",
@@ -2247,47 +2626,79 @@
     }
   },
   {
-    "record_id": "bank_norm_banktxn_n1hzwy6yvnte8b8u",
+    "record_id": "bank_norm_banktxn_hcjvgddjj862qn42",
     "source": "bank",
+    "merchant_id": "merch_bluedart",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 0,
+    "unexplained_amount_paise": 24849,
     "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
     "evidence": {
-      "amount_paise": 0,
-      "date": "2026-06-07"
+      "amount_paise": 24849,
+      "date": "2026-05-31"
     }
   },
   {
-    "record_id": "bank_norm_banktxn_tv7m57g7epjjsua6_split2",
+    "record_id": "bank_norm_banktxn_btnngv37hbl1fcrf_split2",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b9620.22 between source and counterpart records.",
-    "unexplained_amount_paise": 62022,
+    "root_cause": "Discrepancy of \u20b949.89 between source and counterpart records.",
+    "unexplained_amount_paise": 4989,
     "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
     "evidence": {
-      "diff_paise": 62022,
+      "diff_paise": 4989,
       "score": 0.75
     }
   },
   {
-    "record_id": "bank_norm_banktxn_k9j64xvtcivvwgyl",
+    "record_id": "bank_norm_banktxn_eja54isiptkveak5",
     "source": "bank",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 528129,
+    "unexplained_amount_paise": 176368,
     "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
     "evidence": {
-      "amount_paise": 528129,
-      "date": "2026-04-14"
+      "amount_paise": 176368,
+      "date": "2026-06-29"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_4ne069v3scopb3q9",
+    "source": "bank",
+    "merchant_id": "merch_nykaa",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 197210,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 197210,
+      "date": "2026-05-01"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_7xris1gxnk2ad5fs",
+    "source": "bank",
+    "merchant_id": "merch_zomato",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 35973,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 35973,
+      "date": "2026-06-21"
     }
   },
   {
     "record_id": "bank_norm_banktxn_5b1o2keljfawhm48",
     "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for bank record.",
@@ -2299,21 +2710,121 @@
     }
   },
   {
-    "record_id": "bank_norm_banktxn_v81sksc6jjgh7ohk_split2",
+    "record_id": "bank_norm_banktxn_7ji6mbxa6vc9ltzo",
     "source": "bank",
+    "merchant_id": "merch_zomato",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 841901,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 841901,
+      "date": "2026-02-19"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_4h7y7zq4l5nlh9eh",
+    "source": "bank",
+    "merchant_id": "merch_nykaa",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 4969883,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 4969883,
+      "date": "2026-04-03"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_c9an25jp8zg1trlc",
+    "source": "bank",
+    "merchant_id": "merch_bluedart",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 484274,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 484274,
+      "date": "2026-06-14"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_c88e1u9hzvog6bq6",
+    "source": "bank",
+    "merchant_id": "merch_nykaa",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 66722,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 66722,
+      "date": "2026-05-26"
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_zrrden5kwy1t0kc8_split2",
+    "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "AMOUNT_MISMATCH",
     "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b916105.94 between source and counterpart records.",
-    "unexplained_amount_paise": 1610594,
+    "root_cause": "Discrepancy of \u20b91138.76 between source and counterpart records.",
+    "unexplained_amount_paise": 113876,
     "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
     "evidence": {
-      "diff_paise": 1610594,
+      "diff_paise": 113876,
       "score": 0.75
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_ec7v5gtkmg4azaib_split2",
+    "source": "bank",
+    "merchant_id": "merch_lenskart",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b9581.86 between source and counterpart records.",
+    "unexplained_amount_paise": 58186,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 58186,
+      "score": 0.75
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_tv7m57g7epjjsua6_split2",
+    "source": "bank",
+    "merchant_id": "merch_zomato",
+    "category": "AMOUNT_MISMATCH",
+    "severity": "HIGH",
+    "root_cause": "Discrepancy of \u20b9620.22 between source and counterpart records.",
+    "unexplained_amount_paise": 62022,
+    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
+    "evidence": {
+      "diff_paise": 62022,
+      "score": 0.75
+    }
+  },
+  {
+    "record_id": "bank_norm_banktxn_9q3jidbv07zm42qu",
+    "source": "bank",
+    "merchant_id": "merch_urbanco",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for bank record.",
+    "unexplained_amount_paise": 148088,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 148088,
+      "date": "2026-05-17"
     }
   },
   {
     "record_id": "bank_norm_banktxn_spmvrptmx5djeiht",
     "source": "bank",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for bank record.",
@@ -2327,6 +2838,7 @@
   {
     "record_id": "bank_norm_banktxn_azy46lizleg104bs",
     "source": "bank",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for bank record.",
@@ -2338,372 +2850,9 @@
     }
   },
   {
-    "record_id": "bank_norm_banktxn_c9an25jp8zg1trlc",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 484274,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 484274,
-      "date": "2026-06-14"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_7g8wq6xp7ukpyrdg_split2",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b93955.18 between source and counterpart records.",
-    "unexplained_amount_paise": 395518,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 395518,
-      "score": 0.75
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_yzdpc6lpmwoqx6h3_split2",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b9927.59 between source and counterpart records.",
-    "unexplained_amount_paise": 92759,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 92759,
-      "score": 0.75
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_51ja1wi5wbyqkh2t_split2",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b91470.05 between source and counterpart records.",
-    "unexplained_amount_paise": 147005,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 147005,
-      "score": 0.75
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_ec7v5gtkmg4azaib_split2",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b9581.86 between source and counterpart records.",
-    "unexplained_amount_paise": 58186,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 58186,
-      "score": 0.75
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_hcjvgddjj862qn42",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 24849,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 24849,
-      "date": "2026-05-31"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_9q3jidbv07zm42qu",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 148088,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 148088,
-      "date": "2026-05-17"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_c88e1u9hzvog6bq6",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 66722,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 66722,
-      "date": "2026-05-26"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_btnngv37hbl1fcrf_split2",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b949.89 between source and counterpart records.",
-    "unexplained_amount_paise": 4989,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 4989,
-      "score": 0.75
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_7ji6mbxa6vc9ltzo",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 841901,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 841901,
-      "date": "2026-02-19"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_ioohzrrvq3krga0j_split2",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b9300.65 between source and counterpart records.",
-    "unexplained_amount_paise": 30065,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 30065,
-      "score": 0.75
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_g67pc5zvc8x2uu67",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b94271.71 between source and counterpart records.",
-    "unexplained_amount_paise": 427171,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 427171,
-      "score": 0.6
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_zrrden5kwy1t0kc8_split2",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b91138.76 between source and counterpart records.",
-    "unexplained_amount_paise": 113876,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 113876,
-      "score": 0.75
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_ql12f41yktzzakxh",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 116989,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 116989,
-      "date": "2026-06-11"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_grq36v0mfqt26lna",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 355214,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 355214,
-      "date": "2026-05-16"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_e4cukp603vvvca4v",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 620454,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 620454,
-      "date": "2026-06-17"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_ri65651q6vy6sw2i_split2",
-    "source": "bank",
-    "category": "AMOUNT_MISMATCH",
-    "severity": "HIGH",
-    "root_cause": "Discrepancy of \u20b9492.33 between source and counterpart records.",
-    "unexplained_amount_paise": 49233,
-    "suggested_action": "Inspect fee/MDR schedule or banking adjustment entries.",
-    "evidence": {
-      "diff_paise": 49233,
-      "score": 0.75
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_jnqv4a5ajzsrj4km",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 171368,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 171368,
-      "date": "2026-04-09"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_4ne069v3scopb3q9",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 197210,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 197210,
-      "date": "2026-05-01"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_4h7y7zq4l5nlh9eh",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 4969883,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 4969883,
-      "date": "2026-04-03"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_zik6bqlbvqqsf6ln",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 229336,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 229336,
-      "date": "2026-01-16"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_st38n15nnigi2ykt",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 150470,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 150470,
-      "date": "2026-05-20"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_eja54isiptkveak5",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 176368,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 176368,
-      "date": "2026-06-29"
-    }
-  },
-  {
-    "record_id": "bank_norm_banktxn_7xris1gxnk2ad5fs",
-    "source": "bank",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for bank record.",
-    "unexplained_amount_paise": 35973,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 35973,
-      "date": "2026-06-21"
-    }
-  },
-  {
-    "record_id": "merch_norm_led_csvgbprdakqe",
-    "source": "merchant",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for merchant record.",
-    "unexplained_amount_paise": 247112,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 247112,
-      "date": "2026-05-31"
-    }
-  },
-  {
-    "record_id": "merch_norm_led_t09cbjj5bfdr",
-    "source": "merchant",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for merchant record.",
-    "unexplained_amount_paise": 269900,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 269900,
-      "date": "2026-02-05"
-    }
-  },
-  {
-    "record_id": "merch_norm_led_zv1xtx4lsg7r",
-    "source": "merchant",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for merchant record.",
-    "unexplained_amount_paise": 811652,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 811652,
-      "date": "2026-05-25"
-    }
-  },
-  {
-    "record_id": "merch_norm_led_nrpsolbvvnxh",
-    "source": "merchant",
-    "category": "MISSING_COUNTERPART",
-    "severity": "HIGH",
-    "root_cause": "No plausible candidate link found across sources for merchant record.",
-    "unexplained_amount_paise": 97231,
-    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
-    "evidence": {
-      "amount_paise": 97231,
-      "date": "2026-04-20"
-    }
-  },
-  {
     "record_id": "merch_norm_led_2ve0eetdfulo",
     "source": "merchant",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for merchant record.",
@@ -2715,21 +2864,51 @@
     }
   },
   {
-    "record_id": "merch_norm_led_zz86s0aqu7o4",
+    "record_id": "merch_norm_led_csvgbprdakqe",
     "source": "merchant",
+    "merchant_id": "merch_lenskart",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for merchant record.",
-    "unexplained_amount_paise": 1153482,
+    "unexplained_amount_paise": 247112,
     "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
     "evidence": {
-      "amount_paise": 1153482,
-      "date": "2026-06-14"
+      "amount_paise": 247112,
+      "date": "2026-05-31"
+    }
+  },
+  {
+    "record_id": "merch_norm_led_eav9ejg8h4p3",
+    "source": "merchant",
+    "merchant_id": "merch_bluedart",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for merchant record.",
+    "unexplained_amount_paise": 24333,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 24333,
+      "date": "2026-06-18"
+    }
+  },
+  {
+    "record_id": "merch_norm_led_nrpsolbvvnxh",
+    "source": "merchant",
+    "merchant_id": "merch_nykaa",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for merchant record.",
+    "unexplained_amount_paise": 97231,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 97231,
+      "date": "2026-04-20"
     }
   },
   {
     "record_id": "merch_norm_led_3oqxjeelru3w",
     "source": "merchant",
+    "merchant_id": "merch_zomato",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for merchant record.",
@@ -2741,16 +2920,45 @@
     }
   },
   {
-    "record_id": "merch_norm_led_eav9ejg8h4p3",
+    "record_id": "merch_norm_led_zv1xtx4lsg7r",
     "source": "merchant",
+    "merchant_id": "merch_nykaa",
     "category": "MISSING_COUNTERPART",
     "severity": "HIGH",
     "root_cause": "No plausible candidate link found across sources for merchant record.",
-    "unexplained_amount_paise": 24333,
+    "unexplained_amount_paise": 811652,
     "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
     "evidence": {
-      "amount_paise": 24333,
-      "date": "2026-06-18"
+      "amount_paise": 811652,
+      "date": "2026-05-25"
+    }
+  },
+  {
+    "record_id": "merch_norm_led_t09cbjj5bfdr",
+    "source": "merchant",
+    "merchant_id": "merch_zomato",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for merchant record.",
+    "unexplained_amount_paise": 269900,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 269900,
+      "date": "2026-02-05"
+    }
+  },
+  {
+    "record_id": "merch_norm_led_zz86s0aqu7o4",
+    "source": "merchant",
+    "merchant_id": "merch_zomato",
+    "category": "MISSING_COUNTERPART",
+    "severity": "HIGH",
+    "root_cause": "No plausible candidate link found across sources for merchant record.",
+    "unexplained_amount_paise": 1153482,
+    "suggested_action": "Verify transaction existence with counterparty payment gateway or bank.",
+    "evidence": {
+      "amount_paise": 1153482,
+      "date": "2026-06-14"
     }
   }
 ]

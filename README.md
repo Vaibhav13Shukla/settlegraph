@@ -109,7 +109,14 @@ The safety behavior has been checked beyond the main batch:
 - Calibration, replay, drift, baseline, noise, chaos, and holdout tooling.
 - Optional Claude reasoning for unresolved cases. It can propose a candidate;
   it cannot bypass verification or write a ledger entry.
+- A persisted operator review lifecycle: approve / reject / reclassify / resolve
+  with an explicit state machine, an append-only audit trail (who, what, when,
+  why, before/after), and optimistic-concurrency protection against two
+  reviewers overwriting one another. Decisions live in a `review_state.json`
+  overlay and never mutate the immutable batch artifacts (ADR 0012).
 - A single-file dashboard with a local HTTP API and a read-only FastAPI adapter.
+  Review actions are loopback-gated on the local console; the hosted snapshot
+  exposes the queue read-only.
 
 ## Known limits
 
