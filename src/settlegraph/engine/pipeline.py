@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import time
 from pathlib import Path
 
 from settlegraph.config import PipelineConfig
 from settlegraph.engine.assign import classify_unmatched, global_assign
+from settlegraph.engine.atomic_io import write_csv, write_json
 from settlegraph.engine.drift import ADWINDetector
 from settlegraph.engine.evaluate import evaluate as run_evaluate
 from settlegraph.engine.exceptions import ExceptionReport
@@ -159,8 +159,7 @@ def run_pipeline(
     print(f"  Loaded {len(rzp)} Razorpay, {len(bank)} bank, {len(merchant)} merchant records")
     if quarantined_rows:
         print(f"  Quarantined {len(quarantined_rows)} unparseable row(s) -- see quarantine.json")
-        with (output_path / "quarantine.json").open("w", encoding="utf-8") as fh:
-            json.dump([q.to_dict() for q in quarantined_rows], fh, indent=2)
+        write_json(output_path / "quarantine.json", [q.to_dict() for q in quarantined_rows])
 
     # Phase 2: Normalize
     print("[2/7] Normalizing records...")
@@ -176,8 +175,7 @@ def run_pipeline(
     )
     if duplicate_events:
         print(f"  Intercepted {len(duplicate_events)} duplicate record(s) -- see duplicates.json")
-        with (output_path / "duplicates.json").open("w", encoding="utf-8") as fh:
-            json.dump(duplicate_events, fh, indent=2)
+        write_json(output_path / "duplicates.json", duplicate_events)
 
     # Phase 3: Build candidate graph
     print("[3/7] Building candidate graph...")
@@ -291,8 +289,7 @@ def run_pipeline(
             f"  AI-resolved: {ai_resolved_count} exception(s) promoted after "
             "passing invariant verification"
         )
-        with (output_path / "ai_resolutions.json").open("w", encoding="utf-8") as fh:
-            json.dump(ai_log, fh, indent=2)
+        write_json(output_path / "ai_resolutions.json", ai_log)
 
     # Revenue assurance
     rev_assurance = compute_revenue_assurance(
@@ -304,28 +301,22 @@ def run_pipeline(
 
     # Assignments CSV
     if assignments:
-        import csv as csv_mod
-
         fields = list(assignments[0].keys())
-        with (output_path / "assignments.csv").open("w", newline="", encoding="utf-8") as fh:
-            writer = csv_mod.DictWriter(fh, fieldnames=fields)
-            writer.writeheader()
-            writer.writerows(assignments)
+        write_csv(output_path / "assignments.csv", fields, assignments)
 
     # Unmatched CSV
     if unmatched:
-        with (output_path / "unmatched.csv").open("w", newline="", encoding="utf-8") as fh:
-            writer = csv_mod.DictWriter(fh, fieldnames=["source", "record_id", "status"])
-            writer.writeheader()
-            writer.writerows(unmatched)
+        write_csv(
+            output_path / "unmatched.csv",
+            ["source", "record_id", "status"],
+            unmatched,
+        )
 
     # Exceptions JSON
-    with (output_path / "exceptions.json").open("w", encoding="utf-8") as fh:
-        json.dump([r.to_dict() for r in exception_reports], fh, indent=2)
+    write_json(output_path / "exceptions.json", [r.to_dict() for r in exception_reports])
 
     # Revenue Assurance JSON
-    with (output_path / "revenue_assurance.json").open("w", encoding="utf-8") as fh:
-        json.dump(rev_assurance, fh, indent=2)
+    write_json(output_path / "revenue_assurance.json", rev_assurance)
 
     # Summary JSON
     summary = {
@@ -370,8 +361,7 @@ def run_pipeline(
         print(f"  Recall:    {results['recall']}")
         print(f"  F1 Score:  {results['f1']}")
 
-        with (output_path / "evaluation.json").open("w", encoding="utf-8") as fh:
-            json.dump(results, fh, indent=2)
+        write_json(output_path / "evaluation.json", results)
 
     # Satellite reconciliation surfaces (tax-line, Route splits) -- run
     # automatically as part of the one existing pipeline entry point rather
@@ -421,8 +411,7 @@ def run_pipeline(
         run_id = str(uuid.uuid4())
         summary["run_id"] = run_id
 
-    with (output_path / "summary.json").open("w", encoding="utf-8") as fh:
-        json.dump(summary, fh, indent=2)
+    write_json(output_path / "summary.json", summary)
 
     # Plain-language digest -- last, since it summarizes everything above
     # and reads summary.json back from disk the same way the audit report

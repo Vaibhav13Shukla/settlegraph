@@ -86,7 +86,7 @@ Confirm the checkout is healthy before you change anything:
 
 ```bash
 make test                          # pytest -v --basetemp .pytest-tmp
-make lint                          # ruff check src tests scripts datagen
+make lint                          # ruff check src tests scripts datagen api
 ```
 
 `make test` should be fully green. If it is not on a clean checkout, that is itself a
@@ -247,8 +247,8 @@ Python is formatted and linted with **ruff** (config in `pyproject.toml`: line l
 100, target `py311`, rules `E`, `F`, `I`, `W`). Run before pushing:
 
 ```bash
-make format                        # ruff format src tests scripts datagen
-make lint                          # ruff check  src tests scripts datagen
+make format                        # ruff format src tests scripts datagen api
+make lint                          # ruff check src tests scripts datagen api
 ```
 
 CI runs `ruff format --check`, so unformatted code fails the build.

@@ -18,6 +18,10 @@ from settlegraph.engine.verify import (
 from settlegraph.models import NormalizedRecord
 
 
+def test_invariant_violations_are_standard_exceptions() -> None:
+    assert InvariantViolation.__bases__ == (Exception,)
+
+
 def _make_rzp(
     net: int = 9764,
     settlement_date: date | None = None,

@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from settlegraph.engine.atomic_io import write_text
 from settlegraph.engine.exceptions import ExceptionReport
 from settlegraph.models import NormalizedRecord
 
@@ -375,5 +376,5 @@ def generate_markdown_audit_report(
     )
 
     report_content = "\n".join(lines)
-    (output_path / "AUDIT_REPORT.md").write_text(report_content, encoding="utf-8")
+    write_text(output_path / "AUDIT_REPORT.md", report_content)
     return report_content

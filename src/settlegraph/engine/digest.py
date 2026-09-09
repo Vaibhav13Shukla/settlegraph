@@ -17,6 +17,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from settlegraph.engine.atomic_io import write_text
+
 
 def _load(path: Path) -> Any:
     if not path.exists():
@@ -116,5 +118,5 @@ def build_digest(results_dir: Path) -> str:
 
 def run_digest(results_dir: Path) -> str:
     text = build_digest(results_dir)
-    (results_dir / "DIGEST.md").write_text(text, encoding="utf-8")
+    write_text(results_dir / "DIGEST.md", text)
     return text

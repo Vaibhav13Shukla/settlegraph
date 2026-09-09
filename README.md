@@ -168,7 +168,7 @@ path calls out to Anthropic.
 ```bash
 py -3.12 -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev]"
-.venv\Scripts\python -m pytest -q --basetemp .pytest-tmp   # 288 tests
+.venv\Scripts\python -m pytest -q --basetemp .pytest-tmp   # all tests must pass
 ```
 
 **The whole demo, in two commands:**
@@ -202,6 +202,16 @@ Outputs land in `results/`: `assignments.csv`, `unmatched.csv`,
 
 `docs/adr/0006-pdf-compliance.md` is the honest checklist against the
 official Track 04 brief.
+
+### Deployment boundary
+
+The Docker/local service is the stateful deployment: it runs reconciliation,
+writes batch artifacts, and serves the interactive dashboard. The Vercel
+entrypoint (`api.index:app`) exposes the dashboard and read-only artifact API.
+Its `POST /api/run-reconciliation` endpoint is intentionally disabled because
+serverless filesystem writes are not durable or authenticated financial state.
+Do not use the Vercel adapter as the reconciliation worker without adding
+durable artifact storage, authentication, and a job service.
 
 ---
 

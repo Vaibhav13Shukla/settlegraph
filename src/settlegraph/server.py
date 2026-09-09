@@ -48,6 +48,7 @@ _BASELINE_RUNNERS = [
     ("baseline_b_amount_date", "Baseline B: Amount + Date Window", run_amount_date_baseline),
     ("baseline_c_fuzzy", "Baseline C: Fuzzy Heuristic", run_fuzzy_baseline),
 ]
+_MAX_QUESTION_LENGTH = 2_000
 
 
 class SettleGraphAPIHandler(BaseHTTPRequestHandler):
@@ -335,6 +336,15 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
         """Answer queries using Claude Agent SDK if available, else deterministic fallbacks."""
         if not question:
             self._send_json({"status": "error", "error": "No question provided"}, status=400)
+            return
+        if len(question) > _MAX_QUESTION_LENGTH:
+            self._send_json(
+                {
+                    "status": "error",
+                    "error": f"Question exceeds the {_MAX_QUESTION_LENGTH}-character limit",
+                },
+                status=413,
+            )
             return
 
         import os

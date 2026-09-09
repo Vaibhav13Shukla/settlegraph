@@ -311,3 +311,17 @@ def test_ask_endpoint(tmp_path: Path):
     assert status == 200
     data = json.loads(body)
     assert "100.0% precision" in data["answer"]
+
+
+def test_ask_endpoint_rejects_oversized_questions(tmp_path: Path) -> None:
+    handler = SettleGraphAPIHandler.__new__(SettleGraphAPIHandler)
+    handler.server = SimpleNamespace(results_dir=tmp_path / "results")
+    handler.wfile = io.BytesIO()
+    handler.send_response = MagicMock()
+    handler.send_header = MagicMock()
+    handler.end_headers = MagicMock()
+
+    handler._handle_ask("x" * 2_001)
+
+    assert handler.send_response.call_args[0][0] == 413
+    assert "character limit" in json.loads(handler.wfile.getvalue())["error"]

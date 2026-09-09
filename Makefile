@@ -25,13 +25,13 @@ e2e:
 	python scripts/run_e2e.py
 
 lint:
-	ruff check src tests scripts datagen
+	ruff check src tests scripts datagen api
 
 format:
-	ruff format src tests scripts datagen
+	ruff format src tests scripts datagen api
 
 format-check:
-	ruff format --check src tests scripts datagen
+	ruff format --check src tests scripts datagen api
 
 docker-build:
 	docker build -t settlegraph:latest .

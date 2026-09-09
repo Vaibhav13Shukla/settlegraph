@@ -6,7 +6,7 @@ from settlegraph.config import PipelineConfig
 from settlegraph.models import NormalizedRecord
 
 
-class InvariantViolation(BaseException):
+class InvariantViolation(Exception):
     """Raised when a hard accounting invariant fails."""
 
     def __init__(self, message: str, details: dict | None = None):

@@ -145,6 +145,12 @@ than assumed.
 | `history.jsonl` | JSON Lines | Append-only run history; `cat`/`tail`/`grep`-able |
 | `AUDIT_REPORT.md`, `DIGEST.md` | Markdown | Read by a human, not a client library |
 
+Batch artifacts are published with a temporary-file, `fsync`, and atomic
+rename sequence (`engine/atomic_io.py`). A process interrupted during one
+artifact write cannot leave a truncated JSON, CSV, or Markdown file at the
+published path. This is file-level crash safety; multi-process batch
+transactionality still requires shared durable storage and a job lock.
+
 The Track 04 brief names "SQLite / PostgreSQL" as the suggested storage
 layer. This uses neither, and that is a decision with a stated reason
 (`engine/history_store.py`, ADR 0006): every operation the persistence layer
