@@ -236,7 +236,13 @@
     .brand-name { font-family: var(--font-display); font-size: 16px; font-weight: 400; color: var(--ink); }
 
     /* ----------------------------------------------------------------- Nav */
-    .nav { display: flex; gap: 20px; overflow-x: auto; padding: 8px 18px; border: 0; border-radius: 200px; background: var(--ash); }
+    .nav { display: flex; gap: 20px; overflow-x: auto; padding: 8px 18px; border: 0; border-radius: 200px; background: var(--ash); align-items: center; }
+    .nav-group-label {
+      font-family: var(--font-display);
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); opacity: 0.7; white-space: nowrap; align-self: center;
+    }
+    .nav-divider { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line, rgba(0,0,0,0.12)); flex: 0 0 auto; }
     .nav-link {
       background: none; border: 0;
       padding: 8px 0;
@@ -313,7 +319,13 @@
           <button id="btn-reconcile" onclick="triggerReconciliation()" class="btn btn-primary btn-sm">Run reconciliation</button>
         </div>
       </div>
+      <!-- Two audiences, one dashboard (expert feedback I): Operations is the
+           reconciliation analyst's daily surface (exposure, what needs review,
+           the ledger, ask); Engineering is the diagnostic/methodology surface
+           (decision internals, failure injection, the audit artifact). Same
+           tabs and switchTab calls as before -- grouped, not rebuilt. -->
       <nav class="nav">
+        <span class="nav-group-label">Operations</span>
         <button onclick="switchTab('overview')" id="tab-overview" class="nav-link active">Executive Cockpit</button>
         <button onclick="switchTab('exceptions')" id="tab-exceptions" class="nav-link">
           <span>Exceptions</span><span id="badge-exceptions" class="pill">0</span>
@@ -322,10 +334,12 @@
           <span>Review queue</span><span id="badge-review" class="pill">0</span>
         </button>
         <button onclick="switchTab('ledger')" id="tab-ledger" class="nav-link">Ledger</button>
+        <button onclick="switchTab('qa')" id="tab-qa" class="nav-link">Ask</button>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <span class="nav-group-label">Engineering</span>
         <button onclick="switchTab('decisions')" id="tab-decisions" class="nav-link">Decisions</button>
         <button onclick="switchTab('sandbox')" id="tab-sandbox" class="nav-link">Failure sandbox</button>
         <button onclick="switchTab('audit')" id="tab-audit" class="nav-link">Audit report</button>
-        <button onclick="switchTab('qa')" id="tab-qa" class="nav-link">Ask</button>
       </nav>
     </div>
   </header>
@@ -372,6 +386,11 @@
             <div class="t-label">Unexplained exposure</div>
             <div class="t-metric" id="stat-exposure">--</div>
             <div class="t-caption">Flagged for review · <span id="stat-exposure-exact">--</span></div>
+          </div>
+          <div class="card card-sm stack-8">
+            <div class="t-label">Wrongly auto-booked</div>
+            <div class="t-metric" id="stat-false-book">--</div>
+            <div class="t-caption">Rupees booked unattended onto a wrong counterpart · worst-case single auto-book <span id="stat-worst-case">--</span></div>
           </div>
         </section>
 
@@ -963,6 +982,14 @@
       if (evaluation && evaluation.safe_auto_resolution_rate !== undefined) {
         document.getElementById('eval-safe-auto-rate').innerText = (evaluation.safe_auto_resolution_rate * 100).toFixed(1) + '%';
         document.getElementById('eval-false-book-rate').innerText = (evaluation.false_auto_book_rate * 100).toFixed(2) + '%';
+      }
+      // Amount-weighted exposure (offline view): the rupees, not the rate. A
+      // wrong auto-book's cost is asymmetric in money, so surface the rupee
+      // figure and the largest single unattended decision alongside the rate.
+      if (evaluation && evaluation.false_auto_booked_exposure_inr !== undefined) {
+        setMoney('stat-false-book', evaluation.false_auto_booked_exposure_inr);
+        const wc = document.getElementById('stat-worst-case');
+        if (wc) wc.innerText = compactInr(evaluation.worst_case_single_auto_book_inr || 0);
       }
       if (evaluation && evaluation.dangerous_miss_rate !== undefined) {
         const nc = evaluation.no_counterpart_total || 0;
