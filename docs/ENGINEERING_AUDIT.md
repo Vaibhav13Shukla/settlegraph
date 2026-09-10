@@ -224,3 +224,37 @@ Implemented the first slice of the focused rebuild: **merchant identity + cross-
 **Benchmark-narrative correction (important, honest finding):** with realistic independent identifiers, **all three naive baselines reach 100% precision with 0 false auto-books** and each finds slightly *more* true positives than SettleGraph (A 854, B 866, C 872 vs 839), because they never abstain. The previously-reported fuzzy-baseline **27.70% false-auto-book rate is retracted** — it was an artifact of the old sequential `RZP{index:012d}` UTR format (near-identical strings fool `difflib.SequenceMatcher`); real 16-char random UTRs do not resemble each other. The data-realism fix therefore *invalidated the project's own headline benchmark claim*, and that is reported rather than re-manufactured (round-amount clustering was considered and rejected as tuning-to-a-result). SettleGraph's safety case now rests on abstention under ambiguity, merchant isolation, and the invariant gate — demonstrated per-scenario in `datagen/adversarial.py`, not on out-scoring strawmen on an easy batch.
 
 Full suite (clean temp dir): green. The "81 Windows errors" in §6 were purely a poisoned `pytest-of-LENOVO` temp root; a clean `--basetemp` makes the whole suite pass.
+
+---
+
+## 15. Operator review lifecycle (this session)
+
+The highest-impact gap from §10 is closed. A persisted review-decision layer
+(`engine/review.py`, ADR 0012) sits as an **overlay** over the immutable batch
+artifacts — it never mutates `assignments.csv`/`exceptions.json`, so replay
+determinism is preserved.
+
+- **State machine:** `OPEN → APPROVED / REJECTED / RESOLVED`, plus `RECLASSIFY`
+  (re-triage in place) and `REOPEN` (un-close). One transition table; illegal
+  moves raise `IllegalTransition`.
+- **Audit trail:** append-only, every transition records event id, case,
+  merchant, actor, action, previous/new status, reason, timestamp.
+- **Optimistic concurrency:** per-case `version`; a stale decision is refused
+  with `ConcurrencyConflict` (HTTP 409) — double-approval is impossible and
+  tested.
+- **Endpoints:** `GET /api/review-queue` + `GET /api/audit` (read-only, both the
+  stdlib server and the FastAPI adapter); `POST /api/exceptions/<case>/<action>`
+  behind the existing loopback mutation gate (local console only; hosted demo is
+  read-only). `ExceptionReport` now carries `merchant_id` so the queue groups by
+  portfolio.
+- **UI:** a real Review queue tab in `web/index.html` with working
+  Approve/Reject/Reclassify/Resolve buttons calling those endpoints, a reviewer
+  id (recorded, not authenticated — demo), per-case reason, and 409 handling.
+- **Verified live:** approving a case dropped the open badge 208→207, removed it
+  from the queue, and wrote an `OPEN→APPROVED` audit event. 16 new tests
+  (`tests/test_review.py`); full suite 326 passed.
+
+**Still explicitly unbuilt** (honest scope): authentication / per-operator
+authorization (isolation is enforced in the engine, not at an access boundary),
+multi-writer durability (single-writer file store; the `ReviewStore` interface
+is the seam for a DB later), and a hosted mutable console.
