@@ -100,12 +100,18 @@ The safety behavior has been checked beyond the main batch:
 - SHA-256 duplicate interception for identical re-imports.
 - Candidate generation with UTR, identity, amount, and date signals.
 - Merchant-scoped reconciliation: the candidate graph refuses to link records
-  across different merchants, tested against a same-UTR cross-merchant collision
-  (ADR 0010).
+  across different merchants, and the invariant gate rejects a cross-merchant
+  booking regardless of who proposed it — including the AI resolver's
+  graph-bypassing widen path (ADR 0010).
 - Fellegi-Sunter-style weighted scoring.
 - Global assignment with per-leg exclusivity and near-tie abstention.
-- Invariant checks for amount, date, direction, and Razorpay record type.
+- Invariant checks for amount, date, direction, merchant, and Razorpay record
+  type — the same gate every match must clear, exercised against reversal and
+  chargeback scenarios in the adversarial corpus.
 - Exception categories with evidence, severity, remediation, and rupee exposure.
+- Amount-weighted exposure in evaluation (rupees booked onto a wrong
+  counterpart, worst-case single auto-book) — the offline correctness view,
+  kept distinct from the live revenue-assurance cash view (docs/EVALUATION.md).
 - Calibration, replay, drift, baseline, noise, chaos, and holdout tooling.
 - Optional Claude reasoning for unresolved cases. It can propose a candidate;
   it cannot bypass verification or write a ledger entry.

@@ -258,3 +258,51 @@ determinism is preserved.
 authorization (isolation is enforced in the engine, not at an access boundary),
 multi-writer durability (single-writer file store; the `ReviewStore` interface
 is the seam for a DB later), and a hosted mutable console.
+
+---
+
+## 16. Remaining expert-feedback pass (this session)
+
+After the focused rebuild (§14–15), the rest of the §9 feedback set was worked
+through in dependency order, one small commit each, each pushed so CI validated
+it. Correctness-per-line, not volume (§13).
+
+- **AI-path merchant isolation (closes a real bypass of A/F/N's guarantee).**
+  `ai_reasoner._widen_candidates` scans the bank pool on date+amount and does
+  not go through `build_candidate_graph`, and `verify_settlegraph_invariants`
+  had no merchant check — so an AI-widened cross-merchant leg could be booked as
+  `AI_RESOLVED_MATCH`. Closed at the authoritative gate
+  (`verify_merchant_invariant`, fail-safe on unknown ids) plus a defense-in-depth
+  filter in the widen scan. ADR 0010 updated; the guarantee now holds on the AI
+  path, not only the deterministic one.
+- **Amount-weighted exposure (J/K).** `evaluate()` now reports the auto-booked
+  decisions weighted by settlement amount: `false_auto_booked_exposure_inr`
+  (rupees booked onto a wrong counterpart — **₹0.00** on seed 42, the claim
+  worth making, not "precision 1.0"), `worst_case_single_auto_book_inr`
+  (**₹41,088.48**, blast radius of one unattended decision), and
+  `amount_weighted_precision`. Kept deliberately distinct from
+  `revenue_assurance`'s live view rather than co-mingled (the real J/K defect);
+  FN is not rupee-weighted because ground truth carries no amount — documented,
+  not reconstructed from a partial source. EVALUATION.md §1a.
+- **Reversal / chargeback (D).** Added to the adversarial corpus (not the main
+  generator, so zero seeded-batch churn): a Razorpay `refund`/reversal caught by
+  the record-type invariant, and a bank *debit* chargeback caught by the
+  direction invariant — two failures exercising two different invariants.
+- **Dead enum removed (C).** `relationship_type` dropped `merge`,
+  `adjustment_for`, `timing_only` — never generated, matched, evaluated, or in
+  any committed data. `merge` in particular claimed an N:1 capability the system
+  does not have; real N:1 is a reconciliation-unit change, not an enum edit.
+- **Dashboard grouped Operations vs Engineering (I).** The one dashboard's nav
+  is now two labelled groups (same tabs, same `switchTab`); the exposure figure
+  is surfaced in the Operations cockpit.
+
+**Deliberately NOT done, and why:** authentication/authorization (ADR 0012
+rejected invented per-user auth as fake security — reversing that to clear a
+checklist is worse than the documented gap); real N:1 aggregation (changes the
+reconciliation unit D2 and re-invalidates every number — a separate decision);
+100k-scale claims (measured honestly to 20k; an unmeasured "scales to 100k" is
+the exact fabrication the expert probed for); and a `FINAL_ENGINEERING_REVIEW.md`
+(a directive deliverable for a 30-phase run that was not performed — this audit
+plus ADRs 0010–0012 are the record).
+
+Suite grew 326 → **337 passed**; branch CI green across the 9-cell matrix.
