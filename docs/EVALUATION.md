@@ -35,6 +35,40 @@ everything starves the first.
 
 ---
 
+## 1a. Amount-weighted exposure — rupees, not counts
+
+Precision treats a wrong ₹10,00,000 settlement and a wrong ₹100 one as one
+false positive each. A reconciliation analyst does not: the cost is asymmetric
+in *rupees*, not in *rows*. `evaluate()` therefore also reports the auto-booked
+decisions weighted by settlement amount (seed 42, 1,000 records):
+
+| Amount-weighted metric | Value |
+| --- | ---: |
+| Rupees auto-booked unattended | **₹28,97,124.59** |
+| …of which booked onto the **wrong** counterpart | **₹0.00** |
+| Worst-case single unattended auto-book (blast radius) | **₹41,088.48** |
+| Amount-weighted precision | 1.0 |
+
+The claim worth making is the second row, not "precision 1.0": **zero rupees
+were booked unattended onto a wrong counterpart.** The worst-case row is the
+blast radius of trusting any *one* auto-match without review — the largest
+single decision the system made on its own was ₹41,088.48.
+
+**Offline vs live — two different questions, deliberately kept apart.** This
+table is the *offline* view: it needs hidden ground truth to ask whether the
+booked rupees were *correct*, so it exists only in evaluation. The *live* view
+an analyst sees in production is `revenue_assurance` (`engine/report.py`),
+which sums rupees reconciled / held for review / unexplained **without** ground
+truth. The two are not merged: one answers "how much money is where" (live),
+the other "was the money we moved moved correctly" (offline). Amount-weighted
+recall (rupees of true matches *missed*) is intentionally **not** reported — a
+missed payment's authoritative amount lives on the payment record, which
+`ground_truth.csv` does not carry; the honest "rupees not yet booked" figure is
+revenue assurance's pending + unexplained totals, not a number reconstructed
+here from a partial source.
+
+---
+
 ## 2. Baseline comparison — including where we lose
 
 Three baselines, all scored by the identical `evaluate()` harness against the

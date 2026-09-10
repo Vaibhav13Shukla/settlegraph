@@ -208,6 +208,19 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
     rzp_to_bank: dict[str, str] = {}
     ai_assisted_matches = 0
     matchable_labels = {"AUTO_MATCH", "AI_RESOLVED_MATCH"}
+    # Amount-weighted exposure (offline view). `precision` above answers "what
+    # fraction of auto-books were correct"; it says nothing about how much
+    # *money* rode on a wrong one. A wrong ₹10,00,000 settlement and a wrong
+    # ₹100 one count identically in precision, which is exactly the asymmetry
+    # a reconciliation analyst cares about. So we also weight the auto-booked
+    # razorpay↔bank decisions by their settlement amount. This is the offline
+    # counterpart to `revenue_assurance` (report.py): revenue assurance sums
+    # rupees reconciled/held/unexplained *without* ground truth (the live view
+    # an analyst sees in production); here we can additionally ask whether the
+    # booked rupees were *correct*, which only ground truth can answer.
+    rzp_booked_amount: dict[str, int] = {}
+    auto_booked_amount_paise = 0
+    worst_case_single_auto_book_paise = 0
     for a in assignments:
         sources = {a["source_a"], a["source_b"]}
         if sources == {"razorpay", "bank"} and a["label"] in matchable_labels:
@@ -216,10 +229,15 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
             if a["source_a"] == "razorpay":
                 rzp_orig = a["source_a_id"].replace("rzp_norm_", "")
                 bank_orig = a["source_b_id"].replace("bank_norm_", "")
+                rzp_amount = int(a.get("a_amount_paise") or 0)
             else:
                 rzp_orig = a["source_b_id"].replace("rzp_norm_", "")
                 bank_orig = a["source_a_id"].replace("bank_norm_", "")
+                rzp_amount = int(a.get("b_amount_paise") or 0)
             rzp_to_bank[rzp_orig] = bank_orig
+            rzp_booked_amount[rzp_orig] = rzp_amount
+            auto_booked_amount_paise += rzp_amount
+            worst_case_single_auto_book_paise = max(worst_case_single_auto_book_paise, rzp_amount)
 
     # Compute metrics
     true_positives = 0
@@ -257,6 +275,16 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
     dangerous_misses = 0
     correctly_abstained_no_counterpart = 0
 
+    # Amount-weighted TP/FP (paise). Only TP and FP are weighted here: both are
+    # auto-booked razorpay↔bank rows that carry a settlement amount. FN is
+    # deliberately *not* rupee-weighted -- a missed match's authoritative
+    # amount lives on the payment record, which ground_truth.csv does not carry
+    # and this evaluator does not load; the honest "rupees not yet booked" view
+    # is `revenue_assurance`'s pending + unexplained totals, not a number
+    # reconstructed here from a partial source.
+    correct_auto_booked_paise = 0
+    false_auto_booked_paise = 0
+
     for rzp_id, expected_bank_ids in gt_map.items():
         is_no_counterpart = not expected_bank_ids
         if rzp_id not in rzp_to_bank:
@@ -273,12 +301,14 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
             matched_bank = rzp_to_bank[rzp_id]
             if matched_bank in expected_bank_ids:
                 true_positives += 1
+                correct_auto_booked_paise += rzp_booked_amount.get(rzp_id, 0)
                 anomaly = anomaly_by_id.get(rzp_id, "none") or "none"
                 if anomaly not in anomaly_breakdown:
                     anomaly_breakdown[anomaly] = {"tp": 0, "fp": 0, "fn": 0}
                 anomaly_breakdown[anomaly]["tp"] += 1
             else:
                 false_positives += 1
+                false_auto_booked_paise += rzp_booked_amount.get(rzp_id, 0)
                 if is_no_counterpart:
                     no_counterpart_total += 1
                     dangerous_misses += 1
@@ -354,6 +384,26 @@ def evaluate(assignment_path: Path, ground_truth_path: Path) -> dict[str, Any]:
         # batch to measure them against -- an undefined ratio reported as a
         # perfect score would overstate; reported as 0.0 it is at least a
         # visible "n=0" via no_counterpart_total rather than a silent lie.
+        # Amount-weighted exposure (offline view; needs ground truth). The
+        # asymmetric-cost answer to J/K: precision treats every wrong auto-book
+        # as equal, these treat them by the rupees at stake.
+        # `false_auto_booked_exposure_inr` is the headline safety number --
+        # rupees the system booked unattended onto the *wrong* counterpart
+        # (0 here, and that is the claim worth making, not "precision 1.0").
+        # `worst_case_single_auto_book_inr` is the blast radius of any one
+        # unattended decision. `amount_weighted_precision` is rupees-correct /
+        # rupees-booked (vacuously 1.0 while false_auto_booked is 0, reported
+        # for honesty rather than because it is informative on this batch).
+        "auto_booked_exposure_inr": round(auto_booked_amount_paise / 100, 2),
+        "correct_auto_booked_exposure_inr": round(correct_auto_booked_paise / 100, 2),
+        "false_auto_booked_exposure_inr": round(false_auto_booked_paise / 100, 2),
+        "worst_case_single_auto_book_inr": round(worst_case_single_auto_book_paise / 100, 2),
+        "amount_weighted_precision": round(
+            correct_auto_booked_paise / (correct_auto_booked_paise + false_auto_booked_paise),
+            4,
+        )
+        if (correct_auto_booked_paise + false_auto_booked_paise) > 0
+        else 0.0,
         "no_counterpart_total": no_counterpart_total,
         "dangerous_misses": dangerous_misses,
         "dangerous_miss_rate": round(dangerous_misses / no_counterpart_total, 4)

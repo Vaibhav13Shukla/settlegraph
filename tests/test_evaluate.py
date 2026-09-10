@@ -42,6 +42,56 @@ def test_evaluate_returns_metrics(tmp_path: Path) -> None:
     assert results["f1"] >= 0
 
 
+def test_amount_weighted_exposure_reflects_rupees_not_just_counts(tmp_path: Path) -> None:
+    """J/K: precision counts a wrong ₹10,000 auto-book the same as a wrong
+    ₹500 one. The amount-weighted view must separate them. One correct
+    auto-book (₹10,000) and one wrong auto-book (₹500, booked onto bank_99
+    when truth says bank_2)."""
+    assignments_csv = tmp_path / "assignments.csv"
+    assignments_csv.write_text(
+        "source_a,source_a_id,source_b,source_b_id,confidence,label,a_amount_paise,b_amount_paise,a_utr,b_utr,a_order_id,b_order_id\n"
+        "razorpay,rzp_norm_pay_1,bank,bank_norm_bank_1,0.98,AUTO_MATCH,1000000,1000000,RZP001,RZP001,order_1,\n"
+        "razorpay,rzp_norm_pay_2,bank,bank_norm_bank_99,0.98,AUTO_MATCH,50000,50000,RZP002,RZP099,order_2,\n"
+    )
+    gt_csv = tmp_path / "ground_truth.csv"
+    gt_csv.write_text(
+        "razorpay_record_id,true_bank_record_ids,true_merchant_record_id,relationship_type,anomaly_type,notes\n"
+        "pay_1,bank_1,led_1,exact_match,,\n"
+        "pay_2,bank_2,led_2,exact_match,,\n"
+    )
+
+    r = evaluate(assignments_csv, gt_csv)
+
+    assert r["true_positives"] == 1 and r["false_positives"] == 1
+    assert r["auto_booked_exposure_inr"] == 10500.0  # (1,000,000 + 50,000) paise
+    assert r["correct_auto_booked_exposure_inr"] == 10000.0
+    assert r["false_auto_booked_exposure_inr"] == 500.0  # the ₹500 wrong book, not "1 FP"
+    assert r["worst_case_single_auto_book_inr"] == 10000.0  # blast radius of one decision
+    # rupees-correct / rupees-booked = 1,000,000 / 1,050,000
+    assert r["amount_weighted_precision"] == round(1000000 / 1050000, 4)
+
+
+def test_zero_false_auto_books_means_zero_rupee_exposure(tmp_path: Path) -> None:
+    """The headline claim worth making: not "precision 1.0" but "₹0 booked
+    unattended onto a wrong counterpart"."""
+    assignments_csv = tmp_path / "assignments.csv"
+    assignments_csv.write_text(
+        "source_a,source_a_id,source_b,source_b_id,confidence,label,a_amount_paise,b_amount_paise,a_utr,b_utr,a_order_id,b_order_id\n"
+        "razorpay,rzp_norm_pay_1,bank,bank_norm_bank_1,0.98,AUTO_MATCH,1000000,1000000,RZP001,RZP001,order_1,\n"
+    )
+    gt_csv = tmp_path / "ground_truth.csv"
+    gt_csv.write_text(
+        "razorpay_record_id,true_bank_record_ids,true_merchant_record_id,relationship_type,anomaly_type,notes\n"
+        "pay_1,bank_1,led_1,exact_match,,\n"
+    )
+
+    r = evaluate(assignments_csv, gt_csv)
+
+    assert r["false_positives"] == 0
+    assert r["false_auto_booked_exposure_inr"] == 0.0
+    assert r["amount_weighted_precision"] == 1.0
+
+
 def test_evaluate_handles_no_matches() -> None:
     tmp_path = Path(tempfile.mkdtemp(prefix="test_eval_empty_"))
 
