@@ -58,7 +58,7 @@ Source models ([`models/`](../src/settlegraph/models)):
 | `BankStatementRecord` | `reference_number` (UTR), `credit`/`debit` paise, `value_date` | `exactly_one_direction` validator (bank.py:18) |
 | `MerchantLedgerRecord` | `payment_gateway_id`, `order_id`, `invoice_number`, `transaction_type` | |
 | `GSTInvoiceRecord`, `RoutePayoutRecord` | tax + marketplace-split surfaces | |
-| `GroundTruthRecord` | `razorpay_record_id`, `true_bank_record_ids: list`, `true_merchant_record_id`, `relationship_type` ∈ {exact_match, split, merge, refund_of, adjustment_for, no_counterpart, timing_only} | Already relationship-typed, already list-valued |
+| `GroundTruthRecord` | `razorpay_record_id`, `true_bank_record_ids: list`, `true_merchant_record_id`, `relationship_type` ∈ {exact_match, split, refund_of, no_counterpart} | Already relationship-typed, already list-valued. (`merge`/`adjustment_for`/`timing_only` were dead enum values, removed — see §16.) |
 | `NormalizedRecord` | unified; `record_type` ∈ {payment, refund, settlement_credit, sale, adjustment, unknown}; `provenance.direction` | The lingua franca of the engine |
 
 **Money is integer paise throughout.** No floats in the financial path. Good.
