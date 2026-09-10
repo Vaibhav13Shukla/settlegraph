@@ -145,34 +145,41 @@ Two distinct AI surfaces, both optional and both fail-closed:
 
 ## 9. Expert feedback → code reality mapping
 
-| # | Expert point | Verdict | Evidence / nuance |
-|---|---|---|---|
-| A | Synthetic IDs too correlated | **TRUE (at generation)** | All ids derive from one `index` (generator.py:215-230); bank description embeds UTR+settlement_id; merchant copies payment_id. |
-| — | "Matches on last 6 digits" | **FALSE (literal)** | Engine keys on UTR/order_id/payment_id/amount/date (match.py, score.py), not a numeric suffix. Coach is correct that the *dataset* criticism still lands. |
-| B | Define reconciliation semantics | **Partial** | `entity_type`/`record_type` exist and are enforced; refund/adjustment/settlement distinguished. No merchant identity; refunds not yet separate debit rows. |
-| C | Support 1:N / N:1 aggregation | **Partial** | `split` (1→2 bank credits), GST 20:1 batch aggregation, Route 1:N payouts all exist; `merge` (N:1) enum value defined but **never generated or matched**. |
-| D | Refund/reversal/fee semantics | **Partial** | Refund + fee + tax modeled; reversal/chargeback not distinct types. |
-| E | Realistic payment rails | **Partial** | UPI/card/netbanking/wallet/emi + ICICI/HDFC/RazorpayX; timing/aggregation not rail-differentiated. |
-| F | Explicit primary user | **MISSING** | Directive §6 fixes it: Razorpay internal reconciliation analyst. Not modeled (no operator_id). |
-| G | Operator review lifecycle | **MISSING** | No state machine, no persisted decisions. Dashboard is read-only (server.py). |
-| H | Real review queue with actions | **MISSING** | No approve/reject/reclassify/resolve endpoint exists. |
-| I | Separate finance vs engineering UI | **MISSING** | One dashboard mixes exposure with chaos/replay/calibration. |
-| J/K | Business metrics vs ML metrics; precision/recall semantics | **Partial** | ML metrics + revenue_assurance exist but are co-mingled; definitions are correct but offline-vs-live not documented. |
-| L | Don't optimize F1 (asymmetric cost) | **Aligned in spirit** | System is precision-first by construction; not stated as an explicit cost model. |
-| M | 100k scale | **Honest gap** | Measured to 20k; in-memory candidate graph is the named first bottleneck (match.py comments). No false 100k claim. |
-| N | Multi-tenant isolation | **MISSING** | No merchant_id anywhere. |
-| O | Real value to Razorpay | **Defensible, prototype-only** | README already disclaims production readiness + synthetic data. |
+*The `Verdict` column is the state **at audit time** and is left unchanged. The
+`Status now` column records what this session did; see §14–16 for detail.*
+
+| # | Expert point | Verdict (as audited) | Status now | Evidence / nuance |
+|---|---|---|---|---|
+| A | Synthetic IDs too correlated | **TRUE (at generation)** | ✅ Closed (§14) | All ids derived from one `index`; now independent opaque tokens (ADR 0011). Refreshed every number; retracted the fuzzy-baseline claim. |
+| — | "Matches on last 6 digits" | **FALSE (literal)** | — | Engine keys on UTR/order_id/payment_id/amount/date (match.py, score.py), not a numeric suffix. Coach is correct that the *dataset* criticism still lands. |
+| B | Define reconciliation semantics | **Partial** | Partial (unchanged) | `entity_type`/`record_type` exist and are enforced; refund/adjustment/settlement distinguished. Merchant identity now present (A/F/N); refunds still not separate debit rows. |
+| C | Support 1:N / N:1 aggregation | **Partial** | ⚠️ Dead value removed (§16) | `split`, GST 20:1, Route 1:N exist; the `merge` (N:1) enum value was defined but never generated or matched — **removed** rather than faked. Real N:1 remains a deliberate reconciliation-unit change. |
+| D | Refund/reversal/fee semantics | **Partial** | ✅ Adversarial coverage (§16) | Refund + fee + tax modeled; reversal and chargeback now exercised as adversarial scenarios against the record-type and direction invariants. Not yet distinct record types in the main generator. |
+| E | Realistic payment rails | **Partial** | Partial (unchanged) | UPI/card/netbanking/wallet/emi + ICICI/HDFC/RazorpayX; timing/aggregation not rail-differentiated. |
+| F | Explicit primary user | **MISSING** | ✅ Modeled (§14) | `merchant_id` on every record; reconciliation is merchant-scoped. Per-operator auth still unbuilt (documented). |
+| G | Operator review lifecycle | **MISSING** | ✅ Closed (§15, ADR 0012) | State machine + persisted decisions + audit trail + optimistic concurrency. |
+| H | Real review queue with actions | **MISSING** | ✅ Closed (§15) | approve/reject/reclassify/resolve endpoints + UI, loopback-gated. |
+| I | Separate finance vs engineering UI | **MISSING** | ✅ Grouped (§16) | Nav grouped into Operations vs Engineering in the one dashboard (grouped, not two apps). |
+| J/K | Business metrics vs ML metrics; precision/recall semantics | **Partial** | ✅ Closed (§16) | Amount-weighted exposure added to `evaluate` and kept distinct from the live revenue-assurance view; offline-vs-live documented (EVALUATION.md §1a). |
+| L | Don't optimize F1 (asymmetric cost) | **Aligned in spirit** | Aligned (unchanged) | System is precision-first by construction; the amount-weighted exposure metric now makes the asymmetric cost explicit in rupees. |
+| M | 100k scale | **Honest gap** | Honest gap (unchanged) | Measured to 20k; in-memory candidate graph is the named first bottleneck. No false 100k claim; not benchmarked further this session. |
+| N | Multi-tenant isolation | **MISSING** | ✅ Engine-level (§14, §16) | `merchant_id` isolation in the candidate graph **and** the invariant gate (incl. the AI widen path). Access-control isolation still unbuilt (documented). |
+| O | Real value to Razorpay | **Defensible, prototype-only** | Unchanged | README already disclaims production readiness + synthetic data. |
 
 ---
 
 ## 10. Highest-impact weaknesses (ranked)
 
-1. **No operator review lifecycle / persistence (G, H).** The biggest product gap and the one the expert pressed hardest. There is nowhere for a human decision to live.
-2. **No merchant identity / tenancy (F, N).** Blocks the stated primary user's core mental model ("which merchants are affected?").
-3. **Generation-time ID correlation (A).** Makes the clean 85% tidier than real feeds. *Note the blast radius:* fixing it touches `_reality`/`_truth`/`_write_splits` (which hardcode `bank_{i}`, `led_{i}`, and `.replace('pay_','')`) and **invalidates every published number** (823/100%/83.64%) until data is regenerated. Evaluation *structure* already uses an explicit relationship table, so it does not need rewriting — only the generator and the docs' numbers.
-4. **Metrics co-mingled; no amount-weighted exposure in `evaluate` (J, K).** A wrong ₹10L match and a wrong ₹100 match count equally today.
-5. **Windows test suite degraded (81 temp-file errors).** Not logic, but it blinds the dev loop here.
-6. **`merge` (N:1) is defined but never exercised (C).** An enum value pretending to be a capability.
+*These are the weaknesses **as first audited**. The forensic wording is kept
+intact; the closure status is marked inline. See §14–16 for how each was
+addressed.*
+
+1. **No operator review lifecycle / persistence (G, H).** The biggest product gap and the one the expert pressed hardest. There is nowhere for a human decision to live. — ✅ **Closed** (ADR 0012, §15).
+2. **No merchant identity / tenancy (F, N).** Blocks the stated primary user's core mental model ("which merchants are affected?"). — ✅ **Closed** (ADR 0010, §14, §16).
+3. **Generation-time ID correlation (A).** Makes the clean 85% tidier than real feeds. *Note the blast radius:* fixing it touches `_reality`/`_truth`/`_write_splits` (which hardcode `bank_{i}`, `led_{i}`, and `.replace('pay_','')`) and **invalidates every published number** (823/100%/83.64%) until data is regenerated. Evaluation *structure* already uses an explicit relationship table, so it does not need rewriting — only the generator and the docs' numbers. — ✅ **Closed** (ADR 0011, §14; numbers refreshed and the fuzzy-baseline claim retracted).
+4. **Metrics co-mingled; no amount-weighted exposure in `evaluate` (J, K).** A wrong ₹10L match and a wrong ₹100 match count equally today. — ✅ **Closed** (§16; EVALUATION.md §1a — offline exposure kept distinct from the live revenue-assurance view).
+5. **Windows test suite degraded (81 temp-file errors).** Not logic, but it blinds the dev loop here. — ✅ **Environmental, mitigated** (§14: a poisoned `pytest-of-LENOVO` temp root; a clean `--basetemp` passes the whole suite. No code defect.).
+6. **`merge` (N:1) is defined but never exercised (C).** An enum value pretending to be a capability. — ✅ **Closed** (§16: the dead value removed rather than faked; real N:1 is a separate reconciliation-unit decision).
 
 ---
 
