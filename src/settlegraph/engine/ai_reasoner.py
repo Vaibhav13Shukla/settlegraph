@@ -44,6 +44,7 @@ from typing import Any
 
 from settlegraph.config import PipelineConfig
 from settlegraph.engine.exceptions import ExceptionReport
+from settlegraph.engine.match import _same_merchant
 from settlegraph.engine.verify import verify_settlegraph_invariants
 from settlegraph.models import NormalizedRecord
 
@@ -267,6 +268,12 @@ def _widen_candidates(
     scored: list[tuple[int, NormalizedRecord]] = []
     for other in pool:
         if other.record_id == record.record_id:
+            continue
+        if not _same_merchant(record, other):
+            # Never surface a candidate from another merchant. The invariant
+            # gate would reject it anyway (verify_merchant_invariant), but the
+            # model should not be shown, or tempted to name, a cross-merchant
+            # bank leg in the first place -- ADR 0010 holds on this path too.
             continue
         record_date = record.settlement_date or record.transaction_date
         other_date = other.settlement_date or other.transaction_date

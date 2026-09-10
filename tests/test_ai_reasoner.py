@@ -252,6 +252,25 @@ def test_widen_candidates_finds_a_near_exact_amount_within_date_window():
     assert [r.record_id for r in found] == ["bank_close"]
 
 
+def test_widen_candidates_never_crosses_a_merchant_boundary():
+    """The widen scan bypasses the candidate graph (that is its whole point --
+    it runs when the graph produced nothing). So it must enforce merchant
+    isolation itself: a perfect same-amount, same-day bank leg belonging to a
+    *different* merchant must not be surfaced to the model at all. The
+    same-merchant leg is still found. This is the AI-path counterpart to
+    `verify_merchant_invariant` -- ADR 0010 must hold here too."""
+    record = _record("rzp_1", "razorpay", utr=None, amount=10000)
+    record.merchant_id = "merch_apollo"
+    same_merchant = _record("bank_same", "bank", utr=None, amount=10000)
+    same_merchant.merchant_id = "merch_apollo"
+    other_merchant = _record("bank_other", "bank", utr=None, amount=10000)
+    other_merchant.merchant_id = "merch_zomato"
+
+    found = _widen_candidates(record, [same_merchant, other_merchant])
+
+    assert [r.record_id for r in found] == ["bank_same"]
+
+
 def test_merge_ai_assignments_removes_the_stale_row_for_a_promoted_record():
     """Code-review finding: a promoted record's old EXCEPTION/LIKELY_MATCH
     row must not survive alongside its new AI_RESOLVED_MATCH row -- that

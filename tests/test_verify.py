@@ -13,6 +13,7 @@ from settlegraph.engine.verify import (
     verify_amount_invariant,
     verify_date_invariant,
     verify_direction_invariant,
+    verify_merchant_invariant,
     verify_settlegraph_invariants,
 )
 from settlegraph.models import NormalizedRecord
@@ -329,3 +330,59 @@ def test_perfect_utr_and_date_do_not_excuse_an_amount_violation() -> None:
     violations = verify_settlegraph_invariants(rzp, bank, config)
 
     assert any("Amount mismatch" in str(v) for v in violations)
+
+
+def test_merchant_invariant_blocks_cross_merchant_booking() -> None:
+    """A settlement must not be booked against a *different* merchant's bank
+    leg. The candidate graph already refuses to propose such an edge (ADR
+    0010), but `ai_reasoner._widen_candidates` does not go through the graph,
+    so the authoritative gate has to enforce it too. A same-amount, same-day
+    pair that would otherwise be a perfect match must still be rejected when
+    the merchants differ."""
+    rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+    bank = _make_bank(amount=9764, transaction_date=date(2026, 1, 17))
+    rzp.merchant_id = "merch_apollo"
+    bank.merchant_id = "merch_zomato"
+
+    with pytest.raises(InvariantViolation, match="Merchant violation"):
+        verify_merchant_invariant(rzp, bank)
+
+
+def test_merchant_invariant_is_in_the_authoritative_gate() -> None:
+    """The cross-merchant pair must surface through the aggregate gate that the
+    AI resolver actually calls (`verify_settlegraph_invariants`), not only the
+    standalone function -- otherwise the widen path would still book it."""
+    config = PipelineConfig(date_tolerance_days=3)
+    rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+    bank = _make_bank(amount=9764, transaction_date=date(2026, 1, 17))
+    rzp.merchant_id = "merch_apollo"
+    bank.merchant_id = "merch_zomato"
+
+    violations = verify_settlegraph_invariants(rzp, bank, config)
+
+    assert any("Merchant violation" in str(v) for v in violations)
+
+
+def test_merchant_invariant_passes_when_merchants_match() -> None:
+    """The complement: an otherwise-valid pair with the same merchant must not
+    be rejected, or the gate would block every legitimate match."""
+    rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+    bank = _make_bank(amount=9764, transaction_date=date(2026, 1, 17))
+    rzp.merchant_id = "merch_apollo"
+    bank.merchant_id = "merch_apollo"
+
+    assert verify_merchant_invariant(rzp, bank) is True
+
+
+def test_merchant_invariant_fails_safe_on_unknown_ids() -> None:
+    """An unknown/empty id on either side cannot *prove* a cross-merchant
+    violation (older fixtures default to `merch_unknown`), so the invariant
+    must allow it through rather than block a legitimately unlabeled match.
+    This is why the four existing invariant tests -- which never set a
+    merchant_id -- keep passing."""
+    rzp = _make_rzp(net=9764, settlement_date=date(2026, 1, 17))
+    bank = _make_bank(amount=9764, transaction_date=date(2026, 1, 17))
+    assert rzp.merchant_id == "merch_unknown"
+    bank.merchant_id = "merch_zomato"
+
+    assert verify_merchant_invariant(rzp, bank) is True
