@@ -15,12 +15,14 @@ from __future__ import annotations
 
 from datagen.adversarial import (
     amount_tolerance_boundary,
+    chargeback_debit_booked_as_settlement,
     conflicting_sources_no_fee_evidence,
     date_tolerance_boundary,
     high_confidence_wrong_match,
     near_tie_scores,
     new_transaction_category,
     prompt_injection_in_description,
+    settlement_reversal_booked_as_payment,
     twin_candidates_no_reference,
     unexpected_identifier_format,
     unicode_and_case_utr_drift,
@@ -384,6 +386,62 @@ def test_new_transaction_category_is_rejected_by_the_invariant_gate() -> None:
     assert gated[0]["label"] == "EXCEPTION"
     assert violations >= 1
     assert any("Record type" in v for r in reports for v in r.evidence["violations"])
+
+
+def test_settlement_reversal_is_rejected_by_the_record_type_invariant() -> None:
+    """Expert feedback D (reversal semantics): a `refund`/reversal Razorpay
+    record with a perfect UTR+amount+date match to a settlement credit still
+    scores 0.95 -- record_type is invisible to score_edge -- so scoring alone
+    auto-matches it. The record-type invariant is what rejects it: a reversal
+    must not be booked as an incoming settlement. Confirms the invariant covers
+    the whole non-payment family, not only the `adjustment` value already
+    tested by new_transaction_category."""
+    config = PipelineConfig()
+    case = settlement_reversal_booked_as_payment()
+    (rzp,) = case.rzp
+    (bank,) = case.bank
+    assert rzp.record_type == "refund"
+
+    assert score_edge(rzp, bank) == 0.95, "record_type is invisible to score_edge"
+
+    assignments = _run_pipeline(case, config)
+    assert len(assignments) == 1
+    assert assignments[0]["label"] == "AUTO_MATCH", "premise: scoring alone auto-matches it"
+
+    norm_map = {r.record_id: r for r in (*case.rzp, *case.bank)}
+    gated, reports, violations = enforce_invariant_gate(assignments, norm_map, config)
+
+    assert gated[0]["label"] == "EXCEPTION"
+    assert violations >= 1
+    assert any("Record type" in v for r in reports for v in r.evidence["violations"])
+
+
+def test_chargeback_debit_is_rejected_by_the_direction_invariant() -> None:
+    """Expert feedback D (chargeback semantics): a chargeback is a bank *debit*
+    that can carry the original settlement's UTR. Keyed on UTR+amount+date it
+    scores like an ordinary credit -- direction is invisible to score_edge --
+    so scoring auto-matches it. The direction invariant is what rejects it:
+    money leaving the account must not be booked as a settlement arriving.
+    Distinct from the reversal case -- this fails on the *bank* side's
+    credit/debit provenance, not the Razorpay side's record_type."""
+    config = PipelineConfig()
+    case = chargeback_debit_booked_as_settlement()
+    (rzp,) = case.rzp
+    (bank,) = case.bank
+    assert bank.provenance["direction"] == "debit"
+
+    assert score_edge(rzp, bank) == 0.95, "direction is invisible to score_edge"
+
+    assignments = _run_pipeline(case, config)
+    assert len(assignments) == 1
+    assert assignments[0]["label"] == "AUTO_MATCH", "premise: scoring alone auto-matches it"
+
+    norm_map = {r.record_id: r for r in (*case.rzp, *case.bank)}
+    gated, reports, violations = enforce_invariant_gate(assignments, norm_map, config)
+
+    assert gated[0]["label"] == "EXCEPTION"
+    assert violations >= 1
+    assert any("Direction" in v for r in reports for v in r.evidence["violations"])
 
 
 def test_unexpected_identifier_format_abstains_at_the_cost_of_recall() -> None:

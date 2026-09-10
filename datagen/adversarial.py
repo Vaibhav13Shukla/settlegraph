@@ -99,9 +99,16 @@ def _bank(
     transaction_date: date = date(2026, 1, 17),
     settlement_date: date | None = None,
     description: str | None = None,
+    direction: str = "credit",
     raw_record: dict[str, Any] | None = None,
 ) -> NormalizedRecord:
-    """Build a Bank-source NormalizedRecord for an adversarial fixture."""
+    """Build a Bank-source NormalizedRecord for an adversarial fixture.
+
+    `direction` sets `provenance["direction"]` (default "credit"). A "debit"
+    models money leaving the merchant's account -- a chargeback or a reversal
+    posting -- which `verify_direction_invariant` must never accept as a
+    settlement credit.
+    """
     return NormalizedRecord(
         record_id=record_id,
         source="bank",
@@ -122,7 +129,7 @@ def _bank(
         settlement_date=settlement_date or transaction_date,
         description=description,
         raw_record=raw_record or {},
-        provenance={"source": "bank", "scenario": "adversarial"},
+        provenance={"source": "bank", "scenario": "adversarial", "direction": direction},
     )
 
 
@@ -882,5 +889,111 @@ def unexpected_identifier_format() -> AdversarialCase:
             "Zero candidate edges expected -- safe (no false AUTO_MATCH) but "
             "blind (a real match is missed entirely). Abstaining here costs "
             "recall; that is the correct trade, not a failure."
+        ),
+    )
+
+
+def settlement_reversal_booked_as_payment() -> AdversarialCase:
+    """A settlement *reversal* on the Razorpay side, carrying a UTR, amount and
+    date that match a bank credit perfectly -- but it is a `refund`, not a
+    `payment`.
+
+    Real-world situation (expert feedback D): a settlement can be reversed --
+    a payout is clawed back, a batch is re-issued, an NEFT bounces and is
+    re-sent. Razorpay records this as a reversal/refund entity, not a fresh
+    payment. Because reversals reuse the original references, the reversal
+    row can share a UTR and amount with a real settlement credit sitting in
+    the bank feed. A matcher that ignores transaction category will book the
+    reversal against that credit as if a payment had settled -- recording a
+    settlement that, economically, ran the other way.
+
+    Correct behavior: a `refund`/reversal must never be booked as a settlement
+    payment. `score_edge` does not inspect `record_type` (the score is the same
+    0.95 an ordinary payment earns), so scoring alone still auto-matches it --
+    and `verify_record_type_invariant` is what rejects it, demoting to
+    EXCEPTION at the gate. Distinct from `new_transaction_category` (an
+    `adjustment`): this is the refund/reversal case D calls out by name, and it
+    confirms the record-type invariant covers the whole non-payment family, not
+    just the one adjustment value already tested.
+    """
+    rzp = _rzp(
+        "rzp_reversal",
+        utr="UTRREV01",
+        record_type="refund",
+        net_amount_paise=80_000,
+        transaction_date=date(2026, 11, 1),
+        settlement_date=date(2026, 11, 1),
+    )
+    bank = _bank(
+        "bank_reversal",
+        utr="UTRREV01",
+        amount_paise=80_000,
+        net_amount_paise=80_000,
+        transaction_date=date(2026, 11, 1),
+        settlement_date=date(2026, 11, 1),
+    )
+    return AdversarialCase(
+        name="settlement_reversal_booked_as_payment",
+        rzp=[rzp],
+        bank=[bank],
+        merchant=[],
+        expected_behavior=(
+            "A `refund`/reversal Razorpay record with a perfect UTR+amount+date "
+            "match to a settlement credit still scores 0.95 (record_type is "
+            "invisible to score_edge), so scoring auto-matches it -- but "
+            "verify_record_type_invariant rejects any non-payment booked as a "
+            "settlement, so the gate demotes it to EXCEPTION. A reversal must "
+            "not be recorded as an incoming settlement."
+        ),
+    )
+
+
+def chargeback_debit_booked_as_settlement() -> AdversarialCase:
+    """A chargeback in the bank feed -- a *debit* -- that shares its UTR,
+    amount and date with a Razorpay settlement.
+
+    Real-world situation (expert feedback D): a chargeback pulls money back
+    out of the merchant's account. In the bank statement it is a debit line,
+    not a credit, and it can legitimately reference the original settlement's
+    UTR. A matcher that keys on UTR+amount+date without checking ledger
+    direction will treat the debit as if it were the settlement credit --
+    booking an inflow where money actually flowed out, and corrupting both the
+    reconciled total and the revenue-assurance cash position derived from it.
+
+    Correct behavior: a bank *debit* can never satisfy a settlement *credit*
+    match. `verify_direction_invariant` rejects it. Distinct from
+    `settlement_reversal_booked_as_payment` (which checks the *Razorpay* side's
+    record_type): this checks the *bank* side's credit/debit provenance --
+    money leaving vs. an entity that isn't a payment are two different failures
+    and D names both.
+    """
+    rzp = _rzp(
+        "rzp_chargeback",
+        utr="UTRCHB01",
+        net_amount_paise=120_000,
+        transaction_date=date(2026, 11, 5),
+        settlement_date=date(2026, 11, 5),
+    )
+    bank_debit = _bank(
+        "bank_chargeback",
+        utr="UTRCHB01",
+        amount_paise=120_000,
+        net_amount_paise=120_000,
+        transaction_date=date(2026, 11, 5),
+        settlement_date=date(2026, 11, 5),
+        direction="debit",
+    )
+    return AdversarialCase(
+        name="chargeback_debit_booked_as_settlement",
+        rzp=[rzp],
+        bank=[bank_debit],
+        merchant=[],
+        expected_behavior=(
+            "A bank debit (chargeback) sharing the settlement's UTR+amount+date "
+            "scores like an ordinary credit (direction is invisible to "
+            "score_edge), so scoring auto-matches it -- but "
+            "verify_direction_invariant rejects a debit as a settlement credit, "
+            "so the gate demotes it to EXCEPTION. Money leaving must not be "
+            "booked as money arriving."
         ),
     )
