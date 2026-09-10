@@ -318,6 +318,9 @@
         <button onclick="switchTab('exceptions')" id="tab-exceptions" class="nav-link">
           <span>Exceptions</span><span id="badge-exceptions" class="pill">0</span>
         </button>
+        <button onclick="switchTab('review')" id="tab-review" class="nav-link">
+          <span>Review queue</span><span id="badge-review" class="pill">0</span>
+        </button>
         <button onclick="switchTab('ledger')" id="tab-ledger" class="nav-link">Ledger</button>
         <button onclick="switchTab('decisions')" id="tab-decisions" class="nav-link">Decisions</button>
         <button onclick="switchTab('sandbox')" id="tab-sandbox" class="nav-link">Failure sandbox</button>
@@ -549,6 +552,29 @@
           <span class="t-label" id="exception-count-label">--</span>
         </div>
         <div id="exception-cards-container" class="stack-24"></div>
+      </div>
+
+      <!-- ============================================== REVIEW QUEUE ===== -->
+      <div id="view-review" class="hidden stack-24">
+        <div class="view-head flex between gap-16 wrap-flex">
+          <div class="stack-8">
+            <h1 class="t-page">Review queue</h1>
+            <p class="t-sub">Open exceptions awaiting an operator decision. Approve, reject, reclassify, or resolve — each decision is persisted, audited, and removes the case from this queue. Nothing here moves money or changes a match.</p>
+          </div>
+          <span class="t-label" id="review-summary-label">--</span>
+        </div>
+        <div class="card flex between gap-16 wrap-flex" style="align-items:center">
+          <div class="flex gap-8 wrap-flex" style="align-items:center">
+            <span class="t-caption">Reviewer</span>
+            <input id="rq-actor" class="input" style="max-width:180px" value="analyst" placeholder="your id" aria-label="Reviewer id" />
+            <span class="t-caption" title="Reviewer identity is recorded in the audit trail. It is not authenticated — demo only.">(recorded in audit; not authenticated — demo)</span>
+          </div>
+          <label class="flex gap-8" style="align-items:center;cursor:pointer">
+            <input type="checkbox" id="rq-include-closed" onchange="fetchReviewQueue()" />
+            <span class="t-caption">Show closed cases</span>
+          </label>
+        </div>
+        <div id="review-queue-container" class="stack-24"></div>
       </div>
 
       <!-- ============================================== LEDGER ============ -->
@@ -793,12 +819,13 @@
     }
 
     function switchTab(tabId) {
-      ['overview', 'exceptions', 'ledger', 'decisions', 'sandbox', 'audit', 'qa'].forEach(t => {
+      ['overview', 'exceptions', 'review', 'ledger', 'decisions', 'sandbox', 'audit', 'qa'].forEach(t => {
         const view = document.getElementById('view-' + t);
         const tab = document.getElementById('tab-' + t);
         view.classList.toggle('hidden', t !== tabId);
         tab.classList.toggle('active', t === tabId);
       });
+      if (tabId === 'review') fetchReviewQueue();
       if (tabId === 'sandbox') runFailureSimulations();
       if (tabId === 'audit') fetchAuditReport();
       if (tabId === 'decisions') { renderDecisions(); fetchBaselines(); }
@@ -1113,6 +1140,90 @@
           </div>
         </div>
       `).join('');
+    }
+
+    // ---- Review queue: real, persisted operator decisions ----------------
+    async function fetchReviewQueue() {
+      const includeClosed = document.getElementById('rq-include-closed')?.checked;
+      const container = document.getElementById('review-queue-container');
+      try {
+        const res = await fetch('/api/review-queue' + (includeClosed ? '?include_closed=true' : ''));
+        renderReviewQueue(await res.json());
+      } catch (err) {
+        if (container) container.innerHTML = '<div class="note">Could not load the review queue.</div>';
+      }
+    }
+
+    function renderReviewQueue(data) {
+      const container = document.getElementById('review-queue-container');
+      const label = document.getElementById('review-summary-label');
+      const badge = document.getElementById('badge-review');
+      const rows = (data && data.queue) || [];
+      const openCount = data && typeof data.open_count === 'number'
+        ? data.open_count : rows.filter(r => !r.is_closed).length;
+      if (badge) badge.textContent = openCount;
+      if (label) label.textContent = openCount + ' open · ' + inr(data ? data.open_amount_paise : 0) + ' at risk';
+      if (!rows.length) {
+        container.innerHTML = '<div class="note">Nothing awaiting review. Resolved and closed cases are hidden — tick “Show closed cases” to see them.</div>';
+        return;
+      }
+      const severityPill = { HIGH: 'pill-bad', MEDIUM: 'pill-warn', LOW: '' };
+      const statusPill = { REJECTED: 'pill-warn' };
+      container.innerHTML = '<div class="grid grid-2">' + rows.map(r => {
+        const cid = escapeHtml(r.case_id);
+        const v = Number(r.version) || 0;
+        const actions = r.is_closed
+          ? `<button class="btn btn-ghost btn-sm" onclick="reviewAction('${cid}','reopen',${v})">Reopen</button>`
+          : `<button class="btn btn-primary btn-sm" onclick="reviewAction('${cid}','approve',${v})">Approve</button>
+             <button class="btn btn-outline btn-sm" onclick="reviewAction('${cid}','reject',${v})">Reject</button>
+             <button class="btn btn-outline btn-sm" onclick="reviewAction('${cid}','resolve',${v})">Resolve</button>
+             <button class="btn btn-ghost btn-sm" onclick="reviewAction('${cid}','reclassify',${v})">Reclassify</button>`;
+        return `
+          <div class="card stack-16" data-case="${cid}">
+            <div class="flex between gap-8 wrap-flex">
+              <span class="pill">${escapeHtml(r.category || '')}</span>
+              <span class="flex gap-8">
+                <span class="pill ${severityPill[r.severity] || ''}">${escapeHtml(r.severity || '')}</span>
+                <span class="pill ${statusPill[r.status] || ''}">${escapeHtml(r.status || 'OPEN')}</span>
+              </span>
+            </div>
+            <div class="stack-8">
+              <div style="font-weight:600">${cid} <span class="t-caption">· ${escapeHtml(r.merchant_id || '')}</span></div>
+              <div class="t-body">${escapeHtml(r.root_cause || '')}</div>
+            </div>
+            <div class="row"><span class="row-key">Exposure at risk</span><span class="row-val">${inr(r.unexplained_amount_paise)}</span></div>
+            ${r.last_actor ? `<div class="note">Last: <strong style="color:var(--ink)">${escapeHtml(r.last_actor)}</strong> ${escapeHtml(r.updated_at || '')}${r.last_reason ? ' — ' + escapeHtml(r.last_reason) : ''}</div>` : ''}
+            ${r.is_closed ? '' : `<input class="input rq-reason" placeholder="Reason (recorded in the audit trail)" aria-label="Decision reason" />`}
+            <div class="flex gap-8 wrap-flex">${actions}</div>
+          </div>`;
+      }).join('') + '</div>';
+    }
+
+    async function reviewAction(caseId, action, version) {
+      const actor = (document.getElementById('rq-actor')?.value || '').trim() || 'analyst';
+      const card = document.querySelector(`[data-case="${caseId}"]`);
+      const reasonEl = card ? card.querySelector('.rq-reason') : null;
+      const body = { actor_id: actor, reason: reasonEl ? reasonEl.value.trim() : '', expected_version: version };
+      if (action === 'reclassify') {
+        const nc = prompt('Reclassify to which category?');
+        if (!nc) return;
+        body.new_category = nc.trim();
+      }
+      try {
+        const res = await fetch('/api/exceptions/' + encodeURIComponent(caseId) + '/' + action, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        });
+        if (res.status === 409) {
+          alert('This case changed since you loaded it (another reviewer acted on it). Reloading the queue.');
+        } else if (!res.ok) {
+          let msg = 'Action failed.';
+          try { msg = (await res.json()).error || msg; } catch (e) {}
+          alert(msg);
+        }
+      } catch (err) {
+        alert('Could not reach the server. Review actions run on the local console only.');
+      }
+      fetchReviewQueue();
     }
 
     function renderLedger(assignments) {

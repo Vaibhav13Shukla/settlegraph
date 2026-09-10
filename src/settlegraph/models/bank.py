@@ -5,6 +5,9 @@ from pydantic import BaseModel, Field, model_validator
 
 class BankStatementRecord(BaseModel):
     record_id: str
+    # The merchant that owns the bank account this line settled into.
+    # Defaulted for backward compatibility; the generator always sets it.
+    merchant_id: str = "merch_unknown"
     transaction_date: date
     value_date: date | None = None
     description: str

@@ -92,9 +92,9 @@ SPLIT_CHOICES = ("train", "calibration", "test", "adversarial")
 # doc is the more honest anchor.
 DEV_REFERENCE: dict[str, float] = {
     "precision": 1.0,
-    "recall": 0.8364,
-    "f1": 0.9109,
-    "safe_auto_resolution_rate": 0.8230,
+    "recall": 0.8449,
+    "f1": 0.9159,
+    "safe_auto_resolution_rate": 0.8390,
     "false_auto_book_rate": 0.0,
     "abstention_precision": 0.0164,
 }

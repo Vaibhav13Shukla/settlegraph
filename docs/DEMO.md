@@ -57,13 +57,13 @@ python -m settlegraph.cli run
 ```
   Razorpay records: 1000    Bank records: 999    Merchant records: 1000
   Candidates:       3306
-  AUTO_MATCH:       2106
-  LIKELY_MATCH:      175      <- abstentions
-  EXCEPTION:           3
-  Unmatched:          43
+  AUTO_MATCH:       2140
+  LIKELY_MATCH:      166      <- abstentions
+  EXCEPTION:           2
+  Unmatched:          40
   Invariant fails:     0
 
-  Precision: 100.0%   Recall: 83.6%   F1: 0.9109
+  Precision: 100.0%   Recall: 84.5%   F1: 0.9159
 ```
 
 ~1,500 records/sec. Point at the **abstention** line: that is the product.
@@ -76,7 +76,7 @@ Open `results/AUDIT_REPORT.md` or the dashboard.
 
 | | |
 | --- | --- |
-| **Safe Auto-Resolution Rate** | **82.30%** |
+| **Safe Auto-Resolution Rate** | **83.90%** |
 | **False Auto-Book Rate** | **0.00%** |
 
 Reported *together* on purpose. Matching aggressively raises the second;
@@ -84,7 +84,7 @@ abstaining on everything starves the first. Neither can be gamed without the
 other moving — which is what makes the pair Goodhart-resistant.
 
 Alongside them: **Dangerous Miss Rate 0.00%** and **Exception Recall 100%** —
-of the 16 records that genuinely had no bank counterpart at all, the system
+of the 7 records that genuinely had no bank counterpart at all, the system
 forced zero of them into a match.
 
 ---
@@ -97,15 +97,22 @@ python -m settlegraph.cli benchmark
 
 | Metric | A: Exact ID | B: Amount+Date | C: Fuzzy | **SettleGraph** |
 | --- | --- | --- | --- | --- |
-| Precision | 100.0% | 100.0% | 69.2% | **100.0%** |
-| Recall | 84.9% | **87.5%** | 86.5% | 83.6% |
-| True Positives | 835 | **861** | 621 | 823 |
-| False Positives | 0 | 0 | **277** | **0** |
-| False Auto-Book Rate | 0.00% | 0.00% | **27.70%** | **0.00%** |
+| Precision | 100.0% | 100.0% | 100.0% | **100.0%** |
+| Recall | 86.0% | **87.2%** | 87.8% | 84.5% |
+| True Positives | 854 | 866 | **872** | 839 |
+| False Positives | 0 | 0 | 0 | **0** |
+| False Auto-Book Rate | 0.00% | 0.00% | 0.00% | **0.00%** |
 
-**Say this out loud, do not skip it:** Baseline B beats us on recall — 861
-correct matches to our 823, at the same 100% precision. Our safety margin
-cost 38 correct matches and prevented zero errors *on this batch*.
+**Say this out loud, do not skip it:** on this batch, with realistic
+independent identifiers, *every* baseline is exactly as safe as we are — 100%
+precision, zero false auto-books — and each finds slightly more true positives
+than we do (854 / 866 / 872 vs 839) because none of them abstain. We do not win
+this benchmark. An earlier version of this demo showed the fuzzy baseline
+corrupting 277 entries (27.70%); that was an artifact of the old sequential UTR
+format and is **retracted** (ADR 0011). The honest framing: an easy batch does
+not separate a naive matcher from a safe one — the separation lives in the
+adversarial suite (ambiguity, cross-merchant collisions, recycled references),
+where naive matching mis-books and the invariant gate does not.
 
 Then point at column C: fuzzy matching without a verification gate corrupted
 **277 ledger entries**. That is the failure a reconciliation system is

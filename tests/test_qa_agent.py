@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from settlegraph.qa_agent import (
     arithmetic_impl,
     build_options,
@@ -152,6 +154,7 @@ def test_arithmetic_rejects_an_unsupported_operation() -> None:
 def test_build_options_never_enables_a_dangerous_builtin_tool(tmp_path) -> None:
     """The two independent restrictions this module's docstring promises:
     empty built-in tools preset, and an explicit disallowed_tools list."""
+    pytest.importorskip("claude_agent_sdk")
     options = build_options(tmp_path)
     assert options.tools == []
     for dangerous in ("Bash", "Write", "Edit", "WebSearch", "WebFetch", "Task"):
@@ -159,6 +162,7 @@ def test_build_options_never_enables_a_dangerous_builtin_tool(tmp_path) -> None:
 
 
 def test_build_options_allows_exactly_the_six_ledger_tools(tmp_path) -> None:
+    pytest.importorskip("claude_agent_sdk")
     options = build_options(tmp_path)
     assert set(options.allowed_tools) == {
         "mcp__ledger__get_summary",

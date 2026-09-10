@@ -60,4 +60,4 @@ def test_vercel_uses_committed_demo_snapshot_without_runtime_artifacts(monkeypat
 
     assert response.status_code == 200
     assert response.json()["deployment_mode"] == "demo_snapshot"
-    assert response.json()["assignments"]["auto_match"] == 2106
+    assert response.json()["assignments"]["auto_match"] == 2140

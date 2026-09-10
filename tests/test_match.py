@@ -191,3 +191,42 @@ def test_no_candidates_when_no_overlap() -> None:
 
     # Should have zero candidates (no UTR match, no order_id match, no payment_id match)
     assert len(candidates) == 0
+
+
+def test_candidate_graph_never_links_across_merchants() -> None:
+    """Cross-merchant isolation (ADR 0010): two records sharing a UTR, an
+    exact amount, and a settlement date -- the strongest possible match
+    signal -- must still never become a candidate when they belong to
+    different merchants. Booking merchant A's settlement against merchant B's
+    bank account is a cross-tenant integrity failure that no downstream
+    amount or date invariant would catch, so the boundary is enforced at
+    candidate-generation time, before scoring ever runs.
+    """
+    config = PipelineConfig()
+    # Identical UTR/amount/date across two DIFFERENT merchants (a recycled or
+    # coincidentally-colliding bank reference number).
+    rzp_a = _make_rzp("rzp_a", utr="SAMEUTR0000000001").model_copy(
+        update={"merchant_id": "merch_apollo"}
+    )
+    bank_b = _make_bank("bank_b", utr="SAMEUTR0000000001").model_copy(
+        update={"merchant_id": "merch_zomato"}
+    )
+    # A legitimate same-merchant pair, as a control that matching still works.
+    rzp_a2 = _make_rzp("rzp_a2", utr="OWNUTR00000000002").model_copy(
+        update={"merchant_id": "merch_apollo"}
+    )
+    bank_a2 = _make_bank("bank_a2", utr="OWNUTR00000000002").model_copy(
+        update={"merchant_id": "merch_apollo"}
+    )
+
+    candidates = build_candidate_graph([rzp_a, rzp_a2], [bank_b, bank_a2], [], config)
+    pairs = {(a.record_id, b.record_id) for a, b in candidates}
+
+    # The cross-merchant pair is absent despite an identical UTR.
+    assert ("rzp_a", "bank_b") not in pairs
+    assert ("bank_b", "rzp_a") not in pairs
+    # The same-merchant pair is still proposed.
+    assert ("rzp_a2", "bank_a2") in pairs or ("bank_a2", "rzp_a2") in pairs
+    # Nothing in the returned candidate set crosses a merchant boundary.
+    for a, b in candidates:
+        assert a.merchant_id == b.merchant_id

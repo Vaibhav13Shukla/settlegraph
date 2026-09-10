@@ -107,6 +107,45 @@ def verify_record_type_invariant(rzp: NormalizedRecord) -> bool:
     return True
 
 
+_UNKNOWN_MERCHANT = frozenset({"", "merch_unknown"})
+
+
+def verify_merchant_invariant(rzp: NormalizedRecord, bank: NormalizedRecord) -> bool:
+    """Verify: a settlement may only be booked against its own merchant's bank leg.
+
+    ``build_candidate_graph`` (engine/match.py) already refuses to *propose* a
+    cross-merchant edge (ADR 0010), so the deterministic pipeline never reaches
+    this check with a mismatched pair -- here it is a no-op. It exists for the
+    one path that does not go through the candidate graph:
+    ``ai_reasoner._widen_candidates`` scans the whole bank pool on date+amount
+    alone when a Razorpay exception had zero deterministic candidates, and the
+    model's chosen candidate is booked as ``AI_RESOLVED_MATCH`` if it clears
+    this gate. Without a merchant check, a same-amount, same-day bank credit
+    belonging to a *different* merchant could be accepted -- money booked
+    across a tenant boundary on the AI resolver's say-so. This makes ADR 0010's
+    guarantee true for every path, not just the deterministic one: scoring (and
+    the model) propose, verification decides.
+
+    Fail-safe: only fires when both sides carry a real, differing merchant id.
+    An unknown/empty id on either side cannot prove a cross-merchant violation
+    (older fixtures and unpopulated rows default to ``merch_unknown``), so it is
+    allowed through here and left to the other invariants -- mirroring
+    ``match._same_merchant``.
+    """
+    a = rzp.merchant_id
+    b = bank.merchant_id
+    if a in _UNKNOWN_MERCHANT or b in _UNKNOWN_MERCHANT:
+        return True
+    if a != b:
+        raise InvariantViolation(
+            f"Merchant violation: Razorpay record {rzp.record_id} belongs to "
+            f"'{a}' but bank record {bank.record_id} belongs to '{b}'; a "
+            "settlement cannot be booked across a merchant boundary.",
+            {"rzp_merchant": a, "bank_merchant": b},
+        )
+    return True
+
+
 def verify_settlegraph_invariants(
     rzp: NormalizedRecord,
     bank: NormalizedRecord,
@@ -131,6 +170,10 @@ def verify_settlegraph_invariants(
         violations.append(e)
     try:
         verify_record_type_invariant(rzp)
+    except InvariantViolation as e:
+        violations.append(e)
+    try:
+        verify_merchant_invariant(rzp, bank)
     except InvariantViolation as e:
         violations.append(e)
     return violations

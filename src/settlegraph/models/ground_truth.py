@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class GroundTruthRecord(BaseModel):
     razorpay_record_id: str
+    merchant_id: str = "merch_unknown"
     true_bank_record_ids: list[str]
     true_merchant_record_id: str | None = None
     relationship_type: Literal[

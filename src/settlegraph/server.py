@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import tempfile
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -160,6 +161,18 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(json.loads(exc_path.read_text(encoding="utf-8")))
             else:
                 self._send_json([])
+            return
+
+        # Operator review queue: exceptions joined with their persisted review
+        # status, filtered and ranked. Read-only, so it is not behind the
+        # loopback mutation gate.
+        if path == "/api/review-queue":
+            self._handle_review_queue(parsed)
+            return
+
+        # Immutable audit trail of every human review decision.
+        if path == "/api/audit":
+            self._handle_audit(parsed)
             return
 
         if path == "/api/evaluation":
@@ -452,10 +465,15 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
         if any(w in q_lower for w in ["baseline", "naive", "fuzzy", "compare"]):
             prec = evaluation.get("precision", 1.0) * 100
             fp = evaluation.get("false_positives", 0)
+            fab = evaluation.get("false_auto_book_rate", 0.0) * 100
             return (
-                f"SettleGraph achieved {prec:.1f}% precision with {fp} false positives. "
-                f"In comparison, naive fuzzy matching (Baseline C) produces up to 27.7% false auto-books "
-                f"by forcing uncertain candidate links without invariant verification."
+                f"SettleGraph achieved {prec:.1f}% precision with {fp} false auto-books "
+                f"({fab:.2f}% false-auto-book rate) on this batch. Its safety does not come from "
+                "out-scoring naive matchers -- on realistic, independent identifiers a naive matcher "
+                "can reach the same precision -- but from abstaining under ambiguity, refusing "
+                "cross-merchant links, and passing every auto-booked match through deterministic "
+                "invariant verification. See /api/baselines for the side-by-side and "
+                "datagen/adversarial.py for where naive matching does fail."
             )
 
         prec = evaluation.get("precision", 1.0) * 100
@@ -531,7 +549,124 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
             self._handle_ask(question)
             return
 
+        # Operator review decision: POST /api/exceptions/<case_id>/<action>.
+        # A persisted, audited human decision -- a mutation, so it sits behind
+        # the same loopback gate as pipeline re-runs.
+        review_match = re.match(
+            r"^/api/exceptions/([^/]+)/(approve|reject|reclassify|resolve|reopen)$",
+            parsed.path,
+        )
+        if review_match:
+            self._handle_review_action(review_match.group(1), review_match.group(2))
+            return
+
         self._send_json({"error": "Invalid POST endpoint"}, status=404)
+
+    def _review_store(self):
+        from settlegraph.engine.review import ReviewStore
+
+        return ReviewStore(self.results_dir / "review_state.json")
+
+    def _load_exceptions(self) -> list[dict]:
+        exc_path = self.results_dir / "exceptions.json"
+        if not exc_path.exists():
+            return []
+        return json.loads(exc_path.read_text(encoding="utf-8"))
+
+    def _handle_review_queue(self, parsed) -> None:
+        from settlegraph.engine.review import build_review_queue
+
+        qs = urllib.parse.parse_qs(parsed.query)
+        merchant = qs.get("merchant_id", [None])[0]
+        severity = qs.get("severity", [None])[0]
+        try:
+            min_amount = int(qs.get("min_amount_paise", ["0"])[0] or 0)
+        except ValueError:
+            min_amount = 0
+        include_closed = qs.get("include_closed", ["false"])[0].lower() in ("1", "true", "yes")
+        queue = build_review_queue(
+            self._load_exceptions(),
+            self._review_store(),
+            merchant_id=merchant,
+            severity=severity,
+            min_amount_paise=min_amount,
+            include_closed=include_closed,
+        )
+        open_rows = [r for r in queue if not r["is_closed"]]
+        self._send_json(
+            {
+                "queue": queue,
+                "open_count": len(open_rows),
+                "open_amount_paise": sum(
+                    int(r.get("unexplained_amount_paise", 0)) for r in open_rows
+                ),
+            }
+        )
+
+    def _handle_audit(self, parsed) -> None:
+        qs = urllib.parse.parse_qs(parsed.query)
+        case_id = qs.get("case_id", [None])[0]
+        self._send_json({"audit": self._review_store().audit_trail(case_id)})
+
+    def _handle_review_action(self, case_id: str, action_str: str) -> None:
+        from settlegraph.engine.review import (
+            ConcurrencyConflict,
+            IllegalTransition,
+            ReviewAction,
+        )
+
+        content_len = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(content_len) if content_len > 0 else b"{}"
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except Exception:
+            payload = {}
+
+        actor_id = (payload.get("actor_id") or "").strip()
+        reason = (payload.get("reason") or "").strip()
+        if not actor_id:
+            self._send_json({"error": "actor_id is required"}, status=400)
+            return
+        expected_version = payload.get("expected_version")
+        if not isinstance(expected_version, int):
+            self._send_json(
+                {"error": "expected_version (int) is required for optimistic concurrency"},
+                status=400,
+            )
+            return
+
+        # Seed the case from its exception evidence -- the review overlay never
+        # invents a case that the batch did not surface.
+        exc = next((e for e in self._load_exceptions() if e.get("record_id") == case_id), None)
+        if exc is None:
+            self._send_json({"error": f"No exception case '{case_id}' in this batch"}, status=404)
+            return
+        seed = {
+            "merchant_id": exc.get("merchant_id", "merch_unknown"),
+            "category": exc.get("category", "UNKNOWN"),
+            "severity": exc.get("severity", "MEDIUM"),
+            "unexplained_amount_paise": exc.get("unexplained_amount_paise", 0),
+        }
+        try:
+            case = self._review_store().apply(
+                case_id,
+                ReviewAction(action_str),
+                actor_id=actor_id,
+                reason=reason,
+                expected_version=expected_version,
+                seed=seed,
+                new_category=payload.get("new_category"),
+            )
+        except ConcurrencyConflict as exc_conflict:
+            self._send_json(
+                {"error": str(exc_conflict), "current_version": exc_conflict.actual},
+                status=409,
+            )
+            return
+        except IllegalTransition as exc_illegal:
+            self._send_json({"error": str(exc_illegal)}, status=409)
+            return
+        self._send_json({"status": "success", "case": case.to_dict()})
 
 
 def start_server(

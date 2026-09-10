@@ -196,13 +196,26 @@ def test_baselines_endpoint_returns_all_four_methods_with_real_metrics(tmp_path:
 
 def test_baselines_endpoint_is_honest_about_the_real_batch_in_this_workspace() -> None:
     """Track 04 brief's honesty requirement, checked against the actual
-    committed-workflow batch already sitting in this workspace's (gitignored)
-    `data/generated` / `results` dirs: Baseline B genuinely finds more true
-    positives than SettleGraph at the same precision, and Baseline C's fuzzy
-    heuristic corrupts a material fraction of the ledger. Skipped, not
-    failed, when that local batch isn't present (e.g. a fresh checkout) --
-    those directories are gitignored by design (see .gitignore) and are
-    exercised for real by the CLI-driven tests instead.
+    committed-workflow batch in this workspace's (gitignored) `data/generated`
+    / `results` dirs.
+
+    This test previously asserted ``c["false_auto_book_rate"] > 0.2`` -- that
+    the fuzzy baseline (C) corrupted >20% of the ledger. That assertion was
+    retired when source identifiers were made independent and opaque (ADR
+    0011). The old ~27.7% figure was an artifact of the previous sequential
+    UTR format (``RZP{index:012d}``): those strings resemble each other, so
+    ``difflib.SequenceMatcher`` scored unrelated payments as near-matches.
+    Real UTRs are random 16-char tokens that do not resemble each other, so
+    fuzzy string matching is no longer trivially dangerous on this data --
+    and honesty means reporting that rather than tuning the data until the
+    number comes back. The genuine, per-scenario danger demonstrations live
+    in ``datagen/adversarial.py`` where each has an explicit expected safety
+    property.
+
+    What remains true and worth asserting: SettleGraph is at least as safe as
+    every naive baseline (equal-or-higher precision, zero false auto-books),
+    and a baseline can still win on raw recall by refusing to abstain --
+    which is the point, not a defect. Skipped when no local batch is present.
     """
     data_dir = Path("data/generated")
     results_dir = Path("results")
@@ -217,12 +230,16 @@ def test_baselines_endpoint_is_honest_about_the_real_batch_in_this_workspace() -
     baselines = json.loads(body)["baselines"]
 
     b = baselines["baseline_b_amount_date"]["metrics"]
-    sg = baselines["settlegraph"]["metrics"]
     c = baselines["baseline_c_fuzzy"]["metrics"]
+    sg = baselines["settlegraph"]["metrics"]
 
+    # A baseline may find more true positives (it never abstains) ...
     assert b["true_positives"] >= sg["true_positives"]
-    assert b["precision"] == sg["precision"]
-    assert c["false_auto_book_rate"] > 0.2
+    # ... but SettleGraph is never less precise than any baseline, and never
+    # auto-books a false match.
+    assert sg["precision"] >= b["precision"]
+    assert sg["precision"] >= c["precision"]
+    assert sg["false_auto_book_rate"] == 0.0
 
 
 def test_api_assignments_filtering_and_sampling(tmp_path: Path):

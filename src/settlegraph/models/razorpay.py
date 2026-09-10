@@ -6,6 +6,11 @@ from pydantic import BaseModel, Field, model_validator
 
 class RazorpaySettlementRecord(BaseModel):
     entity_id: str
+    # Which merchant this settlement belongs to. Defaulted so existing
+    # single-tenant CSVs and fixtures load unchanged; the generator always
+    # sets a real value. Reconciliation never crosses merchants -- see
+    # engine/match.py's isolation guard and ADR 0010.
+    merchant_id: str = "merch_unknown"
     entity_type: Literal["payment", "refund", "transfer", "adjustment"]
     settlement_id: str
     settlement_utr: str | None = None

@@ -107,6 +107,7 @@ def enforce_invariant_gate(
             ExceptionReport(
                 record_id=rzp.record_id,
                 source=rzp.source,
+                merchant_id=rzp.merchant_id,
                 category="INVARIANT_VIOLATION",
                 severity="HIGH",
                 root_cause=(

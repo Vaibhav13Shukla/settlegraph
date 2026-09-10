@@ -24,14 +24,46 @@ PAYMENT_METHODS = (
     ("emi", 0.05, 0.025),
 )
 
+# A small portfolio of real-shaped merchants, each settling to its own fixed
+# bank account. Reconciliation is merchant-scoped (ADR 0010): a settlement and
+# a bank credit can only be linked when they belong to the same merchant, so
+# the account genuinely belongs to the merchant rather than being chosen at
+# random per row. One merchant settles to a RazorpayX current account (the
+# growing Razorpay-native rail) rather than a traditional bank -- modeled as
+# just another value of the existing bank_name field so the bank-name-agnostic
+# engine gets to prove it already generalizes.
+_MERCHANTS: tuple[tuple[str, str, str, str], ...] = (
+    ("merch_apollo", "Apollo Pharmacy", "HDFC", "XXXXXX4021"),
+    ("merch_zomato", "Zomato", "ICICI", "XXXXXX8830"),
+    ("merch_urbanco", "Urban Company", "Axis", "XXXXXX1147"),
+    ("merch_nykaa", "Nykaa", "RazorpayX", "RZPX00XXXX2201"),
+    ("merch_bluedart", "Blue Dart", "Kotak", "XXXXXX5567"),
+    ("merch_lenskart", "Lenskart", "HDFC", "XXXXXX9910"),
+)
+
+# Independent identifier alphabets. Real gateway/bank/ledger identifiers are
+# opaque tokens minted by different systems; nothing downstream may rely on one
+# source's id being derivable from another's. The only legitimate cross-system
+# keys are genuine shared evidence -- the UTR (printed on both the settlement
+# and the bank statement) and the order_id (created by the merchant, passed to
+# the gateway) -- not a shared numeric suffix. See ADR 0011.
+_ID_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz"
+_UTR_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 
 @dataclass(frozen=True)
 class TransactionReality:
     index: int
+    merchant_id: str
+    bank_name: str
+    account_number: str
     payment_id: str
     order_id: str
     settlement_id: str
     utr: str
+    bank_record_id: str
+    ledger_id: str
+    invoice_number: str
     customer_id: str
     amount_paise: int
     fee_paise: int
@@ -66,7 +98,7 @@ class SyntheticDataGenerator:
     ]:
         if total_records < 50:
             raise ValueError("SettleGraph requires at least 50 financial realities")
-        realities = [self._reality(index) for index in range(1, total_records + 1)]
+        realities = self._build_realities(total_records)
         razorpay = [self._razorpay(record) for record in realities]
         bank = [self._bank(record) for record in realities]
         merchant = [self._merchant(record) for record in realities]
@@ -163,9 +195,16 @@ class SyntheticDataGenerator:
             cursor += count
 
         bank_by_truth_id: dict[str, set[str]] = {}
+        merchant_by_truth_id: dict[str, str] = {}
         for row in truth:
             bank_ids = set(row.true_bank_record_ids)
             bank_by_truth_id[row.razorpay_record_id] = bank_ids
+            # ledger_id is now an opaque token unrelated to payment_id, so the
+            # merchant rows for a split can no longer be derived by string
+            # surgery on the payment id -- they come from the truth table's
+            # true_merchant_record_id, the one place the linkage is recorded.
+            if row.true_merchant_record_id:
+                merchant_by_truth_id[row.razorpay_record_id] = row.true_merchant_record_id
 
         for split_name, member_ids in split_members.items():
             out = split_output_dir / split_name
@@ -179,7 +218,9 @@ class SyntheticDataGenerator:
                 bank_ids |= bank_by_truth_id.get(pid, set())
             bank_rows = [b.model_dump(mode="json") for b in bank if b.record_id in bank_ids]
 
-            merchant_ids = {f"led_{pid.replace('pay_', '')}" for pid in member_ids}
+            merchant_ids = {
+                merchant_by_truth_id[pid] for pid in member_ids if pid in merchant_by_truth_id
+            }
             merchant_rows = [
                 m.model_dump(mode="json") for m in merchant if m.ledger_id in merchant_ids
             ]
@@ -189,7 +230,56 @@ class SyntheticDataGenerator:
             self._write_csv(out / "merchant_ledger.csv", merchant_rows)
             self._write_csv(out / "ground_truth.csv", truth_rows)
 
-    def _reality(self, index: int) -> TransactionReality:
+    def _token(self, n: int) -> str:
+        """An opaque lowercase-alphanumeric identifier token of length ``n``,
+        drawn from the seeded RNG so a given seed is fully reproducible."""
+        return "".join(self.rng.choice(_ID_ALPHABET) for _ in range(n))
+
+    def _utr(self) -> str:
+        """A 16-character alphanumeric UTR -- the shape of a real RBI Unique
+        Transaction Reference, printed on both the gateway settlement and the
+        bank statement line, and therefore a legitimate shared match key."""
+        return "".join(self.rng.choice(_UTR_ALPHABET) for _ in range(16))
+
+    def _build_realities(self, total_records: int) -> list[TransactionReality]:
+        """Assign each payment to a merchant and group each merchant's
+        payments into settlement batches of ~20.
+
+        Razorpay settles per merchant, never across merchants, so the batch
+        boundary is per-merchant rather than a global ``index // 20``. The
+        settlement_id is an opaque token minted once per (merchant, batch),
+        so GST-per-batch aggregation and split-settlement grouping still have
+        a real key to group on -- one that no longer encodes the payment
+        index. Invoice numbers are sequential *within a merchant's own books*,
+        which is how a real ledger numbers them.
+        """
+        merchant_payment_counts: dict[str, int] = {}
+        merchant_batch_settlement: dict[tuple[str, int], str] = {}
+        merchant_invoice_counts: dict[str, int] = {}
+        realities: list[TransactionReality] = []
+        for index in range(1, total_records + 1):
+            merchant = self.rng.choice(_MERCHANTS)
+            merchant_id = merchant[0]
+            seq = merchant_payment_counts.get(merchant_id, 0)
+            merchant_payment_counts[merchant_id] = seq + 1
+            batch = seq // 20
+            settlement_id = merchant_batch_settlement.get((merchant_id, batch))
+            if settlement_id is None:
+                settlement_id = f"setl_{self._token(10)}"
+                merchant_batch_settlement[(merchant_id, batch)] = settlement_id
+            inv_seq = merchant_invoice_counts.get(merchant_id, 0) + 1
+            merchant_invoice_counts[merchant_id] = inv_seq
+            realities.append(self._reality(index, merchant, settlement_id, inv_seq))
+        return realities
+
+    def _reality(
+        self,
+        index: int,
+        merchant: tuple[str, str, str, str],
+        settlement_id: str,
+        invoice_seq: int,
+    ) -> TransactionReality:
+        merchant_id, _display, bank_name, account_number = merchant
         method, _, fee_rate = self.rng.choices(
             PAYMENT_METHODS, weights=[row[1] for row in PAYMENT_METHODS], k=1
         )[0]
@@ -213,25 +303,35 @@ class SyntheticDataGenerator:
                 else net_amount_paise
             )
         return TransactionReality(
-            index,
-            f"pay_{index:06d}",
-            f"order_{index:06d}",
-            f"setl_{index // 20:05d}",
-            f"RZP{index:012d}",
-            f"cust_{self.rng.randrange(1, 500):04d}",
-            amount_paise,
-            fee,
-            tax,
-            net_amount_paise,
-            method,
-            captured,
-            captured + timedelta(days=settlement_delay),
-            refund,
+            index=index,
+            merchant_id=merchant_id,
+            bank_name=bank_name,
+            account_number=account_number,
+            # Every id below is minted independently. The cross-system links
+            # a real system relies on are the UTR and the order_id (shared
+            # evidence), not a common numeric suffix -- see ADR 0011.
+            payment_id=f"pay_{self._token(14)}",
+            order_id=f"order_{self._token(12)}",
+            settlement_id=settlement_id,
+            utr=self._utr(),
+            bank_record_id=f"banktxn_{self._token(16)}",
+            ledger_id=f"led_{self._token(12)}",
+            invoice_number=f"INV-2026-{invoice_seq:05d}",
+            customer_id=f"cust_{self.rng.randrange(1, 500):04d}",
+            amount_paise=amount_paise,
+            fee_paise=fee,
+            tax_paise=tax,
+            net_amount_paise=net_amount_paise,
+            method=method,
+            captured_at=captured,
+            settled_at=captured + timedelta(days=settlement_delay),
+            refunded_paise=refund,
         )
 
     def _razorpay(self, record: TransactionReality) -> RazorpaySettlementRecord:
         return RazorpaySettlementRecord(
             entity_id=record.payment_id,
+            merchant_id=record.merchant_id,
             entity_type="payment",
             settlement_id=record.settlement_id,
             settlement_utr=record.utr,
@@ -250,36 +350,31 @@ class SyntheticDataGenerator:
 
     def _bank(self, record: TransactionReality) -> BankStatementRecord:
         net = record.net_amount_paise - record.refunded_paise
-        # Not every merchant settles to a traditional bank account -- a real
-        # and growing share settle straight into a RazorpayX current
-        # account instead. Modeled here as just another value of the
-        # existing `bank_name` field (BankStatementRecord already supported
-        # this; nothing about the schema needed to change) so the core
-        # engine's reconciliation logic, which is bank-name-agnostic, gets
-        # to prove it already generalizes rather than needing a parallel
-        # code path for "the Razorpay-native rail."
-        bank_name, account_number = self.rng.choices(
-            [("ICICI", "XXXX001234"), ("HDFC", "XXXX007788"), ("RazorpayX", "RZPX00XXXX2201")],
-            weights=[0.55, 0.25, 0.20],
-            k=1,
-        )[0]
+        # The bank account belongs to the merchant (fixed per merchant in the
+        # roster), not chosen at random per row -- a merchant settles to its
+        # own account. One merchant in the roster settles to a RazorpayX
+        # current account (the Razorpay-native rail) rather than a traditional
+        # bank; it is just another value of the existing bank_name field, so
+        # the bank-name-agnostic engine gets to prove it already generalizes.
         return BankStatementRecord(
-            record_id=f"bank_{record.index:06d}",
+            record_id=record.bank_record_id,
+            merchant_id=record.merchant_id,
             transaction_date=record.settled_at.date(),
             value_date=record.settled_at.date(),
             description=f"NEFT/RAZORPAY/{record.utr}/{record.settlement_id}",
             reference_number=record.utr,
             credit_amount_paise=net,
             balance_paise=None,
-            bank_name=bank_name,
-            account_number=account_number,
+            bank_name=record.bank_name,
+            account_number=record.account_number,
         )
 
     def _merchant(self, record: TransactionReality) -> MerchantLedgerRecord:
         return MerchantLedgerRecord(
-            ledger_id=f"led_{record.index:06d}",
+            ledger_id=record.ledger_id,
+            merchant_id=record.merchant_id,
             order_id=record.order_id,
-            invoice_number=f"INV-2026-{record.index:06d}",
+            invoice_number=record.invoice_number,
             customer_id=record.customer_id,
             amount_paise=record.amount_paise,
             transaction_type="sale",
@@ -293,8 +388,9 @@ class SyntheticDataGenerator:
         relationship = "refund_of" if record.refunded_paise else "exact_match"
         return GroundTruthRecord(
             razorpay_record_id=record.payment_id,
-            true_bank_record_ids=[f"bank_{record.index:06d}"],
-            true_merchant_record_id=f"led_{record.index:06d}",
+            merchant_id=record.merchant_id,
+            true_bank_record_ids=[record.bank_record_id],
+            true_merchant_record_id=record.ledger_id,
             relationship_type=relationship,
             anomaly_type="partial_refund"
             if 0 < record.refunded_paise < record.amount_paise
@@ -601,6 +697,7 @@ class SyntheticDataGenerator:
     def _truth_row(row: GroundTruthRecord) -> dict[str, str]:
         return {
             "razorpay_record_id": row.razorpay_record_id,
+            "merchant_id": row.merchant_id,
             "true_bank_record_ids": "|".join(row.true_bank_record_ids),
             "true_merchant_record_id": row.true_merchant_record_id or "",
             "relationship_type": row.relationship_type,

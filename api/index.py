@@ -79,6 +79,46 @@ def exceptions() -> object:
     return _read_json("exceptions.json", default=[])
 
 
+@app.get("/api/review-queue")
+def review_queue(
+    merchant_id: str | None = Query(default=None),
+    severity: str | None = Query(default=None),
+    min_amount_paise: int = Query(default=0),
+    include_closed: bool = Query(default=False),
+) -> object:
+    """Operator review queue: exceptions joined with their persisted review
+    status. Read-only here -- the hosted ASGI deployment is read-only, so
+    approve/reject/resolve run only on the local (Docker/CLI) console."""
+    from settlegraph.engine.review import ReviewStore, build_review_queue
+
+    results = _results_dir()
+    exc_path = results / "exceptions.json"
+    exceptions_data = json.loads(exc_path.read_text(encoding="utf-8")) if exc_path.exists() else []
+    store = ReviewStore(results / "review_state.json")
+    queue = build_review_queue(
+        exceptions_data,
+        store,
+        merchant_id=merchant_id,
+        severity=severity,
+        min_amount_paise=min_amount_paise,
+        include_closed=include_closed,
+    )
+    open_rows = [r for r in queue if not r["is_closed"]]
+    return {
+        "queue": queue,
+        "open_count": len(open_rows),
+        "open_amount_paise": sum(int(r.get("unexplained_amount_paise", 0)) for r in open_rows),
+    }
+
+
+@app.get("/api/audit")
+def audit(case_id: str | None = Query(default=None)) -> object:
+    """Immutable audit trail of human review decisions."""
+    from settlegraph.engine.review import ReviewStore
+
+    return {"audit": ReviewStore(_results_dir() / "review_state.json").audit_trail(case_id)}
+
+
 @app.get("/api/assignments")
 def assignments(label: str | None = Query(default=None)) -> list[dict[str, str]]:
     path = _results_dir() / "assignments.csv"

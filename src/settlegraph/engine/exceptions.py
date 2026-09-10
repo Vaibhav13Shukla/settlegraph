@@ -38,9 +38,14 @@ class ExceptionReport:
         unexplained_amount_paise: int,
         suggested_action: str,
         evidence: dict[str, Any],
+        merchant_id: str = "merch_unknown",
     ):
         self.record_id = record_id
         self.source = source
+        # Which merchant this exception belongs to, so the operator review
+        # queue can answer "which merchants are affected?" and filter by
+        # portfolio. Defaulted; populated from the record's merchant_id.
+        self.merchant_id = merchant_id
         self.category = category  # e.g., "UTR_CORRUPTION", "AMOUNT_MISMATCH", "REFUND_ADJUSTMENT"
         self.severity = severity  # "HIGH", "MEDIUM", "LOW"
         self.root_cause = root_cause
@@ -52,6 +57,7 @@ class ExceptionReport:
         return {
             "record_id": self.record_id,
             "source": self.source,
+            "merchant_id": self.merchant_id,
             "category": self.category,
             "severity": self.severity,
             "root_cause": self.root_cause,
@@ -216,6 +222,7 @@ def generate_exception_reports(
         b_norm = norm_map.get(a["source_b_id"])
         if a_norm and b_norm:
             report = investigate_exception(a_norm, [(b_norm, a["confidence"])], norm_map)
+            report.merchant_id = a_norm.merchant_id
             reports.append(report)
 
     # Process orphans
@@ -224,6 +231,7 @@ def generate_exception_reports(
         if rec:
             links = candidate_map.get(rec.record_id, [])
             report = investigate_exception(rec, links, norm_map)
+            report.merchant_id = rec.merchant_id
             reports.append(report)
 
     return reports
