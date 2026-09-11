@@ -363,8 +363,14 @@ class SettleGraphAPIHandler(BaseHTTPRequestHandler):
         import os
         from datetime import datetime, timezone
 
-        # Attempt invocation of claude-agent-sdk QA agent only if explicitly enabled and key is present
-        if os.environ.get("ANTHROPIC_API_KEY"):
+        # Invoke the claude-agent-sdk Q&A agent when a credential is present:
+        # either an Anthropic API key, or a Claude Pro/Max subscription token
+        # (`claude setup-token` -> CLAUDE_CODE_OAUTH_TOKEN). The Agent SDK draws
+        # on the subscription's included programmatic credits -- this is the
+        # personal/individual-use path and must not back a multi-user service
+        # (Anthropic's Agent SDK terms). With neither set, fall through to the
+        # deterministic answer below.
+        if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"):
             try:
                 import asyncio
 

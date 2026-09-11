@@ -51,6 +51,31 @@ python scripts/chaos_batch.py --records 400
 python scripts/eval_holdout.py --records 2000 --seed 20260905
 ```
 
+## Enabling the optional AI features (local, personal use)
+
+The reconciliation core runs with no LLM at all. Two optional add-ons — the AI
+exception *reasoner* and the read-only *Q&A agent* — turn on only when a
+credential is present, and both fail closed.
+
+```powershell
+pip install -e ".[dev,llm]"
+```
+
+Pick one credential (see `.env.example`):
+
+- **Anthropic API key** — powers both features:
+  `setx ANTHROPIC_API_KEY "sk-ant-..."` (new shell), then set
+  `SETTLEGRAPH_LLM_PROVIDER=claude` to enable the reasoner.
+- **Claude Pro/Max subscription token** — the Q&A agent only, via
+  `claude setup-token` → `CLAUDE_CODE_OAUTH_TOKEN`. The Q&A endpoint
+  (`server.py`) activates the Claude Agent SDK when either credential is set.
+
+The subscription path is licensed for **individual/local use** and must not
+back a public or multi-user service (Anthropic Agent SDK terms). Run the live
+agent from your own machine (`http://127.0.0.1:8080`); the hosted deployment
+stays read-only and serves a committed snapshot — it does not run the agent.
+Never commit a token: `.env` is gitignored.
+
 ## What the current batch shows
 
 The seeded 1,000-record batch produces:
